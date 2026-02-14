@@ -198,13 +198,13 @@ public class NbtFactory {
     }
 
     /**
-     * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array with {@link Compression#GZIP} compression.
+     * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array with {@link Compression#NONE NO} compression.
      *
      * @param compound the NBT compound to write.
      * @throws NbtException if any I/O error occurs.
      */
     public byte[] toByteArray(@NotNull CompoundTag compound) throws NbtException {
-        return this.toByteArray(compound, Compression.GZIP);
+        return this.toByteArray(compound, Compression.NONE);
     }
 
     /**
