@@ -1,24 +1,22 @@
 package dev.sbs.minecraftapi.nbt;
 
-import dev.sbs.api.io.stream.ByteArrayDataInput;
-import dev.sbs.api.io.stream.ByteArrayDataOutput;
 import dev.sbs.api.io.stream.Compression;
 import dev.sbs.api.util.PrimitiveUtil;
 import dev.sbs.api.util.StringUtil;
 import dev.sbs.api.util.SystemUtil;
 import dev.sbs.minecraftapi.nbt.exception.NbtException;
+import dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer;
+import dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer;
 import dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtDeserializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtSerializer;
-import dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream;
-import dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import lombok.Cleanup;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,10 +29,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.InflaterInputStream;
 
 /**
  * Standard interface for reading and writing NBT data structures.
@@ -73,8 +67,13 @@ public class NbtFactory {
      */
     public @NotNull CompoundTag fromByteArray(byte[] bytes) throws NbtException {
         try {
-            @Cleanup ByteArrayDataInput byteArrayInputStream = new ByteArrayDataInput(bytes);
-            return this.fromStream(byteArrayInputStream);
+            NbtInputBuffer buffer = new NbtInputBuffer(bytes);
+
+            if (buffer.readByte() != TagType.COMPOUND.getId())
+                throw new IOException("Root tag in NBT structure must be a CompoundTag.");
+
+            buffer.readUTF(); // Discard Root Name
+            return buffer.readCompoundTag();
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
@@ -148,29 +147,14 @@ public class NbtFactory {
      */
     public @NotNull CompoundTag fromStream(@NotNull InputStream inputStream) throws NbtException {
         try {
-            @Cleanup NbtInputStream nbtInputStream = new NbtInputStream(inputStream);
-            return this.fromStream(nbtInputStream);
-        } catch (IOException exception) {
-            throw new NbtException(exception);
-        }
-    }
+            @Cleanup ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[8192];
+            int bytesRead;
 
-    /**
-     * Deserializes an NBT {@link NbtInputStream} into a {@link CompoundTag}.
-     * <br><br>
-     * When creating a new {@link NbtInputStream}, it will automatically wrap the stream
-     * with {@link GZIPInputStream} or {@link InflaterInputStream}.
-     *
-     * @param inputStream the NBT input stream to read from.
-     * @throws NbtException if any I/O error occurs.
-     */
-    public @NotNull CompoundTag fromStream(@NotNull NbtInputStream inputStream) throws NbtException {
-        try {
-            if (inputStream.readByte() != TagType.COMPOUND.getId())
-                throw new IOException("Root tag in NBT structure must be a CompoundTag.");
+            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1)
+                buffer.write(data, 0, bytesRead);
 
-            inputStream.readUTF(); // Discard Root Name
-            return inputStream.readCompoundTag();
+            return this.fromByteArray(buffer.toByteArray());
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -192,40 +176,71 @@ public class NbtFactory {
     }
 
     /**
-     * Serializes a {@link CompoundTag} into an NBT Base64 encoded {@link String}.
+     * Serializes a {@link CompoundTag} into an NBT Base64 encoded {@link String} with {@link Compression#GZIP} compression.
      *
      * @param compound the NBT compound to write.
-     * @throws NbtException if any I/O error occurs.
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toBase64(@NotNull CompoundTag compound) throws NbtException {
-        return StringUtil.encodeBase64ToString(this.toByteArray(compound));
+        return this.toBase64(compound, Compression.GZIP);
     }
 
     /**
-     * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array.
+     * Serializes a {@link CompoundTag} into an NBT Base64 encoded {@link String} with the given compression.
+     *
+     * @param compound the NBT compound to write.
+     * @param compression compression to use on the file.
+     * @throws NbtException if any I/O error occurs
+     */
+    public @NotNull String toBase64(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
+        return StringUtil.encodeBase64ToString(this.toByteArray(compound, compression));
+    }
+
+    /**
+     * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array with {@link Compression#GZIP} compression.
      *
      * @param compound the NBT compound to write.
      * @throws NbtException if any I/O error occurs.
      */
     public byte[] toByteArray(@NotNull CompoundTag compound) throws NbtException {
+        return this.toByteArray(compound, Compression.GZIP);
+    }
+
+    /**
+     * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array with the given compression.
+     *
+     * @param compound the NBT compound to write.
+     * @param compression compression to use on the file.
+     * @throws NbtException if any I/O error occurs
+     */
+    public byte[] toByteArray(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
         try {
-            @Cleanup ByteArrayDataOutput byteArrayDataOutput = new ByteArrayDataOutput();
-            this.toStream(compound, byteArrayDataOutput);
-            return byteArrayDataOutput.toByteArray();
+            // Serialize to uncompressed byte array
+            NbtOutputBuffer buffer = new NbtOutputBuffer();
+            buffer.writeByte(TagType.COMPOUND.getId());
+            buffer.writeUTF(""); // Empty root name
+            buffer.writeCompoundTag(compound);
+            byte[] uncompressed = buffer.toByteArray();
+
+            // Apply compression if needed
+            if (compression == Compression.NONE)
+                return uncompressed;
+
+            return Compression.compress(uncompressed, compression);
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
     }
 
     /**
-     * Serializes a {@link CompoundTag} into an NBT {@link File} with {@link Compression#NONE NO} compression.
+     * Serializes a {@link CompoundTag} into an NBT {@link File} with {@link Compression#GZIP} compression.
      *
      * @param compound the NBT compound to write.
      * @param file the file to write to.
      * @throws NbtException if any I/O error occurs.
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
-        this.toFile(compound, file, Compression.NONE);
+        this.toFile(compound, file, Compression.GZIP);
     }
 
     /**
@@ -238,36 +253,11 @@ public class NbtFactory {
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
         try {
-            @Cleanup OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-
-            outputStream = switch (compression) {
-                case GZIP -> new GZIPOutputStream(outputStream);
-                case ZLIB -> new DeflaterOutputStream(outputStream);
-                default -> outputStream;
-            };
-
-            this.toStream(compound, outputStream);
+            this.toStream(compound, new FileOutputStream(file), compression);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
 
-    }
-
-    /**
-     * Serializes a {@link CompoundTag} into a JSON {@link File}.
-     *
-     * @param compound the NBT compound to write.
-     * @param file the file to write to.
-     * @throws NbtException if any I/O error occurs.
-     */
-    public void toJson(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
-        try {
-            @Cleanup FileWriter writer = new FileWriter(file);
-            NbtJsonSerializer nbtJsonSerializer = new NbtJsonSerializer(writer);
-            nbtJsonSerializer.writeCompoundTag(compound);
-        } catch (IOException exception) {
-            throw new NbtException(exception);
-        }
     }
 
     /**
@@ -282,6 +272,23 @@ public class NbtFactory {
             NbtJsonSerializer nbtJsonSerializer = new NbtJsonSerializer(writer);
             nbtJsonSerializer.writeCompoundTag(compound);
             return writer.toString();
+        } catch (IOException exception) {
+            throw new NbtException(exception);
+        }
+    }
+
+    /**
+     * Serializes a {@link CompoundTag} into a JSON {@link File}.
+     *
+     * @param compound the NBT compound to write.
+     * @param file the file to write to.
+     * @throws NbtException if any I/O error occurs.
+     */
+    public void toJson(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
+        try {
+            @Cleanup FileWriter writer = new FileWriter(file);
+            NbtJsonSerializer nbtJsonSerializer = new NbtJsonSerializer(writer);
+            nbtJsonSerializer.writeCompoundTag(compound);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -322,32 +329,32 @@ public class NbtFactory {
     }
 
     /**
-     * Serializes a {@link CompoundTag} into an {@link OutputStream}.
+     * Serializes a {@link CompoundTag} into an {@link OutputStream} with {@link Compression#GZIP} compression.
      *
      * @param compound the NBT compound to write.
      * @param outputStream the stream to write to.
-     * @throws NbtException if any I/O error occurs.
+     * @throws NbtException if any I/O error occurs
      */
     public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream) throws NbtException {
-        this.toStream(compound, new NbtOutputStream(outputStream));
+        this.toStream(compound, outputStream, Compression.GZIP);
     }
 
-
     /**
-     * Serializes a {@link CompoundTag} into an {@link NbtOutputStream}.
+     * Serializes a {@link CompoundTag} into an {@link OutputStream} with the given compression.
      *
      * @param compound the NBT compound to write.
      * @param outputStream the stream to write to.
-     * @throws NbtException if any I/O error occurs.
+     * @param compression compression to use on the stream.
+     * @throws NbtException if any I/O error occurs
      */
-    public void toStream(@NotNull CompoundTag compound, @NotNull NbtOutputStream outputStream) throws NbtException {
+    public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream, @NotNull Compression compression) throws NbtException {
         try {
-            outputStream.writeByte(TagType.COMPOUND.getId());
-            outputStream.writeUTF(""); // Empty Root Name
-            outputStream.writeCompoundTag(compound);
+            byte[] data = this.toByteArray(compound, compression);
+            outputStream.write(data);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
     }
+
 
 }
