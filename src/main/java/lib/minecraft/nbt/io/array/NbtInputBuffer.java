@@ -1,6 +1,5 @@
 package dev.sbs.minecraftapi.nbt.io.array;
 
-import dev.sbs.api.io.stream.Compression;
 import dev.sbs.api.util.PrimitiveUtil;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
@@ -23,7 +22,7 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     private int position;
 
     public NbtInputBuffer(byte[] buffer) {
-        this.buffer = Compression.decompress(buffer);
+        this.buffer = buffer;
         this.position = 0;
     }
 

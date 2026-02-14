@@ -67,7 +67,8 @@ public class NbtFactory {
      */
     public @NotNull CompoundTag fromByteArray(byte[] bytes) throws NbtException {
         try {
-            NbtInputBuffer buffer = new NbtInputBuffer(bytes);
+            byte[] decompressed = Compression.decompress(bytes);
+            NbtInputBuffer buffer = new NbtInputBuffer(decompressed);
 
             if (buffer.readByte() != TagType.COMPOUND.getId())
                 throw new IOException("Root tag in NBT structure must be a CompoundTag.");
@@ -253,7 +254,9 @@ public class NbtFactory {
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
         try {
-            this.toStream(compound, new FileOutputStream(file), compression);
+            byte[] data = this.toByteArray(compound, compression);
+            @Cleanup FileOutputStream fileOutputStream = new FileOutputStream(file);
+            fileOutputStream.write(data);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }

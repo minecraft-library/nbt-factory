@@ -1,6 +1,5 @@
 package dev.sbs.minecraftapi.nbt.io.stream;
 
-import dev.sbs.api.io.stream.Compression;
 import dev.sbs.api.util.PrimitiveUtil;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
@@ -20,7 +19,7 @@ import java.io.InputStream;
 public class NbtInputStream extends DataInputStream implements NbtInput {
 
     public NbtInputStream(@NotNull InputStream inputStream) throws IOException {
-        super(Compression.wrap(inputStream));
+        super(inputStream);
     }
 
     @Override
