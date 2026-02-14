@@ -15,46 +15,13 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.regex.Pattern;
+
+import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
 
 /**
  * Implementation for SNBT deserialization.
  */
 public class SnbtDeserializer extends StringReader implements NbtInput {
-
-    private static final char COMPOUND_START        = '{';
-    private static final char COMPOUND_END          = '}';
-
-    private static final char ENTRY_VALUE_INDICATOR = ':';
-    private static final char ENTRY_SEPARATOR       = ',';
-
-    private static final char ARRAY_START          = '[';
-    private static final char ARRAY_END            = ']';
-    private static final char ARRAY_TYPE_INDICATOR = ';';
-    private static final char ARRAY_TYPE_BYTE      = 'B';
-    private static final char ARRAY_TYPE_INT       = 'I';
-    private static final char ARRAY_TYPE_LONG      = 'L';
-
-    private static final char STRING_DELIMITER_1   = '\"';
-    private static final char STRING_DELIMITER_2   = '\'';
-    private static final char STRING_ESCAPE        = '\\';
-
-    private static final Pattern BYTE_PATTERN      = Pattern.compile("^[+-]?\\d+b$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SHORT_PATTERN     = Pattern.compile("^[+-]?\\d+s$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern INT_PATTERN       = Pattern.compile("^[+-]?\\d+$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern LONG_PATTERN      = Pattern.compile("^[+-]?\\d+l$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern FLOAT_PATTERN     = Pattern.compile("^[+-]?[0-9]*\\.?[0-9]+f$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern DOUBLE_PATTERN    = Pattern.compile("^[+-]?[0-9]*\\.?[0-9]+d$", Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Used to find and delete suffixes from numeric literals.
-     */
-    private static final String LITERAL_SUFFIX_PATTERN = "[BbDdFfLlSs]$";
-
-    /**
-     * All characters that can be used in strings without quotation marks (including tag names).
-     */
-    private static final String VALID_UNQUOTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+_.";
 
     public SnbtDeserializer(@NotNull String snbt) {
         super(StringUtil.trimToEmpty(snbt));
@@ -105,17 +72,17 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     @Override
     public @NotNull Byte[] readByteArray() throws IOException {
-        return this.readArray(byte.class, ARRAY_TYPE_BYTE, Byte::parseByte);
+        return this.readArray(byte.class, ARRAY_PREFIX_BYTE, Byte::parseByte);
     }
 
     @Override
     public @NotNull Integer[] readIntArray() throws IOException {
-        return this.readArray(int.class, ARRAY_TYPE_INT, Integer::parseInt);
+        return this.readArray(int.class, ARRAY_PREFIX_INT, Integer::parseInt);
     }
 
     @Override
     public @NotNull Long[] readLongArray() throws IOException {
-        return this.readArray(long.class, ARRAY_TYPE_LONG, Long::parseLong);
+        return this.readArray(long.class, ARRAY_PREFIX_LONG, Long::parseLong);
     }
 
     @Override
@@ -287,9 +254,9 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
                 if (thirdChar == ARRAY_TYPE_INDICATOR) {
                     yield switch (secondChar) {
-                        case ARRAY_TYPE_BYTE -> TagType.BYTE_ARRAY.getId();
-                        case ARRAY_TYPE_INT -> TagType.INT_ARRAY.getId();
-                        case ARRAY_TYPE_LONG -> TagType.LONG_ARRAY.getId();
+                        case ARRAY_PREFIX_BYTE -> TagType.BYTE_ARRAY.getId();
+                        case ARRAY_PREFIX_INT -> TagType.INT_ARRAY.getId();
+                        case ARRAY_PREFIX_LONG -> TagType.LONG_ARRAY.getId();
                         default -> throw new IOException("Unknown NBT array type.");
                     };
                 } else

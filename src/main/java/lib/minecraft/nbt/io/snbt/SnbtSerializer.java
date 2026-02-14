@@ -16,7 +16,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
+
+import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
 
 /**
  * Implementation for SNBT serialization.
@@ -24,7 +25,6 @@ import java.util.regex.Pattern;
 public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     private static final Reflection<JsonWriter> JSON_REFLECTION = Reflection.of(JsonWriter.class);
-    private static final @NotNull Pattern NON_QUOTE_PATTERN = Pattern.compile("[a-zA-Z_.+\\-]+");
     private final @NotNull Writer writer;
 
     public SnbtSerializer(@NotNull Writer writer) {
@@ -75,17 +75,17 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeByteArray(@NotNull Byte[] value) throws IOException {
-        this.writeArray(value, 'B');
+        this.writeArray(value, SnbtUtil.ARRAY_PREFIX_BYTE, ARRAY_SUFFIX_BYTE);
     }
 
     @Override
     public void writeIntArray(@NotNull Integer[] value) throws IOException {
-        this.writeArray(value, 'I');
+        this.writeArray(value, SnbtUtil.ARRAY_PREFIX_INT, ARRAY_SUFFIX_INT);
     }
 
     @Override
     public void writeLongArray(@NotNull Long[] value) throws IOException {
-        this.writeArray(value, 'L');
+        this.writeArray(value, SnbtUtil.ARRAY_PREFIX_LONG, ARRAY_SUFFIX_LONG);
     }
 
     @Override
@@ -119,31 +119,32 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
         this.endObject();
     }
 
-    private <T extends Number> void writeArray(@NotNull T[] array, char prefix) throws IOException {
-        this.beginArray();
-        this.writer.append(prefix).append(';');
+    private <T extends Number> void writeArray(@NotNull T[] array, char prefix, String suffix) throws IOException {
+        this.writer.append(ARRAY_START).append(prefix).append(ARRAY_TYPE_INDICATOR);
 
-        for (T t : array)
-            this.jsonValue(t.toString());
+        for (int i = 0; i < array.length; i++) {
+            if (i > 0) this.writer.append(ENTRY_SEPARATOR);
+            this.writer.append(array[i].toString()).append(suffix);
+        }
 
-        this.endArray();
+        this.writer.append(ARRAY_END);
     }
 
     private static String escapeString(@NotNull String value) {
         if (!NON_QUOTE_PATTERN.matcher(value).matches()) {
             StringBuilder sb = new StringBuilder();
-            sb.append('"');
+            sb.append(STRING_DELIMITER_1);
 
             for (int i = 0; i < value.length(); i++) {
                 char current = value.charAt(i);
 
-                if (current == '\\' || current == '"')
-                    sb.append('\\');
+                if (current == STRING_ESCAPE || current == STRING_DELIMITER_1)
+                    sb.append(STRING_ESCAPE);
 
                 sb.append(current);
             }
 
-            sb.append('"');
+            sb.append(STRING_DELIMITER_1);
             return sb.toString();
         }
 
