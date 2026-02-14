@@ -1,5 +1,7 @@
 package dev.sbs.minecraftapi.nbt.io.stream;
 
+import dev.sbs.api.io.stream.Compression;
+import dev.sbs.api.util.PrimitiveUtil;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
@@ -14,8 +16,6 @@ import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
-import dev.sbs.api.util.PrimitiveUtil;
-import dev.sbs.api.io.Compression;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
