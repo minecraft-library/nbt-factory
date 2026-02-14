@@ -16,7 +16,6 @@ import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
-import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -32,59 +31,50 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         super(Compression.wrap(inputStream));
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull ByteTag readByteTag() {
+    public @NotNull ByteTag readByteTag() throws IOException {
         return new ByteTag(this.readByte());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull ShortTag readShortTag() {
+    public @NotNull ShortTag readShortTag() throws IOException {
         return new ShortTag(this.readShort());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull IntTag readIntTag() {
+    public @NotNull IntTag readIntTag() throws IOException {
         return new IntTag(this.readInt());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull LongTag readLongTag() {
+    public @NotNull LongTag readLongTag() throws IOException {
         return new LongTag(this.readLong());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull FloatTag readFloatTag() {
+    public @NotNull FloatTag readFloatTag() throws IOException {
         return new FloatTag(this.readFloat());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull DoubleTag readDoubleTag() {
+    public @NotNull DoubleTag readDoubleTag() throws IOException {
         return new DoubleTag(this.readDouble());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull ByteArrayTag readByteArrayTag() {
+    public @NotNull ByteArrayTag readByteArrayTag() throws IOException {
         byte[] tmp = new byte[this.readInt()];
         this.readFully(tmp);
         return new ByteArrayTag(PrimitiveUtil.wrap(tmp));
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull StringTag readStringTag() {
+    public @NotNull StringTag readStringTag() throws IOException {
         return new StringTag(this.readUTF());
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull ListTag<?> readListTag(int depth) {
+    public @NotNull ListTag<?> readListTag(int depth) throws IOException {
         ListTag<Tag<?>> listTag = new ListTag<>();
         int listType = this.readUnsignedByte();
         int length = Math.max(0, this.readInt());
@@ -95,9 +85,8 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         return listTag;
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull CompoundTag readCompoundTag(int depth) {
+    public @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
         CompoundTag compoundTag = new CompoundTag();
 
         for (int id = this.readUnsignedByte() & 0xFF; id != 0; id = this.readUnsignedByte() & 0xFF) {
@@ -109,9 +98,8 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         return compoundTag;
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull IntArrayTag readIntArrayTag() {
+    public @NotNull IntArrayTag readIntArrayTag() throws IOException {
         int length = this.readInt();
         Integer[] data = new Integer[length];
 
@@ -121,9 +109,8 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         return new IntArrayTag(data);
     }
 
-    @SneakyThrows
     @Override
-    public @NotNull LongArrayTag readLongArrayTag() {
+    public @NotNull LongArrayTag readLongArrayTag() throws IOException {
         int length = this.readInt();
         Long[] data = new Long[length];
 
