@@ -1,24 +1,14 @@
 package dev.sbs.minecraftapi.nbt.io.snbt;
 
 import com.google.gson.stream.JsonWriter;
+import dev.sbs.api.reflection.Reflection;
+import dev.sbs.api.util.StringUtil;
+import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.minecraftapi.nbt.tags.array.ArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
-import dev.sbs.api.reflection.Reflection;
-import dev.sbs.api.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -44,57 +34,78 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
     }
 
     @Override
-    public void writeByteTag(@NotNull ByteTag tag) throws IOException {
-        this.jsonValue(tag.getValue() + "b");
+    public void writeBoolean(boolean value) throws IOException {
+        this.writeByte(value ? 1 : 0);
     }
 
     @Override
-    public void writeShortTag(@NotNull ShortTag tag) throws IOException {
-        this.jsonValue(tag.getValue() + "s");
+    public void writeByte(int value) throws IOException {
+        this.jsonValue(value + "b");
     }
 
     @Override
-    public void writeIntTag(@NotNull IntTag tag) throws IOException {
-        this.jsonValue(Integer.toString(tag.getValue()));
+    public void writeShort(int value) throws IOException {
+        this.jsonValue(value + "s");
     }
 
     @Override
-    public void writeLongTag(@NotNull LongTag tag) throws IOException {
-        this.jsonValue(tag.getValue() + "l");
+    public void writeInt(int value) throws IOException {
+        this.jsonValue(Integer.toString(value));
     }
 
     @Override
-    public void writeFloatTag(@NotNull FloatTag tag) throws IOException {
-        this.jsonValue(tag.getValue() + "f");
+    public void writeLong(long value) throws IOException {
+        this.jsonValue(value + "l");
     }
 
     @Override
-    public void writeDoubleTag(@NotNull DoubleTag tag) throws IOException {
-        this.jsonValue(tag.getValue() + "d");
+    public void writeFloat(float value) throws IOException {
+        this.jsonValue(value + "f");
     }
 
     @Override
-    public void writeByteArrayTag(@NotNull ByteArrayTag tag) throws IOException {
-        this.writeArray(tag, 'B');
+    public void writeDouble(double value) throws IOException {
+        this.jsonValue(value + "d");
     }
 
     @Override
-    public void writeStringTag(@NotNull StringTag tag) throws IOException {
-        this.jsonValue(escapeString(tag.getValue()));
+    public void writeUTF(@NotNull String value) throws IOException {
+        this.jsonValue(escapeString(value));
+    }
+
+    @Override
+    public void writeByteArray(@NotNull Byte[] value) throws IOException {
+        this.writeArray(value, 'B');
+    }
+
+    @Override
+    public void writeIntArray(@NotNull Integer[] value) throws IOException {
+        this.writeArray(value, 'I');
+    }
+
+    @Override
+    public void writeLongArray(@NotNull Long[] value) throws IOException {
+        this.writeArray(value, 'L');
     }
 
     @Override
     public void writeListTag(@NotNull ListTag<Tag<?>> tag, int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
         this.beginArray();
 
         for (Tag<?> value : tag)
-            this.writeTag(value, this.incrementMaxDepth(depth));
+            this.writeTag(value, depth);
 
         this.endArray();
     }
 
     @Override
     public void writeCompoundTag(@NotNull CompoundTag tag, int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
         this.beginObject();
 
         for (Map.Entry<String, Tag<?>> entry : tag) {
@@ -102,28 +113,18 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
                 break;
 
             this.name(StringUtil.stripToEmpty(entry.getKey()));
-            this.writeTag(entry.getValue(), this.incrementMaxDepth(depth));
+            this.writeTag(entry.getValue(), depth);
         }
 
         this.endObject();
     }
 
-    @Override
-    public void writeIntArrayTag(@NotNull IntArrayTag tag) throws IOException {
-        this.writeArray(tag, 'I');
-    }
-
-    @Override
-    public void writeLongArrayTag(@NotNull LongArrayTag tag) throws IOException {
-        this.writeArray(tag, 'L');
-    }
-
-    private <T extends Number> void writeArray(@NotNull ArrayTag<T> arrayTag, char prefix) throws IOException {
+    private <T extends Number> void writeArray(@NotNull T[] array, char prefix) throws IOException {
         this.beginArray();
         this.writer.append(prefix).append(';');
 
-        for (int i = 0; i < arrayTag.length(); i++)
-            this.jsonValue(arrayTag.get(i).toString());
+        for (T t : array)
+            this.jsonValue(t.toString());
 
         this.endArray();
     }

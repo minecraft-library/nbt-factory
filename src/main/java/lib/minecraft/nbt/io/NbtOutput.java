@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public interface NbtOutput extends MaxDepthIO {
+public interface NbtOutput {
 
     @SuppressWarnings("all")
     default void writeTag(@NotNull Tag<?> tag, int maxDepth) throws IOException {
@@ -38,21 +38,67 @@ public interface NbtOutput extends MaxDepthIO {
         };
     }
 
-    void writeByteTag(@NotNull ByteTag tag) throws IOException;
+    void writeBoolean(boolean value) throws IOException;
 
-    void writeShortTag(@NotNull ShortTag tag) throws IOException;
+    void writeByte(int value) throws IOException;
 
-    void writeIntTag(@NotNull IntTag tag) throws IOException;
+    void writeShort(int value) throws IOException;
 
-    void writeLongTag(@NotNull LongTag tag) throws IOException;
+    void writeInt(int value) throws IOException;
 
-    void writeFloatTag(@NotNull FloatTag tag) throws IOException;
+    void writeLong(long value) throws IOException;
 
-    void writeDoubleTag(@NotNull DoubleTag tag) throws IOException;
+    void writeFloat(float value) throws IOException;
 
-    void writeByteArrayTag(@NotNull ByteArrayTag tag) throws IOException;
+    void writeDouble(double value) throws IOException;
 
-    void writeStringTag(@NotNull StringTag tag) throws IOException;
+    void writeUTF(@NotNull String value) throws IOException;
+
+    void writeByteArray(@NotNull Byte[] value) throws IOException;
+
+    void writeIntArray(@NotNull Integer[] value) throws IOException;
+
+    void writeLongArray(@NotNull Long[] value) throws IOException;
+
+    default void writeByteTag(@NotNull ByteTag tag) throws IOException {
+        this.writeByte(tag.getValue());
+    }
+
+    default void writeShortTag(@NotNull ShortTag tag) throws IOException {
+        this.writeShort(tag.getValue());
+    }
+
+    default void writeIntTag(@NotNull IntTag tag) throws IOException {
+        this.writeInt(tag.getValue());
+    }
+
+    default void writeLongTag(@NotNull LongTag tag) throws IOException {
+        this.writeLong(tag.getValue());
+    }
+
+    default void writeFloatTag(@NotNull FloatTag tag) throws IOException {
+        this.writeFloat(tag.getValue());
+    }
+
+    default void writeDoubleTag(@NotNull DoubleTag tag) throws IOException {
+        this.writeDouble(tag.getValue());
+    }
+
+    default void writeStringTag(@NotNull StringTag tag) throws IOException {
+        this.writeUTF(tag.getValue());
+    }
+
+    default void writeByteArrayTag(@NotNull ByteArrayTag tag) throws IOException {
+        this.writeByteArray(tag.getValue());
+    }
+
+    default void writeIntArrayTag(@NotNull IntArrayTag tag) throws IOException {
+        this.writeIntArray(tag.getValue());
+    }
+
+    default void writeLongArrayTag(@NotNull LongArrayTag tag) throws IOException {
+        this.writeLongArray(tag.getValue());
+    }
 
     default void writeListTag(@NotNull ListTag<Tag<?>> tag) throws IOException {
         this.writeListTag(tag, 0);
@@ -65,9 +111,5 @@ public interface NbtOutput extends MaxDepthIO {
     }
 
     void writeCompoundTag(@NotNull CompoundTag tag, int depth) throws IOException;
-
-    void writeIntArrayTag(@NotNull IntArrayTag tag) throws IOException;
-
-    void writeLongArrayTag(@NotNull LongArrayTag tag) throws IOException;
 
 }

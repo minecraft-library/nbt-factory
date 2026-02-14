@@ -1,28 +1,20 @@
 package dev.sbs.minecraftapi.nbt.io.snbt;
 
+import dev.sbs.api.util.StringUtil;
+import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.minecraftapi.nbt.tags.array.ArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
-import dev.sbs.api.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -69,47 +61,68 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
     }
 
     @Override
-    public @NotNull ByteTag readByteTag() throws IOException {
-        return new ByteTag(Byte.parseByte(this.readNumberAsString()));
+    public boolean readBoolean() throws IOException {
+        return this.readByte() != 0;
     }
 
     @Override
-    public @NotNull ShortTag readShortTag() throws IOException {
-        return new ShortTag(Short.parseShort(this.readNumberAsString()));
+    public byte readByte() throws IOException {
+        return Byte.parseByte(this.readNumberAsString());
     }
 
     @Override
-    public @NotNull IntTag readIntTag() throws IOException {
-        return new IntTag(Integer.parseInt(this.readNumberAsString()));
+    public short readShort() throws IOException {
+        return Short.parseShort(this.readNumberAsString());
     }
 
     @Override
-    public @NotNull LongTag readLongTag() throws IOException {
-        return new LongTag(Long.parseLong(this.readNumberAsString()));
+    public int readInt() throws IOException {
+        return Integer.parseInt(this.readNumberAsString());
     }
 
     @Override
-    public @NotNull FloatTag readFloatTag() throws IOException {
-        return new FloatTag(Float.parseFloat(this.readNumberAsString()));
+    public long readLong() throws IOException {
+        return Long.parseLong(this.readNumberAsString());
     }
 
     @Override
-    public @NotNull DoubleTag readDoubleTag() throws IOException {
-        return new DoubleTag(Double.parseDouble(this.readNumberAsString()));
+    public float readFloat() throws IOException {
+        return Float.parseFloat(this.readNumberAsString());
     }
 
     @Override
-    public @NotNull ByteArrayTag readByteArrayTag() throws IOException {
-        return this.readArray(ByteArrayTag::new, Byte::parseByte);
+    public double readDouble() throws IOException {
+        return Double.parseDouble(this.readNumberAsString());
+    }
+
+    /**
+     * Read an SNBT string from the current index of a reader
+     */
+    @Override
+    public @NotNull String readUTF() throws IOException {
+        return this.readUTF(false);
     }
 
     @Override
-    public @NotNull StringTag readStringTag() throws IOException {
-        return new StringTag(this.readString());
+    public @NotNull Byte[] readByteArray() throws IOException {
+        return this.readArray(byte.class, ARRAY_TYPE_BYTE, Byte::parseByte);
+    }
+
+    @Override
+    public @NotNull Integer[] readIntArray() throws IOException {
+        return this.readArray(int.class, ARRAY_TYPE_INT, Integer::parseInt);
+    }
+
+    @Override
+    public @NotNull Long[] readLongArray() throws IOException {
+        return this.readArray(long.class, ARRAY_TYPE_LONG, Long::parseLong);
     }
 
     @Override
     public @NotNull ListTag<?> readListTag(int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
         ListTag<Tag<?>> listTag = new ListTag<>();
 
         if (this.read() != ARRAY_START)
@@ -123,7 +136,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 break;
             this.reset();
 
-            listTag.add(this.readTag(this.peekTagId(), this.incrementMaxDepth(depth)));
+            listTag.add(this.readTag(this.peekTagId(), depth));
             this.skipWhitespace();
         } while (this.read() == ENTRY_SEPARATOR);
 
@@ -132,6 +145,9 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     @Override
     public @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
         CompoundTag compoundTag = new CompoundTag();
 
         if (this.read() != COMPOUND_START)
@@ -145,37 +161,19 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 break;
             this.reset();
 
-            String key = this.readString();
+            String key = this.readUTF();
 
             this.skipWhitespace();
             if (this.read() != ENTRY_VALUE_INDICATOR)
                 throw new IOException("Invalid value indicator in SNBT CompoundTag.");
             this.skipWhitespace();
 
-            Tag<?> tag = this.readTag(this.peekTagId(), this.incrementMaxDepth(depth));
+            Tag<?> tag = this.readTag(this.peekTagId(), depth);
             compoundTag.put(key, tag);
             this.skipWhitespace();
         } while (this.read() == ENTRY_SEPARATOR);
 
         return compoundTag;
-    }
-
-    @Override
-    public @NotNull IntArrayTag readIntArrayTag() throws IOException {
-        return this.readArray(IntArrayTag::new, Integer::parseInt);
-    }
-
-    @Override
-    public @NotNull LongArrayTag readLongArrayTag() throws IOException {
-        return this.readArray(LongArrayTag::new, Long::parseLong);
-    }
-
-    /**
-     * Consumes a single character.
-     */
-    @SuppressWarnings("all")
-    private void consume() throws IOException {
-        this.read();
     }
 
     /**
@@ -188,16 +186,28 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         return value;
     }
 
-    private <T extends Number, A extends ArrayTag<T>> A readArray(@NotNull Supplier<A> supplier, @NotNull Function<String, T> transformer) throws IOException {
-        A arrayTag = supplier.get();
-
+    /**
+     * Generic array reader that works with primitive arrays.
+     * Uses reflection to create the appropriate primitive array type.
+     *
+     * @param arrayType the primitive class type (byte.class, int.class, long.class)
+     * @param typeIndicator the expected type indicator character (B, I, L)
+     * @param transformer function to transform string into the numeric type
+     * @param <T> the numeric wrapper type (Byte, Integer, Long)
+     * @return a primitive array of the specified type
+     */
+    @SuppressWarnings("unchecked")
+    private <T extends Number> @NotNull T[] readArray(@NotNull Class<?> arrayType, char typeIndicator, @NotNull Function<String, T> transformer) throws IOException {
         if (this.read() != ARRAY_START)
-            throw new IOException("Invalid start of SNBT ArrayTag.");
+            throw new IOException("Invalid start of SNBT array.");
 
-        this.consume();
+        if (this.read() != typeIndicator)
+            throw new IOException("Invalid array type indicator, expected '" + typeIndicator + "'.");
 
         if (this.read() != ARRAY_TYPE_INDICATOR)
-            throw new IOException("Invalid start of SNBT ArrayTag.");
+            throw new IOException("Invalid array type separator.");
+
+        List<T> values = new ArrayList<>();
 
         do {
             this.skipWhitespace();
@@ -207,25 +217,24 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 break;
             this.reset();
 
-            arrayTag.add(transformer.apply(this.readNumberAsString()));
+            values.add(transformer.apply(this.readNumberAsString()));
             this.skipWhitespace();
         } while (this.read() == ENTRY_SEPARATOR);
 
-        return arrayTag;
+        // Convert List<T> to primitive array using reflection
+        Object array = Array.newInstance(arrayType, values.size());
+
+        for (int i = 0; i < values.size(); i++)
+            Array.set(array, i, values.get(i));
+
+        return (T[]) array;
     }
 
     private @NotNull String readNumberAsString() throws IOException {
-        return this.readString().replaceFirst(LITERAL_SUFFIX_PATTERN, "");
+        return this.readUTF().replaceFirst(LITERAL_SUFFIX_PATTERN, "");
     }
 
-    /**
-     * Read an SNBT string from the current index of a reader
-     */
-    private @NotNull String readString() throws IOException {
-        return this.readString(false);
-    }
-
-    private @NotNull String readString(boolean peek) throws IOException {
+    private @NotNull String readUTF(boolean peek) throws IOException {
         if (peek)
             this.mark(Integer.MAX_VALUE);
 
@@ -271,7 +280,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
             case COMPOUND_START -> TagType.COMPOUND.getId();
             case ARRAY_START -> {
                 this.mark(3);
-                this.consume();
+                this.read(); // Skip 1 char
                 int secondChar = this.read();
                 int thirdChar = this.read();
                 this.reset();
@@ -290,7 +299,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 int firstChar = this.peek(); // Check if the value is in quotes.
                 boolean isQuoted = firstChar == STRING_DELIMITER_1 || firstChar == STRING_DELIMITER_2;
 
-                String peekString = this.readString(true);
+                String peekString = this.readUTF(true);
 
                 // Always use the string type for text in quotes.
                 if (isQuoted)

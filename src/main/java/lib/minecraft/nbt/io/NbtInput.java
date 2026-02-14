@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public interface NbtInput extends MaxDepthIO {
+public interface NbtInput {
 
     default @NotNull Tag<?> readTag(byte id, int maxDepth) throws IOException {
         return switch (id) {
@@ -37,21 +37,59 @@ public interface NbtInput extends MaxDepthIO {
         };
     }
 
-    @NotNull ByteTag readByteTag() throws IOException;
+    boolean readBoolean() throws IOException;
 
-    @NotNull ShortTag readShortTag() throws IOException;
+    byte readByte() throws IOException;
 
-    @NotNull IntTag readIntTag() throws IOException;
+    short readShort() throws IOException;
 
-    @NotNull LongTag readLongTag() throws IOException;
+    int readInt() throws IOException;
 
-    @NotNull FloatTag readFloatTag() throws IOException;
+    long readLong() throws IOException;
 
-    @NotNull DoubleTag readDoubleTag() throws IOException;
+    float readFloat() throws IOException;
 
-    @NotNull ByteArrayTag readByteArrayTag() throws IOException;
+    double readDouble() throws IOException;
 
-    @NotNull StringTag readStringTag() throws IOException;
+    @NotNull String readUTF() throws IOException;
+
+    @NotNull Byte[] readByteArray() throws IOException;
+
+    @NotNull Integer[] readIntArray() throws IOException;
+
+    @NotNull Long[] readLongArray() throws IOException;
+
+    default @NotNull ByteTag readByteTag() throws IOException {
+        return new ByteTag(this.readByte());
+    }
+
+    default @NotNull ShortTag readShortTag() throws IOException {
+        return new ShortTag(this.readShort());
+    }
+
+    default @NotNull IntTag readIntTag() throws IOException {
+        return new IntTag(this.readInt());
+    }
+
+    default @NotNull LongTag readLongTag() throws IOException {
+        return new LongTag(this.readLong());
+    }
+
+    default @NotNull FloatTag readFloatTag() throws IOException {
+        return new FloatTag(this.readFloat());
+    }
+
+    default @NotNull DoubleTag readDoubleTag() throws IOException {
+        return new DoubleTag(this.readDouble());
+    }
+
+    default @NotNull ByteArrayTag readByteArrayTag() throws IOException {
+        return new ByteArrayTag(this.readByteArray());
+    }
+
+    default @NotNull StringTag readStringTag() throws IOException {
+        return new StringTag(this.readUTF());
+    }
 
     default @NotNull ListTag<?> readListTag() throws IOException {
         return this.readListTag(0);
@@ -65,8 +103,12 @@ public interface NbtInput extends MaxDepthIO {
 
     @NotNull CompoundTag readCompoundTag(int depth) throws IOException;
 
-    @NotNull IntArrayTag readIntArrayTag() throws IOException;
+    default @NotNull IntArrayTag readIntArrayTag() throws IOException {
+        return new IntArrayTag(this.readIntArray());
+    }
 
-    @NotNull LongArrayTag readLongArrayTag() throws IOException;
+    default @NotNull LongArrayTag readLongArrayTag() throws IOException {
+        return new LongArrayTag(this.readLongArray());
+    }
     
 }
