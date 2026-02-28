@@ -2,10 +2,10 @@ package dev.sbs.minecraftapi.nbt.tags.collection;
 
 import dev.sbs.api.builder.EqualsBuilder;
 import dev.sbs.api.builder.HashCodeBuilder;
+import dev.sbs.api.tuple.triple.Triple;
+import dev.sbs.api.util.StreamUtil;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.api.stream.StreamUtil;
-import dev.sbs.api.stream.triple.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
