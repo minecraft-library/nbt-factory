@@ -24,7 +24,7 @@ import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
  */
 public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
-    private static final Reflection<JsonWriter> JSON_REFLECTION = Reflection.of(JsonWriter.class);
+    private static final Reflection<JsonWriter> JSON_REFLECTION = new Reflection<>(JsonWriter.class);
     private final @NotNull Writer writer;
 
     public SnbtSerializer(@NotNull Writer writer) {
