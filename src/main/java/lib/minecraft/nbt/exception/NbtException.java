@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * {@link NbtException NbtExceptions} are thrown when the {@link NbtFactory} class is unable<br>
- * to parse nbt data.
+ * Thrown when the {@link NbtFactory} is unable to parse NBT data.
  */
 public class NbtException extends MinecraftException {
 

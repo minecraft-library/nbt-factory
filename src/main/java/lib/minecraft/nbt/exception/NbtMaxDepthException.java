@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.nbt.exception;
 
 /**
- * Checked exception thrown after reaching maximum depth deserializing an NBT tag.
+ * Thrown when the maximum nesting depth is reached while deserializing an NBT tag.
  */
 public class NbtMaxDepthException extends NbtException {
 
