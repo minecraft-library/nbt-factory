@@ -1,7 +1,5 @@
 package dev.sbs.minecraftapi.nbt.tags.collection;
 
-import dev.sbs.api.builder.EqualsBuilder;
-import dev.sbs.api.builder.HashCodeBuilder;
 import dev.sbs.api.tuple.triple.Triple;
 import dev.sbs.api.util.StreamUtil;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
@@ -161,10 +159,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
         ListTag<?> listTag = (ListTag<?>) o;
 
-        return new EqualsBuilder()
-            .append(this.getListType(), listTag.getListType())
-            .append(this.getValue(), listTag.getValue())
-            .build();
+        return this.getListType() == listTag.getListType()
+            && Objects.equals(this.getValue(), listTag.getValue());
     }
 
     @Override
@@ -193,10 +189,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-            .append(this.getListType())
-            .append(this.getValue())
-            .build();
+        return Objects.hash(this.getListType(), this.getValue());
     }
 
     @Override

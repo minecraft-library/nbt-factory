@@ -3,13 +3,13 @@ package dev.sbs.minecraftapi.nbt.tags;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
-import dev.sbs.api.builder.EqualsBuilder;
-import dev.sbs.api.builder.HashCodeBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * <p>Interface for all NBT tags.</p>
@@ -46,9 +46,7 @@ public abstract class Tag<T> implements Cloneable {
 
         Tag<?> tag = (Tag<?>) o;
 
-        return new EqualsBuilder()
-            .append(this.getValue(), tag.getValue())
-            .build();
+        return Objects.equals(this.getValue(), tag.getValue());
     }
 
     /**
@@ -60,9 +58,7 @@ public abstract class Tag<T> implements Cloneable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-            .append(this.getValue())
-            .build();
+        return Objects.hash(this.getValue());
     }
 
     @Override
