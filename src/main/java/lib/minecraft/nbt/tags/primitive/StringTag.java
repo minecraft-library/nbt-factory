@@ -1,5 +1,6 @@
 package dev.sbs.minecraftapi.nbt.tags.primitive;
 
+import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import lombok.Getter;
@@ -40,6 +41,14 @@ public class StringTag extends Tag<String> {
     @Override
     public byte getId() {
         return TagType.STRING.getId();
+    }
+
+    public boolean isEmpty() {
+        return StringUtil.isEmpty(this.getValue());
+    }
+
+    public boolean notEmpty() {
+        return !this.isEmpty();
     }
 
     @Override
