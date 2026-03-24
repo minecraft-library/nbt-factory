@@ -163,7 +163,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      */
     @Override
     public @Nullable Tag<?> get(@Nullable Object key) {
-        return this.getOrDefault(key, null);
+        return this.getValue().get(key);
     }
 
     public <T extends Tag<?>> @NotNull T getOrDefault(@NotNull String key, @NotNull T defaultValue) {
