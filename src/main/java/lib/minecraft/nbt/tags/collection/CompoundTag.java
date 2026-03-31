@@ -207,7 +207,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
         if (this.containsPath(path)) {
             List<String> entries = StringUtil.toList(StringUtil.split(path, "\\."));
             CompoundTag compoundTag = this.getMap(entries.subList(0, entries.size() - 1), false);
-            value = compoundTag.getTag(entries.get(entries.size() - 1));
+            value = compoundTag.getTag(entries.getLast());
         }
 
         return value;
@@ -390,8 +390,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     public @NotNull CompoundTag putPath(@NotNull String path, @NotNull Tag<?> value) {
         List<String> entries = StringUtil.toList(StringUtil.split(path, "\\."));
         CompoundTag map = this.getMap(entries.subList(0, entries.size() - 1), true);
-        map.put(entries.get(entries.size() - 1), value);
-        // TODO: Save tag data
+        map.put(entries.getLast(), value);
         return this;
     }
 
@@ -431,7 +430,6 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
                 currentTag = Objects.requireNonNull(currentTag).getTag(entry);
         }
 
-        // TODO: Save tag data
         return Objects.requireNonNull(currentTag);
     }
 
