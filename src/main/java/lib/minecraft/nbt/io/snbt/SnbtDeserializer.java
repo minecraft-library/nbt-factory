@@ -1,12 +1,12 @@
 package dev.sbs.minecraftapi.nbt.io.snbt;
 
-import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
+import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

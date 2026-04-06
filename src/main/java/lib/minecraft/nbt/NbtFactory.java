@@ -1,9 +1,5 @@
 package dev.sbs.minecraftapi.nbt;
 
-import dev.sbs.api.io.stream.Compression;
-import dev.sbs.api.util.PrimitiveUtil;
-import dev.sbs.api.util.StringUtil;
-import dev.sbs.api.util.SystemUtil;
 import dev.sbs.minecraftapi.nbt.exception.NbtException;
 import dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer;
 import dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer;
@@ -12,6 +8,10 @@ import dev.sbs.minecraftapi.nbt.io.snbt.SnbtDeserializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtSerializer;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
+import dev.simplified.stream.Compression;
+import dev.simplified.util.PrimitiveUtil;
+import dev.simplified.util.StringUtil;
+import dev.simplified.util.SystemUtil;
 import lombok.Cleanup;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

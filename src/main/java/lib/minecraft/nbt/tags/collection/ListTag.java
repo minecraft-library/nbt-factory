@@ -1,9 +1,9 @@
 package dev.sbs.minecraftapi.nbt.tags.collection;
 
-import dev.sbs.api.tuple.triple.Triple;
-import dev.sbs.api.util.StreamUtil;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
+import dev.simplified.collection.StreamUtil;
+import dev.simplified.collection.tuple.triple.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

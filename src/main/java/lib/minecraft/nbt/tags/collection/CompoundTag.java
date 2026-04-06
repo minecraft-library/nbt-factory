@@ -1,7 +1,5 @@
 package dev.sbs.minecraftapi.nbt.tags.collection;
 
-import dev.sbs.api.tuple.pair.Pair;
-import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
@@ -14,6 +12,8 @@ import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import dev.simplified.collection.tuple.pair.Pair;
+import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

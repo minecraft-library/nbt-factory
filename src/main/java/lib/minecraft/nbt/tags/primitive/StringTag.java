@@ -1,8 +1,8 @@
 package dev.sbs.minecraftapi.nbt.tags.primitive;
 
-import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
+import dev.simplified.util.StringUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
