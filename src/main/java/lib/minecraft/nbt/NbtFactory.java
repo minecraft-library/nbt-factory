@@ -9,16 +9,13 @@ import dev.sbs.minecraftapi.nbt.io.snbt.SnbtSerializer;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.simplified.stream.Compression;
-import dev.simplified.util.PrimitiveUtil;
 import dev.simplified.util.StringUtil;
 import dev.simplified.util.SystemUtil;
 import lombok.Cleanup;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -50,16 +47,6 @@ public class NbtFactory {
     }
 
     /**
-     * Deserializes an NBT {@code Byte[]} array into a {@link CompoundTag}.
-     *
-     * @param bytes the {@code Byte[]} array to read from.
-     * @throws NbtException if any I/O error occurs.
-     */
-    public @NotNull CompoundTag fromByteArray(@NotNull Byte[] bytes) throws NbtException {
-        return this.fromByteArray(PrimitiveUtil.unwrap(bytes));
-    }
-
-    /**
      * Deserializes an NBT {@code byte[]} array into a {@link CompoundTag}.
      *
      * @param bytes the {@code byte[]} array to read from.
@@ -88,8 +75,7 @@ public class NbtFactory {
      */
     public @NotNull CompoundTag fromFile(@NotNull File file) throws NbtException {
         try {
-            @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
-            return this.fromStream(fileInputStream);
+            return this.fromByteArray(Files.readAllBytes(file.toPath()));
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -148,14 +134,7 @@ public class NbtFactory {
      */
     public @NotNull CompoundTag fromStream(@NotNull InputStream inputStream) throws NbtException {
         try {
-            @Cleanup ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            byte[] data = new byte[8192];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1)
-                buffer.write(data, 0, bytesRead);
-
-            return this.fromByteArray(buffer.toByteArray());
+            return this.fromByteArray(inputStream.readAllBytes());
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
