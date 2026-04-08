@@ -11,10 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 
 import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
 
@@ -71,18 +67,74 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
     }
 
     @Override
-    public @NotNull Byte[] readByteArray() throws IOException {
-        return this.readArray(ARRAY_PREFIX_BYTE, Byte::parseByte, Byte[]::new);
+    public byte @NotNull [] readByteArray() throws IOException {
+        this.readArrayHeader(ARRAY_PREFIX_BYTE);
+        ByteList values = new ByteList();
+
+        do {
+            this.skipWhitespace();
+
+            this.mark(1);
+            if (this.read() == ARRAY_END)
+                break;
+            this.reset();
+
+            values.add(Byte.parseByte(this.readNumberAsString()));
+            this.skipWhitespace();
+        } while (this.read() == ENTRY_SEPARATOR);
+
+        return values.toArray();
     }
 
     @Override
-    public @NotNull Integer[] readIntArray() throws IOException {
-        return this.readArray(ARRAY_PREFIX_INT, Integer::parseInt, Integer[]::new);
+    public int @NotNull [] readIntArray() throws IOException {
+        this.readArrayHeader(ARRAY_PREFIX_INT);
+        IntList values = new IntList();
+
+        do {
+            this.skipWhitespace();
+
+            this.mark(1);
+            if (this.read() == ARRAY_END)
+                break;
+            this.reset();
+
+            values.add(Integer.parseInt(this.readNumberAsString()));
+            this.skipWhitespace();
+        } while (this.read() == ENTRY_SEPARATOR);
+
+        return values.toArray();
     }
 
     @Override
-    public @NotNull Long[] readLongArray() throws IOException {
-        return this.readArray(ARRAY_PREFIX_LONG, Long::parseLong, Long[]::new);
+    public long @NotNull [] readLongArray() throws IOException {
+        this.readArrayHeader(ARRAY_PREFIX_LONG);
+        LongList values = new LongList();
+
+        do {
+            this.skipWhitespace();
+
+            this.mark(1);
+            if (this.read() == ARRAY_END)
+                break;
+            this.reset();
+
+            values.add(Long.parseLong(this.readNumberAsString()));
+            this.skipWhitespace();
+        } while (this.read() == ENTRY_SEPARATOR);
+
+        return values.toArray();
+    }
+
+    private void readArrayHeader(char typeIndicator) throws IOException {
+        if (this.read() != ARRAY_START)
+            throw new IOException("Invalid start of SNBT array.");
+
+        if (this.read() != typeIndicator)
+            throw new IOException("Invalid array type indicator, expected '" + typeIndicator + "'.");
+
+        if (this.read() != ARRAY_TYPE_INDICATOR)
+            throw new IOException("Invalid array type separator.");
     }
 
     @Override
@@ -153,42 +205,6 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         return value;
     }
 
-    /**
-     * Generic reader for SNBT type-tagged arrays.
-     *
-     * @param typeIndicator the expected type indicator character (B, I, L)
-     * @param transformer function to transform string into the numeric type
-     * @param arrayFactory factory producing the output array of the given size
-     * @param <T> the numeric wrapper type (Byte, Integer, Long)
-     * @return an array of the specified wrapper type containing the parsed values
-     */
-    private <T extends Number> @NotNull T[] readArray(char typeIndicator, @NotNull Function<String, T> transformer, @NotNull IntFunction<T[]> arrayFactory) throws IOException {
-        if (this.read() != ARRAY_START)
-            throw new IOException("Invalid start of SNBT array.");
-
-        if (this.read() != typeIndicator)
-            throw new IOException("Invalid array type indicator, expected '" + typeIndicator + "'.");
-
-        if (this.read() != ARRAY_TYPE_INDICATOR)
-            throw new IOException("Invalid array type separator.");
-
-        List<T> values = new ArrayList<>();
-
-        do {
-            this.skipWhitespace();
-
-            this.mark(1);
-            if (this.read() == ARRAY_END)
-                break;
-            this.reset();
-
-            values.add(transformer.apply(this.readNumberAsString()));
-            this.skipWhitespace();
-        } while (this.read() == ENTRY_SEPARATOR);
-
-        return values.toArray(arrayFactory);
-    }
-
     private @NotNull String readNumberAsString() throws IOException {
         return LITERAL_SUFFIX_PATTERN.matcher(this.readUTF()).replaceFirst("");
     }
@@ -203,11 +219,28 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
         // Check if the string is quoted.
         if (firstChar == STRING_DELIMITER_1 || firstChar == STRING_DELIMITER_2) {
-            boolean isEscaped = false;
+            // Decode escape sequences: a backslash is consumed, and the following char is appended literally.
+            // This correctly unescapes the \" and \\ sequences emitted by SnbtSerializer.escapeString.
+            while (true) {
+                lastChar = this.read();
 
-            while ((lastChar = this.read()) != firstChar || isEscaped) {
+                if (lastChar == -1)
+                    throw new IOException("Unterminated SNBT string literal.");
+
+                if (lastChar == STRING_ESCAPE) {
+                    int escaped = this.read();
+
+                    if (escaped == -1)
+                        throw new IOException("Unterminated SNBT escape sequence.");
+
+                    builder.append((char) escaped);
+                    continue;
+                }
+
+                if (lastChar == firstChar)
+                    break;
+
                 builder.append((char) lastChar);
-                isEscaped = lastChar == STRING_ESCAPE;
             }
         } else {
             builder.append((char) firstChar);
@@ -291,6 +324,69 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
             this.mark(1);
         } while (Character.isWhitespace(this.read()));
         this.reset();
+    }
+
+    /**
+     * Tiny growable {@code byte[]} buffer used during SNBT byte-array parsing to avoid {@code Byte} boxing.
+     */
+    private static final class ByteList {
+
+        private byte[] data = new byte[16];
+        private int size = 0;
+
+        void add(byte value) {
+            if (this.size == this.data.length)
+                this.data = java.util.Arrays.copyOf(this.data, this.data.length << 1);
+
+            this.data[this.size++] = value;
+        }
+
+        byte @NotNull [] toArray() {
+            return java.util.Arrays.copyOf(this.data, this.size);
+        }
+
+    }
+
+    /**
+     * Tiny growable {@code int[]} buffer used during SNBT int-array parsing to avoid {@code Integer} boxing.
+     */
+    private static final class IntList {
+
+        private int[] data = new int[16];
+        private int size = 0;
+
+        void add(int value) {
+            if (this.size == this.data.length)
+                this.data = java.util.Arrays.copyOf(this.data, this.data.length << 1);
+
+            this.data[this.size++] = value;
+        }
+
+        int @NotNull [] toArray() {
+            return java.util.Arrays.copyOf(this.data, this.size);
+        }
+
+    }
+
+    /**
+     * Tiny growable {@code long[]} buffer used during SNBT long-array parsing to avoid {@code Long} boxing.
+     */
+    private static final class LongList {
+
+        private long[] data = new long[16];
+        private int size = 0;
+
+        void add(long value) {
+            if (this.size == this.data.length)
+                this.data = java.util.Arrays.copyOf(this.data, this.data.length << 1);
+
+            this.data[this.size++] = value;
+        }
+
+        long @NotNull [] toArray() {
+            return java.util.Arrays.copyOf(this.data, this.size);
+        }
+
     }
 
 }
