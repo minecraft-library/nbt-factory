@@ -196,7 +196,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     public int indexOf(@Nullable Object obj) {
         return StreamUtil.zipWithIndex(this.getValue().stream())
             .filterLeft(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj))
-            .map(Triple::getMiddle)
+            .map(Triple::middle)
             .reduce((f, s) -> f)
             .map(Long::intValue)
             .orElse(-1);
@@ -219,7 +219,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     public int lastIndexOf(@Nullable Object obj) {
         return StreamUtil.zipWithIndex(this.getValue().stream())
             .filterLeft(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj))
-            .map(Triple::getMiddle)
+            .map(Triple::middle)
             .reduce((f, s) -> s)
             .map(Long::intValue)
             .orElse(-1);
