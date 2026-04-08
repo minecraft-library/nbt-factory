@@ -3,11 +3,8 @@ package dev.sbs.minecraftapi.nbt.io.array;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.util.PrimitiveUtil;
-import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
@@ -21,11 +18,17 @@ import java.util.Map;
  */
 public class NbtOutputBuffer implements NbtOutput, DataOutput {
 
+    /**
+     * Default initial capacity (32 KB) - sized to fit a typical SkyBlock item NBT payload after enrichment
+     * without paying any resize {@code arraycopy} cost on the serialization hot path.
+     */
+    private static final int DEFAULT_INITIAL_CAPACITY = 32 * 1024;
+
     private byte[] buffer;
     private int position;
 
     public NbtOutputBuffer() {
-        this(8192); // Start with 8KB
+        this(DEFAULT_INITIAL_CAPACITY);
     }
 
     public NbtOutputBuffer(int initialCapacity) {
@@ -147,13 +150,13 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
     }
 
     @Override
-    public void writeByteArray(@NotNull Byte[] value) {
+    public void writeByteArray(byte @NotNull [] value) {
         this.writeInt(value.length);
-        this.write(PrimitiveUtil.unwrap(value));
+        this.write(value);
     }
 
     @Override
-    public void writeIntArray(@NotNull Integer[] value) {
+    public void writeIntArray(int @NotNull [] value) {
         this.writeInt(value.length);
 
         for (int i : value)
@@ -161,7 +164,7 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
     }
 
     @Override
-    public void writeLongArray(@NotNull Long[] value) {
+    public void writeLongArray(long @NotNull [] value) {
         this.writeInt(value.length);
 
         for (long l : value)
@@ -186,12 +189,10 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
             throw new NbtMaxDepthException();
 
         for (Map.Entry<String, Tag<?>> entry : tag) {
-            if (entry.getValue().getId() == TagType.END.getId())
-                break;
-
-            this.writeByte(entry.getValue().getId());
-            this.writeUTF(StringUtil.stripToEmpty(entry.getKey()));
-            this.writeTag(entry.getValue(), depth);
+            Tag<?> value = entry.getValue();
+            this.writeByte(value.getId());
+            this.writeUTF(entry.getKey());
+            this.writeTag(value, depth);
         }
 
         this.writeByte(0);
