@@ -2,14 +2,12 @@ package dev.sbs.minecraftapi.nbt.tags.collection;
 
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.simplified.collection.StreamUtil;
-import dev.simplified.collection.tuple.triple.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
@@ -25,10 +23,19 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     private byte elementId;
 
     /**
-     * Constructs an empty, unnamed list tag.
+     * Constructs an empty, unnamed list tag backed by an {@link ArrayList}.
      */
     public ListTag() {
-        this(new LinkedList<>());
+        this(new ArrayList<>());
+    }
+
+    /**
+     * Constructs an empty, unnamed list tag backed by an {@link ArrayList} pre-sized to the given capacity.
+     *
+     * @param initialCapacity initial capacity for the backing list
+     */
+    public ListTag(int initialCapacity) {
+        this(new ArrayList<>(initialCapacity));
     }
 
     /**
@@ -48,7 +55,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     @Override
     @SuppressWarnings("all")
     public final @NotNull ListTag<E> clone() {
-        return new ListTag<>(new LinkedList<>(this.getValue()));
+        return new ListTag<>(new ArrayList<>(this.getValue()));
     }
 
     /**
@@ -129,9 +136,14 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      */
     @Override
     public boolean contains(Object obj) {
-        return this.getValue()
-            .stream()
-            .anyMatch(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj));
+        boolean compareTag = obj instanceof Tag<?>;
+
+        for (E tag : this.getValue()) {
+            if (Objects.equals(compareTag ? tag : tag.getValue(), obj))
+                return true;
+        }
+
+        return false;
     }
 
     /**
@@ -145,11 +157,14 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
         if (this.isEmpty() || collection.isEmpty())
             return false;
 
-        boolean isTags = collection.stream().findFirst().orElseThrow() instanceof Tag<?>;
+        boolean isTags = collection.iterator().next() instanceof Tag<?>;
 
-        return this.getValue()
-            .stream()
-            .allMatch(tag -> collection.contains(isTags ? tag : tag.getValue()));
+        for (E tag : this.getValue()) {
+            if (!collection.contains(isTags ? tag : tag.getValue()))
+                return false;
+        }
+
+        return true;
     }
 
     @Override
@@ -189,17 +204,23 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getListType(), this.getValue());
+        return 31 * this.getValue().hashCode() + this.getListType();
     }
 
     @Override
     public int indexOf(@Nullable Object obj) {
-        return StreamUtil.zipWithIndex(this.getValue().stream())
-            .filterLeft(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj))
-            .map(Triple::middle)
-            .reduce((f, s) -> f)
-            .map(Long::intValue)
-            .orElse(-1);
+        boolean compareTag = obj instanceof Tag<?>;
+        List<E> values = this.getValue();
+        int size = values.size();
+
+        for (int i = 0; i < size; i++) {
+            E tag = values.get(i);
+
+            if (Objects.equals(compareTag ? tag : tag.getValue(), obj))
+                return i;
+        }
+
+        return -1;
     }
 
     /**
@@ -217,12 +238,17 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public int lastIndexOf(@Nullable Object obj) {
-        return StreamUtil.zipWithIndex(this.getValue().stream())
-            .filterLeft(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj))
-            .map(Triple::middle)
-            .reduce((f, s) -> s)
-            .map(Long::intValue)
-            .orElse(-1);
+        boolean compareTag = obj instanceof Tag<?>;
+        List<E> values = this.getValue();
+
+        for (int i = values.size() - 1; i >= 0; i--) {
+            E tag = values.get(i);
+
+            if (Objects.equals(compareTag ? tag : tag.getValue(), obj))
+                return i;
+        }
+
+        return -1;
     }
 
     @Override
