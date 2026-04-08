@@ -5,7 +5,6 @@ import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.util.PrimitiveUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -144,38 +143,25 @@ public class NbtInputBuffer implements NbtInput, DataInput {
         int utfLen = this.readUnsignedShort();
         if (this.position + utfLen > this.buffer.length)
             throw new EOFException();
-        
-        // Fast path for ASCII strings
-        boolean isAscii = true;
-        for (int i = 0; i < utfLen; i++) {
-            if ((this.buffer[this.position + i] & 0x80) != 0) {
-                isAscii = false;
-                break;
-            }
-        }
-        
-        if (isAscii) {
-            String result = new String(this.buffer, this.position, utfLen, StandardCharsets.US_ASCII);
-            this.position += utfLen;
-            return result;
-        }
-        
-        // Fall back to proper UTF-8 decoding
+
+        // String(byte[], UTF_8) has its own ASCII fast path; pre-scanning was redundant.
         String result = new String(this.buffer, this.position, utfLen, StandardCharsets.UTF_8);
         this.position += utfLen;
         return result;
     }
     
-    public @NotNull Byte[] readByteArray() throws IOException {
+    @Override
+    public byte @NotNull [] readByteArray() throws IOException {
         int length = this.readInt();
         byte[] data = new byte[length];
         this.readFully(data);
-        return PrimitiveUtil.wrap(data);
+        return data;
     }
 
-    public @NotNull Integer[] readIntArray() throws IOException {
+    @Override
+    public int @NotNull [] readIntArray() throws IOException {
         int length = this.readInt();
-        Integer[] data = new Integer[length];
+        int[] data = new int[length];
 
         for (int i = 0; i < length; i++)
             data[i] = this.readInt();
@@ -183,9 +169,10 @@ public class NbtInputBuffer implements NbtInput, DataInput {
         return data;
     }
 
-    public @NotNull Long[] readLongArray() throws IOException {
+    @Override
+    public long @NotNull [] readLongArray() throws IOException {
         int length = this.readInt();
-        Long[] data = new Long[length];
+        long[] data = new long[length];
 
         for (int i = 0; i < length; i++)
             data[i] = this.readLong();
@@ -198,9 +185,9 @@ public class NbtInputBuffer implements NbtInput, DataInput {
         if (++depth >= 512)
             throw new NbtMaxDepthException();
 
-        ListTag<Tag<?>> listTag = new ListTag<>();
         int listType = readUnsignedByte();
         int length = Math.max(0, readInt());
+        ListTag<Tag<?>> listTag = new ListTag<>(length);
 
         for (int i = 0; i < length; i++)
             listTag.add(readTag((byte) listType, depth));
