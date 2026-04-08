@@ -4,12 +4,9 @@ import com.google.gson.stream.JsonWriter;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -69,18 +66,51 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
     }
 
     @Override
-    public void writeByteArray(@NotNull Byte[] value) throws IOException {
-        this.writeArray(value, SnbtUtil.ARRAY_PREFIX_BYTE, ARRAY_SUFFIX_BYTE);
+    public void writeByteArray(byte @NotNull [] value) throws IOException {
+        StringBuilder sb = new StringBuilder()
+            .append(ARRAY_START)
+            .append(ARRAY_PREFIX_BYTE)
+            .append(ARRAY_TYPE_INDICATOR);
+
+        for (int i = 0; i < value.length; i++) {
+            if (i > 0) sb.append(ENTRY_SEPARATOR);
+            sb.append(value[i]).append(ARRAY_SUFFIX_BYTE);
+        }
+
+        sb.append(ARRAY_END);
+        this.jsonValue(sb.toString());
     }
 
     @Override
-    public void writeIntArray(@NotNull Integer[] value) throws IOException {
-        this.writeArray(value, SnbtUtil.ARRAY_PREFIX_INT, ARRAY_SUFFIX_INT);
+    public void writeIntArray(int @NotNull [] value) throws IOException {
+        StringBuilder sb = new StringBuilder()
+            .append(ARRAY_START)
+            .append(ARRAY_PREFIX_INT)
+            .append(ARRAY_TYPE_INDICATOR);
+
+        for (int i = 0; i < value.length; i++) {
+            if (i > 0) sb.append(ENTRY_SEPARATOR);
+            sb.append(value[i]).append(ARRAY_SUFFIX_INT);
+        }
+
+        sb.append(ARRAY_END);
+        this.jsonValue(sb.toString());
     }
 
     @Override
-    public void writeLongArray(@NotNull Long[] value) throws IOException {
-        this.writeArray(value, SnbtUtil.ARRAY_PREFIX_LONG, ARRAY_SUFFIX_LONG);
+    public void writeLongArray(long @NotNull [] value) throws IOException {
+        StringBuilder sb = new StringBuilder()
+            .append(ARRAY_START)
+            .append(ARRAY_PREFIX_LONG)
+            .append(ARRAY_TYPE_INDICATOR);
+
+        for (int i = 0; i < value.length; i++) {
+            if (i > 0) sb.append(ENTRY_SEPARATOR);
+            sb.append(value[i]).append(ARRAY_SUFFIX_LONG);
+        }
+
+        sb.append(ARRAY_END);
+        this.jsonValue(sb.toString());
     }
 
     @Override
@@ -104,29 +134,11 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
         this.beginObject();
 
         for (Map.Entry<String, Tag<?>> entry : tag) {
-            if (entry.getValue().getId() == TagType.END.getId())
-                break;
-
-            this.name(StringUtil.stripToEmpty(entry.getKey()));
+            this.name(entry.getKey());
             this.writeTag(entry.getValue(), depth);
         }
 
         this.endObject();
-    }
-
-    private <T extends Number> void writeArray(T @NonNull [] array, char prefix, String suffix) throws IOException {
-        StringBuilder sb = new StringBuilder()
-            .append(ARRAY_START)
-            .append(prefix)
-            .append(ARRAY_TYPE_INDICATOR);
-
-        for (int i = 0; i < array.length; i++) {
-            if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(array[i]).append(suffix);
-        }
-
-        sb.append(ARRAY_END);
-        this.jsonValue(sb.toString());
     }
 
     private static String escapeString(@NotNull String value) {
