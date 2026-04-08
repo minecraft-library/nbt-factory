@@ -38,7 +38,7 @@ final class SnbtUtil {
     /**
      * Used to find and delete suffixes from numeric literals.
      */
-    public static final String LITERAL_SUFFIX_PATTERN = "[BbDdFfLlSs]$";
+    public static final Pattern LITERAL_SUFFIX_PATTERN = Pattern.compile("[BbDdFfLlSs]$");
 
     /**
      * All characters that can be used in strings without quotation marks (including tag names).

@@ -12,20 +12,11 @@ import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
 import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
-import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -155,7 +146,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      */
     @Override
     public void forEach(@NotNull Consumer<? super Entry<String, Tag<?>>> action) {
-        this.getValue().forEach((key, value) -> action.accept(Pair.of(key, value)));
+        this.getValue().forEach((key, value) -> action.accept(new AbstractMap.SimpleEntry<>(key, value)));
     }
 
     /**

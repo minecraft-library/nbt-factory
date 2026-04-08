@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
 
@@ -72,17 +72,17 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     @Override
     public @NotNull Byte[] readByteArray() throws IOException {
-        return this.readArray(byte.class, ARRAY_PREFIX_BYTE, Byte::parseByte);
+        return this.readArray(ARRAY_PREFIX_BYTE, Byte::parseByte, Byte[]::new);
     }
 
     @Override
     public @NotNull Integer[] readIntArray() throws IOException {
-        return this.readArray(int.class, ARRAY_PREFIX_INT, Integer::parseInt);
+        return this.readArray(ARRAY_PREFIX_INT, Integer::parseInt, Integer[]::new);
     }
 
     @Override
     public @NotNull Long[] readLongArray() throws IOException {
-        return this.readArray(long.class, ARRAY_PREFIX_LONG, Long::parseLong);
+        return this.readArray(ARRAY_PREFIX_LONG, Long::parseLong, Long[]::new);
     }
 
     @Override
@@ -154,17 +154,15 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
     }
 
     /**
-     * Generic array reader that works with primitive arrays.
-     * Uses reflection to create the appropriate primitive array type.
+     * Generic reader for SNBT type-tagged arrays.
      *
-     * @param arrayType the primitive class type (byte.class, int.class, long.class)
      * @param typeIndicator the expected type indicator character (B, I, L)
      * @param transformer function to transform string into the numeric type
+     * @param arrayFactory factory producing the output array of the given size
      * @param <T> the numeric wrapper type (Byte, Integer, Long)
-     * @return a primitive array of the specified type
+     * @return an array of the specified wrapper type containing the parsed values
      */
-    @SuppressWarnings("unchecked")
-    private <T extends Number> @NotNull T[] readArray(@NotNull Class<?> arrayType, char typeIndicator, @NotNull Function<String, T> transformer) throws IOException {
+    private <T extends Number> @NotNull T[] readArray(char typeIndicator, @NotNull Function<String, T> transformer, @NotNull IntFunction<T[]> arrayFactory) throws IOException {
         if (this.read() != ARRAY_START)
             throw new IOException("Invalid start of SNBT array.");
 
@@ -188,17 +186,11 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
             this.skipWhitespace();
         } while (this.read() == ENTRY_SEPARATOR);
 
-        // Convert List<T> to primitive array using reflection
-        Object array = Array.newInstance(arrayType, values.size());
-
-        for (int i = 0; i < values.size(); i++)
-            Array.set(array, i, values.get(i));
-
-        return (T[]) array;
+        return values.toArray(arrayFactory);
     }
 
     private @NotNull String readNumberAsString() throws IOException {
-        return this.readUTF().replaceFirst(LITERAL_SUFFIX_PATTERN, "");
+        return LITERAL_SUFFIX_PATTERN.matcher(this.readUTF()).replaceFirst("");
     }
 
     private @NotNull String readUTF(boolean peek) throws IOException {
