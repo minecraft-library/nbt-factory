@@ -72,7 +72,7 @@ public enum TagType {
      *
      * @see ByteArrayTag
      */
-    BYTE_ARRAY(7, Byte[].class, ByteArrayTag.class),
+    BYTE_ARRAY(7, byte[].class, ByteArrayTag.class),
     /**
      * ID: 8
      *
@@ -96,13 +96,13 @@ public enum TagType {
      *
      * @see IntArrayTag
      */
-    INT_ARRAY(11, Integer[].class, IntArrayTag.class),
+    INT_ARRAY(11, int[].class, IntArrayTag.class),
     /**
      * ID: 12
      *
      * @see LongArrayTag
      */
-    LONG_ARRAY(12, Long[].class, LongArrayTag.class);
+    LONG_ARRAY(12, long[].class, LongArrayTag.class);
 
     static final TagType[] VALUES;
 
