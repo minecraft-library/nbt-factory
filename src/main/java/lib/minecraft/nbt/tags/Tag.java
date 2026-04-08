@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * <p>Interface for all NBT tags.</p>
  *
@@ -46,7 +44,7 @@ public abstract class Tag<T> implements Cloneable {
 
         Tag<?> tag = (Tag<?>) o;
 
-        return Objects.equals(this.getValue(), tag.getValue());
+        return this.getValue().equals(tag.getValue());
     }
 
     /**
@@ -58,7 +56,7 @@ public abstract class Tag<T> implements Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getValue());
+        return this.getValue().hashCode();
     }
 
     @Override
