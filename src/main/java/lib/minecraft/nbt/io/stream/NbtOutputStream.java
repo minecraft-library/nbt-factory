@@ -3,11 +3,8 @@ package dev.sbs.minecraftapi.nbt.io.stream;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.util.PrimitiveUtil;
-import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
@@ -25,13 +22,13 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
     }
 
     @Override
-    public void writeByteArray(@NotNull Byte[] data) throws IOException {
+    public void writeByteArray(byte @NotNull [] data) throws IOException {
         this.writeInt(data.length);
-        this.write(PrimitiveUtil.unwrap(data));
+        this.write(data);
     }
 
     @Override
-    public void writeIntArray(@NotNull Integer[] data) throws IOException {
+    public void writeIntArray(int @NotNull [] data) throws IOException {
         this.writeInt(data.length);
 
         for (int value : data)
@@ -39,7 +36,7 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
     }
 
     @Override
-    public void writeLongArray(@NotNull Long[] data) throws IOException {
+    public void writeLongArray(long @NotNull [] data) throws IOException {
         this.writeInt(data.length);
 
         for (long value : data)
@@ -64,12 +61,10 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
             throw new NbtMaxDepthException();
 
         for (Map.Entry<String, Tag<?>> entry : tag) {
-            if (entry.getValue().getId() == TagType.END.getId())
-                break;
-
-            this.writeByte(entry.getValue().getId());
-            this.writeUTF(StringUtil.stripToEmpty(entry.getKey()));
-            this.writeTag(entry.getValue(), depth);
+            Tag<?> value = entry.getValue();
+            this.writeByte(value.getId());
+            this.writeUTF(entry.getKey());
+            this.writeTag(value, depth);
         }
 
         this.writeByte(0);
