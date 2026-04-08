@@ -5,34 +5,38 @@ import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.util.PrimitiveUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * NBT deserialization that reads from an input stream.
+ *
+ * <p>Wraps the provided stream in a {@link BufferedInputStream} unless it is already buffered, so callers
+ * passing raw {@code FileInputStream}, {@code GZIPInputStream}, or socket streams do not pay per-byte
+ * syscall overhead through {@link DataInputStream}.</p>
  */
 @SuppressWarnings("all")
 public class NbtInputStream extends DataInputStream implements NbtInput {
 
     public NbtInputStream(@NotNull InputStream inputStream) throws IOException {
-        super(inputStream);
+        super(inputStream instanceof BufferedInputStream ? inputStream : new BufferedInputStream(inputStream));
     }
 
     @Override
-    public @NotNull Byte[] readByteArray() throws IOException {
-        byte[] tmp = new byte[this.readInt()];
-        this.readFully(tmp);
-        return PrimitiveUtil.wrap(tmp);
+    public byte @NotNull [] readByteArray() throws IOException {
+        byte[] data = new byte[this.readInt()];
+        this.readFully(data);
+        return data;
     }
 
     @Override
-    public @NotNull Integer[] readIntArray() throws IOException {
+    public int @NotNull [] readIntArray() throws IOException {
         int length = this.readInt();
-        Integer[] data = new Integer[length];
+        int[] data = new int[length];
 
         for (int i = 0; i < length; i++)
             data[i] = this.readInt();
@@ -41,9 +45,9 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
     }
 
     @Override
-    public @NotNull Long[] readLongArray() throws IOException {
+    public long @NotNull [] readLongArray() throws IOException {
         int length = this.readInt();
-        Long[] data = new Long[length];
+        long[] data = new long[length];
 
         for (int i = 0; i < length; i++)
             data[i] = this.readLong();
@@ -56,9 +60,9 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         if (++depth >= 512)
             throw new NbtMaxDepthException();
 
-        ListTag<Tag<?>> listTag = new ListTag<>();
         int listType = this.readUnsignedByte();
         int length = Math.max(0, this.readInt());
+        ListTag<Tag<?>> listTag = new ListTag<>(length);
 
         for (int i = 0; i < length; i++)
             listTag.add(this.readTag((byte) listType, depth));
