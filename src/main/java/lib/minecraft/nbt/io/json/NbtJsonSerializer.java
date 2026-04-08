@@ -4,10 +4,8 @@ import com.google.gson.stream.JsonWriter;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -67,7 +65,7 @@ public class NbtJsonSerializer extends JsonWriter implements NbtOutput {
     }
 
     @Override
-    public void writeByteArray(@NotNull Byte[] value) throws IOException {
+    public void writeByteArray(byte @NotNull [] value) throws IOException {
         this.beginArray();
 
         for (byte b : value)
@@ -77,7 +75,7 @@ public class NbtJsonSerializer extends JsonWriter implements NbtOutput {
     }
 
     @Override
-    public void writeIntArray(@NotNull Integer[] value) throws IOException {
+    public void writeIntArray(int @NotNull [] value) throws IOException {
         this.beginArray();
 
         for (int i : value)
@@ -87,7 +85,7 @@ public class NbtJsonSerializer extends JsonWriter implements NbtOutput {
     }
 
     @Override
-    public void writeLongArray(@NotNull Long[] value) throws IOException {
+    public void writeLongArray(long @NotNull [] value) throws IOException {
         this.beginArray();
 
         for (long l : value)
@@ -118,10 +116,7 @@ public class NbtJsonSerializer extends JsonWriter implements NbtOutput {
         this.beginObject();
 
         for (Map.Entry<String, Tag<?>> entry : tag) {
-            if (entry.getValue().getId() == TagType.END.getId())
-                break;
-
-            this.name(StringUtil.stripToEmpty(entry.getKey()));
+            this.name(entry.getKey());
             this.writeTag(entry.getValue(), depth);
         }
 
