@@ -25,6 +25,12 @@ import java.util.function.Consumer;
 @SuppressWarnings("unchecked")
 public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String, Tag<?>>, Iterable<Map.Entry<String, Tag<?>>> {
 
+    /**
+     * Default initial capacity for the backing {@link LinkedHashMap}.
+     * Sized for typical SkyBlock item compounds (20 - 60 entries) to avoid resizing on the deserialization hot path.
+     */
+    private static final int DEFAULT_INITIAL_CAPACITY = 32;
+
     public static final @NotNull CompoundTag EMPTY = new CompoundTag() {
         @Override
         public void requireModifiable() {
@@ -33,10 +39,19 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     };
 
     /**
-     * Constructs an empty, unnamed compound tag.
+     * Constructs an empty, unnamed compound tag with a {@linkplain #DEFAULT_INITIAL_CAPACITY default} capacity.
      */
     public CompoundTag() {
-        this(new LinkedHashMap<>());
+        this(DEFAULT_INITIAL_CAPACITY);
+    }
+
+    /**
+     * Constructs an empty, unnamed compound tag pre-sized for the given expected number of entries.
+     *
+     * @param expectedSize expected number of entries (used to pre-size the backing map without resizing)
+     */
+    public CompoundTag(int expectedSize) {
+        this(LinkedHashMap.newLinkedHashMap(expectedSize));
     }
 
     /**
@@ -59,9 +74,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     @Override
     @SuppressWarnings("all")
     public final @NotNull CompoundTag clone() {
-        CompoundTag compoundTag = new CompoundTag();
-        compoundTag.putAll(this.getValue());
-        return compoundTag;
+        return new CompoundTag(new LinkedHashMap<>(this.getValue()));
     }
 
     /**
@@ -105,22 +118,30 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * @return True if found.
      */
     public boolean containsPath(@NotNull String path) {
-        List<String> entries = StringUtil.toList(StringUtil.split(path, "\\."));
         CompoundTag current = this;
+        int start = 0;
+        int len = path.length();
 
-        for (String entry : entries) {
+        while (true) {
+            int dot = path.indexOf('.', start);
+            String entry = (dot < 0) ? path.substring(start) : path.substring(start, dot);
             Tag<?> childTag = current.get(entry);
 
             if (childTag == null)
                 return false;
 
-            if (!(childTag instanceof CompoundTag))
+            if (!(childTag instanceof CompoundTag compound))
                 return true;
 
-            current = (CompoundTag) childTag;
-        }
+            if (dot < 0)
+                return true;
 
-        return true;
+            current = compound;
+            start = dot + 1;
+
+            if (start > len)
+                return true;
+        }
     }
 
     /**
@@ -128,9 +149,14 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      */
     @Override
     public boolean containsValue(@NotNull Object value) {
-        return this.values()
-            .stream()
-            .anyMatch(tagValue -> Objects.equals(((value instanceof Tag<?>) ? tagValue : tagValue.getValue()), value));
+        boolean compareTag = value instanceof Tag<?>;
+
+        for (Tag<?> tagValue : this.getValue().values()) {
+            if (Objects.equals(compareTag ? tagValue : tagValue.getValue(), value))
+                return true;
+        }
+
+        return false;
     }
 
     /**
@@ -146,7 +172,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      */
     @Override
     public void forEach(@NotNull Consumer<? super Entry<String, Tag<?>>> action) {
-        this.getValue().forEach((key, value) -> action.accept(new AbstractMap.SimpleEntry<>(key, value)));
+        this.getValue().entrySet().forEach(action);
     }
 
     /**
@@ -193,15 +219,26 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * @return The value, or default value if not found.
      */
     public <T extends Tag<?>> T getPathOrDefault(@NotNull String path, @Nullable T defaultValue) {
-        T value = defaultValue;
+        if (!this.containsPath(path))
+            return defaultValue;
 
-        if (this.containsPath(path)) {
-            List<String> entries = StringUtil.toList(StringUtil.split(path, "\\."));
-            CompoundTag compoundTag = this.getMap(entries.subList(0, entries.size() - 1), false);
-            value = compoundTag.getTag(entries.getLast());
+        CompoundTag current = this;
+        int start = 0;
+
+        while (true) {
+            int dot = path.indexOf('.', start);
+
+            if (dot < 0)
+                return current.getTag(path.substring(start));
+
+            CompoundTag next = current.getTag(path.substring(start, dot));
+
+            if (next == null)
+                return defaultValue;
+
+            current = next;
+            start = dot + 1;
         }
-
-        return value;
     }
 
     /**
@@ -336,7 +373,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
         return this.putTag(key, new DoubleTag(value));
     }
 
-    public @Nullable ByteArrayTag put(@NotNull String key, @NotNull Byte[] value) {
+    public @Nullable ByteArrayTag put(@NotNull String key, byte @NotNull [] value) {
         return this.putTag(key, new ByteArrayTag(value));
     }
 
@@ -345,18 +382,18 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     }
 
     public <T extends Tag<?>> @Nullable ListTag<T> put(@NotNull String key, @NotNull ListTag<T> value) {
-        return this.putTag(key, new ListTag<>(value));
+        return this.putTag(key, value);
     }
 
     public @Nullable CompoundTag put(@NotNull String key, @NotNull CompoundTag value) {
-        return this.putTag(key, new CompoundTag(value));
+        return this.putTag(key, value);
     }
 
-    public @Nullable IntArrayTag put(@NotNull String key, @NotNull Integer[] value) {
+    public @Nullable IntArrayTag put(@NotNull String key, int @NotNull [] value) {
         return this.putTag(key, new IntArrayTag(value));
     }
 
-    public @Nullable LongArrayTag put(@NotNull String key, @NotNull Long[] value) {
+    public @Nullable LongArrayTag put(@NotNull String key, long @NotNull [] value) {
         return this.putTag(key, new LongArrayTag(value));
     }
 
@@ -379,10 +416,27 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * @return This compound, for chaining.
      */
     public @NotNull CompoundTag putPath(@NotNull String path, @NotNull Tag<?> value) {
-        List<String> entries = StringUtil.toList(StringUtil.split(path, "\\."));
-        CompoundTag map = this.getMap(entries.subList(0, entries.size() - 1), true);
-        map.put(entries.getLast(), value);
-        return this;
+        this.requireModifiable();
+        CompoundTag current = this;
+        int start = 0;
+
+        while (true) {
+            int dot = path.indexOf('.', start);
+
+            if (dot < 0) {
+                current.put(path.substring(start), value);
+                return this;
+            }
+
+            String entry = path.substring(start, dot);
+            CompoundTag next = current.getTag(entry);
+
+            if (next == null)
+                current.put(entry, next = new CompoundTag());
+
+            current = next;
+            start = dot + 1;
+        }
     }
 
     public <T extends Tag<?>> @Nullable T putTag(@NotNull String key, @NotNull T value) {
@@ -409,19 +463,25 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      */
     public @NotNull CompoundTag removePath(@NotNull String path) {
         this.requireModifiable();
-        List<String> entries = StringUtil.toList(StringUtil.split(path, "\\."));
-        CompoundTag currentTag = this;
+        CompoundTag current = this;
+        int start = 0;
 
-        for (int i = 0; i < entries.size(); i++) {
-            String entry = entries.get(i);
+        while (true) {
+            int dot = path.indexOf('.', start);
 
-            if (i == entries.size() - 1)
-                Objects.requireNonNull(currentTag).remove(entry);
-            else
-                currentTag = Objects.requireNonNull(currentTag).getTag(entry);
+            if (dot < 0) {
+                current.remove(path.substring(start));
+                return current;
+            }
+
+            CompoundTag next = current.getTag(path.substring(start, dot));
+
+            if (next == null)
+                return current;
+
+            current = next;
+            start = dot + 1;
         }
-
-        return Objects.requireNonNull(currentTag);
     }
 
     public void requireModifiable() { }
