@@ -7,15 +7,14 @@ import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.simplified.reflection.Reflection;
 import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
-import java.util.Objects;
 
 import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
 
@@ -24,13 +23,9 @@ import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
  */
 public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
-    private static final Reflection<JsonWriter> JSON_REFLECTION = new Reflection<>(JsonWriter.class);
-    private final @NotNull Writer writer;
-
     public SnbtSerializer(@NotNull Writer writer) {
         super(writer);
         this.setIndent("    ");
-        this.writer = Objects.requireNonNull(JSON_REFLECTION.getValue(Writer.class, this));
     }
 
     @Override
@@ -119,15 +114,19 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
         this.endObject();
     }
 
-    private <T extends Number> void writeArray(@NotNull T[] array, char prefix, String suffix) throws IOException {
-        this.writer.append(ARRAY_START).append(prefix).append(ARRAY_TYPE_INDICATOR);
+    private <T extends Number> void writeArray(T @NonNull [] array, char prefix, String suffix) throws IOException {
+        StringBuilder sb = new StringBuilder()
+            .append(ARRAY_START)
+            .append(prefix)
+            .append(ARRAY_TYPE_INDICATOR);
 
         for (int i = 0; i < array.length; i++) {
-            if (i > 0) this.writer.append(ENTRY_SEPARATOR);
-            this.writer.append(array[i].toString()).append(suffix);
+            if (i > 0) sb.append(ENTRY_SEPARATOR);
+            sb.append(array[i]).append(suffix);
         }
 
-        this.writer.append(ARRAY_END);
+        sb.append(ARRAY_END);
+        this.jsonValue(sb.toString());
     }
 
     private static String escapeString(@NotNull String value) {
