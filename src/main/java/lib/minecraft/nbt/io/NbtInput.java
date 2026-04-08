@@ -19,21 +19,27 @@ import java.io.IOException;
 
 public interface NbtInput {
 
+    /**
+     * Dispatches a tag read by id directly to the matching primitive {@code readXxx} method.
+     *
+     * <p>Inlined - no intermediate {@code readXxxTag} wrapper hop. The tag instance is constructed
+     * once with the primitive value, avoiding an extra getter call.</p>
+     */
     default @NotNull Tag<?> readTag(byte id, int maxDepth) throws IOException {
         return switch (id) {
-            case 1 -> this.readByteTag();
-            case 2 -> this.readShortTag();
-            case 3 -> this.readIntTag();
-            case 4 -> this.readLongTag();
-            case 5 -> this.readFloatTag();
-            case 6 -> this.readDoubleTag();
-            case 7 -> this.readByteArrayTag();
-            case 8 -> this.readStringTag();
+            case 1 -> new ByteTag(this.readByte());
+            case 2 -> new ShortTag(this.readShort());
+            case 3 -> new IntTag(this.readInt());
+            case 4 -> new LongTag(this.readLong());
+            case 5 -> new FloatTag(this.readFloat());
+            case 6 -> new DoubleTag(this.readDouble());
+            case 7 -> new ByteArrayTag(this.readByteArray());
+            case 8 -> new StringTag(this.readUTF());
             case 9 -> this.readListTag(maxDepth);
             case 10 -> this.readCompoundTag(maxDepth);
-            case 11 -> this.readIntArrayTag();
-            case 12 -> this.readLongArrayTag();
-            default -> throw new UnsupportedOperationException(String.format("Tag with id %s is not supported.", id));
+            case 11 -> new IntArrayTag(this.readIntArray());
+            case 12 -> new LongArrayTag(this.readLongArray());
+            default -> throw new UnsupportedOperationException("Tag with id " + id + " is not supported.");
         };
     }
 
@@ -53,43 +59,11 @@ public interface NbtInput {
 
     @NotNull String readUTF() throws IOException;
 
-    @NotNull Byte[] readByteArray() throws IOException;
+    byte @NotNull [] readByteArray() throws IOException;
 
-    @NotNull Integer[] readIntArray() throws IOException;
+    int @NotNull [] readIntArray() throws IOException;
 
-    @NotNull Long[] readLongArray() throws IOException;
-
-    default @NotNull ByteTag readByteTag() throws IOException {
-        return new ByteTag(this.readByte());
-    }
-
-    default @NotNull ShortTag readShortTag() throws IOException {
-        return new ShortTag(this.readShort());
-    }
-
-    default @NotNull IntTag readIntTag() throws IOException {
-        return new IntTag(this.readInt());
-    }
-
-    default @NotNull LongTag readLongTag() throws IOException {
-        return new LongTag(this.readLong());
-    }
-
-    default @NotNull FloatTag readFloatTag() throws IOException {
-        return new FloatTag(this.readFloat());
-    }
-
-    default @NotNull DoubleTag readDoubleTag() throws IOException {
-        return new DoubleTag(this.readDouble());
-    }
-
-    default @NotNull ByteArrayTag readByteArrayTag() throws IOException {
-        return new ByteArrayTag(this.readByteArray());
-    }
-
-    default @NotNull StringTag readStringTag() throws IOException {
-        return new StringTag(this.readUTF());
-    }
+    long @NotNull [] readLongArray() throws IOException;
 
     default @NotNull ListTag<?> readListTag() throws IOException {
         return this.readListTag(0);
@@ -103,12 +77,4 @@ public interface NbtInput {
 
     @NotNull CompoundTag readCompoundTag(int depth) throws IOException;
 
-    default @NotNull IntArrayTag readIntArrayTag() throws IOException {
-        return new IntArrayTag(this.readIntArray());
-    }
-
-    default @NotNull LongArrayTag readLongArrayTag() throws IOException {
-        return new LongArrayTag(this.readLongArray());
-    }
-    
 }
