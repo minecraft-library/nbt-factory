@@ -1,10 +1,7 @@
 package dev.sbs.minecraftapi.nbt.io.stream;
 
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
+import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
@@ -15,9 +12,15 @@ import java.io.InputStream;
 /**
  * NBT deserialization that reads from an input stream.
  *
- * <p>Wraps the provided stream in a {@link BufferedInputStream} unless it is already buffered, so callers
- * passing raw {@code FileInputStream}, {@code GZIPInputStream}, or socket streams do not pay per-byte
- * syscall overhead through {@link DataInputStream}.</p>
+ * <p>Wraps the provided stream in a {@link BufferedInputStream} unless it is already buffered, so
+ * callers passing a raw {@code FileInputStream}, {@code GZIPInputStream}, or socket stream do not
+ * pay per-byte syscall overhead through {@link DataInputStream}.</p>
+ *
+ * <p>Modified UTF-8 and the primitive byte-level reads are inherited from {@link DataInputStream}
+ * unchanged. {@code readListTag} and {@code readCompoundTag} are inherited from {@link NbtInput}
+ * as default methods - this class only overrides the bulk primitive array reads where a scratch
+ * buffer plus {@link NbtByteCodec} is faster than per-element {@code readInt}/{@code readLong}
+ * method calls through {@link DataInputStream}.</p>
  */
 @SuppressWarnings("all")
 public class NbtInputStream extends DataInputStream implements NbtInput {
@@ -38,8 +41,17 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         int length = this.readInt();
         int[] data = new int[length];
 
-        for (int i = 0; i < length; i++)
-            data[i] = this.readInt();
+        // Bulk-read the raw bytes in one call (the underlying BufferedInputStream does a single
+        // arraycopy), then decode in memory via NbtByteCodec. Eliminates N method-call chains
+        // through DataInputStream.readInt.
+        byte[] scratch = new byte[length << 2];
+        this.readFully(scratch);
+
+        int p = 0;
+        for (int i = 0; i < length; i++) {
+            data[i] = NbtByteCodec.getInt(scratch, p);
+            p += 4;
+        }
 
         return data;
     }
@@ -49,41 +61,16 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         int length = this.readInt();
         long[] data = new long[length];
 
-        for (int i = 0; i < length; i++)
-            data[i] = this.readLong();
+        byte[] scratch = new byte[length << 3];
+        this.readFully(scratch);
 
-        return data;
-    }
-
-    @Override
-    public @NotNull ListTag<?> readListTag(int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        int listType = this.readUnsignedByte();
-        int length = Math.max(0, this.readInt());
-        ListTag<Tag<?>> listTag = new ListTag<>(length);
-
-        for (int i = 0; i < length; i++)
-            listTag.add(this.readTag((byte) listType, depth));
-
-        return listTag;
-    }
-
-    @Override
-    public @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        CompoundTag compoundTag = new CompoundTag();
-
-        for (int id = this.readUnsignedByte() & 0xFF; id != 0; id = this.readUnsignedByte() & 0xFF) {
-            String key = this.readUTF();
-            Tag<?> tag = this.readTag((byte) id, depth);
-            compoundTag.put(key, tag);
+        int p = 0;
+        for (int i = 0; i < length; i++) {
+            data[i] = NbtByteCodec.getLong(scratch, p);
+            p += 8;
         }
 
-        return compoundTag;
+        return data;
     }
 
 }
