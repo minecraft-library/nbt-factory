@@ -7,23 +7,31 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Modified UTF-8 codec matching {@link java.io.DataInput#readUTF()} and
- * {@link java.io.DataOutput#writeUTF(String)} - the wire format Mojang uses for Minecraft NBT.
+ * {@link java.io.DataOutput#writeUTF(String)} - the wire format Mojang uses for every string in
+ * Minecraft's binary NBT payload.
+ *
+ * <p>Every NBT string (both compound keys and {@code TAG_String} values) is framed on the wire
+ * as a 2-byte big-endian unsigned length prefix followed by {@code length} bytes of modified
+ * UTF-8 data, per the <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a>
+ * specification. This class owns the inner codec; the length-prefix framing lives in the
+ * individual backends ({@link dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer NbtInputBuffer},
+ * {@link dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer NbtOutputBuffer}).</p>
  *
  * <p>Modified UTF-8 matches standard UTF-8 for code points in {@code [0x0001..0x007F]}. Two
  * differences from standard UTF-8:</p>
  * <ul>
  *   <li>{@code U+0000} is encoded as two bytes {@code 0xC0 0x80} instead of the single byte
- *       {@code 0x00} - so the byte {@code 0x00} never appears inside a valid encoded string</li>
+ *       {@code 0x00} - so the byte {@code 0x00} never appears inside a valid encoded string.</li>
  *   <li>Supplementary code points (above the BMP) are encoded as their UTF-16 surrogate pair,
  *       each surrogate in the three-byte form - total six bytes instead of standard UTF-8's
- *       four-byte form</li>
+ *       four-byte form.</li>
  * </ul>
  *
- * <p>This class is used by the byte-array NBT backends ({@code NbtInputBuffer} and
- * {@code NbtOutputBuffer}) to match the {@link java.io.DataInputStream}-derived stream backends
- * byte-for-byte. The prior standard-UTF-8 implementation diverged on {@code U+0000} and
- * supplementary characters, which would corrupt a round trip through a real Mojang-written
- * {@code .dat} file containing those code points.</p>
+ * <p>This class is used by the byte-array NBT backends to match the
+ * {@link java.io.DataInputStream}-derived stream backends byte-for-byte. The prior
+ * standard-UTF-8 implementation diverged on {@code U+0000} and supplementary characters, which
+ * would corrupt a round trip through a real Mojang-written {@code .dat} file containing those
+ * code points.</p>
  */
 public final class NbtModifiedUtf8 {
 
