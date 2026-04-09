@@ -19,7 +19,19 @@ public class ShortTag extends NumericalTag<Short> {
      * Constructs a short tag with a 0 value.
      */
     public ShortTag() {
-        this(0);
+        this((short) 0);
+    }
+
+    /**
+     * Constructs a short tag with the given primitive {@code short} value.
+     *
+     * <p>Primitive overload - avoids the duplicate autobox the {@link #ShortTag(Number)} path
+     * incurred when called from the NBT read dispatcher with a primitive argument.</p>
+     *
+     * @param value the tag's primitive {@code short} value
+     */
+    public ShortTag(short value) {
+        super(value);
     }
 
     /**
@@ -28,7 +40,7 @@ public class ShortTag extends NumericalTag<Short> {
      * @param value the tag's value, to be converted to {@code short}.
      */
     public ShortTag(@NotNull Number value) {
-        super(value.shortValue());
+        this(value.shortValue());
     }
 
     @Override
