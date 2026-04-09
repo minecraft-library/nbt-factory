@@ -19,7 +19,19 @@ public class ByteTag extends NumericalTag<Byte> {
      * Constructs a byte tag with a 0 value.
      */
     public ByteTag() {
-        this(0);
+        this((byte) 0);
+    }
+
+    /**
+     * Constructs a byte tag with the given primitive {@code byte} value.
+     *
+     * <p>Primitive overload - avoids the duplicate autobox the {@link #ByteTag(Number)} path
+     * incurred when called from the NBT read dispatcher with a primitive argument.</p>
+     *
+     * @param value the tag's primitive {@code byte} value
+     */
+    public ByteTag(byte value) {
+        super(value);
     }
 
     /**
@@ -28,7 +40,7 @@ public class ByteTag extends NumericalTag<Byte> {
      * @param value the tag's value, to be converted to {@code byte}.
      */
     public ByteTag(@NotNull Number value) {
-        super(value.byteValue());
+        this(value.byteValue());
     }
 
     @Override
