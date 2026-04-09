@@ -3,6 +3,7 @@ package dev.sbs.minecraftapi.nbt;
 import dev.sbs.minecraftapi.nbt.exception.NbtException;
 import dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer;
 import dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer;
+import dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer;
 import dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtDeserializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtSerializer;
@@ -21,12 +22,14 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -86,6 +89,47 @@ public class NbtFactory {
         try {
             @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
             return this.fromStream(fileInputStream);
+        } catch (IOException exception) {
+            throw new NbtException(exception);
+        }
+    }
+
+    /**
+     * Deserializes a JSON {@link File} into a {@link CompoundTag} using the Minecraft Wiki's
+     * "Conversion from JSON" algorithm.
+     *
+     * <p>JSON does not preserve NBT tag type information, so reconstruction applies the rules
+     * documented on {@link NbtJsonDeserializer}. This conversion is lossy in the general case -
+     * see that class for the type-inference contract and round-trip caveats.</p>
+     *
+     * @param file the JSON file to read from.
+     * @throws NbtException if any I/O or parse error occurs.
+     */
+    public @NotNull CompoundTag fromJson(@NotNull File file) throws NbtException {
+        try {
+            @Cleanup FileReader reader = new FileReader(file, StandardCharsets.UTF_8);
+            @Cleanup NbtJsonDeserializer deserializer = new NbtJsonDeserializer(reader);
+            return deserializer.readCompoundTag(0);
+        } catch (IOException exception) {
+            throw new NbtException(exception);
+        }
+    }
+
+    /**
+     * Deserializes a JSON {@link String} into a {@link CompoundTag} using the Minecraft Wiki's
+     * "Conversion from JSON" algorithm.
+     *
+     * <p>JSON does not preserve NBT tag type information, so reconstruction applies the rules
+     * documented on {@link NbtJsonDeserializer}. This conversion is lossy in the general case -
+     * see that class for the type-inference contract and round-trip caveats.</p>
+     *
+     * @param json the JSON string to read from.
+     * @throws NbtException if any I/O or parse error occurs.
+     */
+    public @NotNull CompoundTag fromJson(@NotNull String json) throws NbtException {
+        try {
+            @Cleanup NbtJsonDeserializer deserializer = new NbtJsonDeserializer(new StringReader(json));
+            return deserializer.readCompoundTag(0);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -274,6 +318,11 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into a JSON {@link String}.
      *
+     * <p>Produces plain JSON with no SNBT-style type suffixes or array headers - see
+     * {@link NbtJsonSerializer} for the emitted representation. Pair with {@link #fromJson(String)}
+     * to read the result back; the round-trip is lossy in the general case because JSON does not
+     * preserve NBT tag type information.</p>
+     *
      * @param compound the NBT compound to write.
      * @throws NbtException if any I/O error occurs.
      */
@@ -290,6 +339,11 @@ public class NbtFactory {
 
     /**
      * Serializes a {@link CompoundTag} into a JSON {@link File}.
+     *
+     * <p>Produces plain JSON with no SNBT-style type suffixes or array headers - see
+     * {@link NbtJsonSerializer} for the emitted representation. Pair with {@link #fromJson(File)}
+     * to read the result back; the round-trip is lossy in the general case because JSON does not
+     * preserve NBT tag type information.</p>
      *
      * @param compound the NBT compound to write.
      * @param file the file to write to.
