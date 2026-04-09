@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 
-import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
+import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtConstants.*;
 
 /**
  * SNBT (stringified NBT) serialization that writes directly to a JSON writer, emitting the

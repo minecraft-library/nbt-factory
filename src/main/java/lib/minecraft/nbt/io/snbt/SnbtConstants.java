@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * should not leak into the public API surface.</p>
  */
 @UtilityClass
-final class SnbtUtil {
+final class SnbtConstants {
 
     public static final char COMPOUND_START        = '{';
     public static final char COMPOUND_END          = '}';

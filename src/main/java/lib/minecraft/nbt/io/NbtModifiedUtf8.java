@@ -1,5 +1,6 @@
 package dev.sbs.minecraftapi.nbt.io;
 
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.UTFDataFormatException;
@@ -33,11 +34,8 @@ import java.nio.charset.StandardCharsets;
  * would corrupt a round trip through a real Mojang-written {@code .dat} file containing those
  * code points.</p>
  */
+@UtilityClass
 public final class NbtModifiedUtf8 {
-
-    private NbtModifiedUtf8() {
-        throw new UnsupportedOperationException();
-    }
 
     /**
      * Returns the number of modified UTF-8 bytes required to encode {@code value}.

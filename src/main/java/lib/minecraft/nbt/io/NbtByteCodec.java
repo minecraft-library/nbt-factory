@@ -1,5 +1,7 @@
 package dev.sbs.minecraftapi.nbt.io;
 
+import lombok.experimental.UtilityClass;
+
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -26,15 +28,12 @@ import java.nio.ByteOrder;
  * inlines them across the NBT I/O hot path so the generated code is equivalent to writing the
  * bit shifting directly at each call site, but the source-level duplication is gone.</p>
  */
+@UtilityClass
 public final class NbtByteCodec {
 
     private static final VarHandle SHORT_BE = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.BIG_ENDIAN);
     private static final VarHandle INT_BE = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
     private static final VarHandle LONG_BE = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
-
-    private NbtByteCodec() {
-        throw new UnsupportedOperationException();
-    }
 
     /**
      * Reads a big-endian signed 16-bit integer starting at {@code offset}.

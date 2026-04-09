@@ -1,5 +1,6 @@
 package dev.sbs.minecraftapi.nbt.io;
 
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * Duplicates across lists are harmless (the static initializer dedupes), so categorization can
  * reflect semantic intent rather than forcing a single canonical home for every key.</p>
  */
+@UtilityClass
 public final class NbtKnownKeys {
 
     // ------------------------------------------------------------------
@@ -200,10 +202,6 @@ public final class NbtKnownKeys {
         }
 
         BY_LENGTH = buckets;
-    }
-
-    private NbtKnownKeys() {
-        throw new UnsupportedOperationException();
     }
 
     /**

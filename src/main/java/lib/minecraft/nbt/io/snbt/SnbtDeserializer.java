@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.StringReader;
 
-import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
+import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtConstants.*;
 
 /**
  * SNBT (stringified NBT) deserialization that reads from a {@link StringReader} and
@@ -41,7 +41,7 @@ import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
  *       delimiters are accepted; {@code \"}, {@code \\}, and {@code \'} escape sequences are
  *       unescaped character-for-character.</li>
  *   <li><b>Unquoted identifier</b> - classified by regex match against the numeric patterns
- *       in {@link SnbtUtil}; falls back to
+ *       in {@link SnbtConstants}; falls back to
  *       {@link dev.sbs.minecraftapi.nbt.tags.primitive.StringTag StringTag} on no match. Valid
  *       unquoted characters are {@code [A-Za-z0-9._+-]}.</li>
  *   <li><b>{@code [B;...]}</b> /
