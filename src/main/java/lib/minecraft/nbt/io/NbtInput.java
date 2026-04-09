@@ -1,5 +1,6 @@
 package dev.sbs.minecraftapi.nbt.io;
 
+import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
 import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
@@ -69,12 +70,55 @@ public interface NbtInput {
         return this.readListTag(0);
     }
 
-    @NotNull ListTag<?> readListTag(int depth) throws IOException;
+    /**
+     * Reads an NBT {@code TAG_List} payload: element type byte, big-endian length, then that many
+     * elements of the given type.
+     *
+     * <p>Binary NBT backends ({@code NbtInputBuffer}, {@code NbtInputStream}) share this
+     * implementation. SNBT and any other text-based backend overrides with format-specific parsing.</p>
+     */
+    default @NotNull ListTag<?> readListTag(int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
+        byte listType = this.readByte();
+        int length = Math.max(0, this.readInt());
+        // Pre-seed elementId so ListTag.add skips the "first element" probe on every entry.
+        ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
+
+        for (int i = 0; i < length; i++)
+            listTag.add(this.readTag(listType, depth));
+
+        return listTag;
+    }
 
     default @NotNull CompoundTag readCompoundTag() throws IOException {
         return this.readCompoundTag(0);
     }
 
-    @NotNull CompoundTag readCompoundTag(int depth) throws IOException;
+    /**
+     * Reads an NBT {@code TAG_Compound} payload: a sequence of {@code (type, name, value)} entries
+     * terminated by a {@code TAG_End} (id 0).
+     *
+     * <p>Binary NBT backends share this implementation. SNBT and other text-based backends override
+     * with format-specific parsing.</p>
+     */
+    default @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
+        CompoundTag compoundTag = new CompoundTag();
+
+        // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte abstract
+        // on this interface, which would force SnbtDeserializer (whose readByte parses text) to
+        // provide a meaningless implementation.
+        for (int id = this.readByte() & 0xFF; id != 0; id = this.readByte() & 0xFF) {
+            String key = this.readUTF();
+            Tag<?> tag = this.readTag((byte) id, depth);
+            compoundTag.put(key, tag);
+        }
+
+        return compoundTag;
+    }
 
 }
