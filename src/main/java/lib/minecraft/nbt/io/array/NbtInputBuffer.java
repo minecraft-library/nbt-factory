@@ -11,13 +11,41 @@ import java.io.EOFException;
 import java.io.IOException;
 
 /**
- * High-performance NBT deserialization that reads directly from a byte buffer.
+ * High-performance NBT deserialization that reads directly from a {@code byte[]} buffer,
+ * decoding Minecraft's canonical big-endian binary wire format.
+ *
+ * <p>Implements Java Edition's binary NBT layout exactly as documented on the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page:</p>
+ * <ul>
+ *   <li>All integer primitives are big-endian ({@code TAG_Short} 2 bytes,
+ *       {@code TAG_Int}/{@code TAG_Float} 4 bytes, {@code TAG_Long}/{@code TAG_Double} 8 bytes).</li>
+ *   <li>Strings ({@code TAG_String}, compound keys) are length-prefixed by a 2-byte big-endian
+ *       unsigned short followed by {@code length} bytes of modified UTF-8 - decoded through
+ *       {@link NbtModifiedUtf8} so {@code U+0000} and supplementary code points round-trip
+ *       correctly.</li>
+ *   <li>{@code TAG_Byte_Array} / {@code TAG_Int_Array} / {@code TAG_Long_Array} are each a
+ *       4-byte big-endian signed length followed by {@code length} native-sized payloads.</li>
+ *   <li>{@code TAG_List} and {@code TAG_Compound} framing is inherited from the
+ *       {@link NbtInput} default implementations unchanged.</li>
+ * </ul>
  *
  * <p>Byte-level primitive reads delegate to {@link NbtByteCodec} which uses {@code VarHandle}
- * intrinsics against the raw {@code byte[]}. String reads use {@link NbtModifiedUtf8} to match
- * the Mojang wire format byte-for-byte. The {@code readListTag} and {@code readCompoundTag}
- * implementations are inherited from {@link NbtInput} as default methods - this class only
- * overrides what its byte-array backing can do faster than the default.</p>
+ * intrinsics against the raw {@code byte[]} to compile down to a single big-endian load
+ * instruction. Compound keys are further fast-pathed through
+ * {@link NbtKnownKeys#match(byte[], int, int)} so a hit on the canonical NBT / SkyBlock key
+ * vocabulary returns a shared interned {@code String} with zero allocation. The bulk primitive
+ * array reads ({@code readByteArray}, {@code readIntArray}, {@code readLongArray}) are
+ * overridden to perform a single up-front bounds check then decode all elements in a tight
+ * {@code VarHandle} loop, skipping the per-element method-call chain the
+ * {@link NbtInput} defaults would take.</p>
+ *
+ * <p>Implements {@link DataInput} as well as {@link NbtInput} so callers that already hold a
+ * {@code DataInput}-shaped interface can consume this directly. {@code readChar()} and
+ * {@code readLine()} are unsupported because neither appears in the NBT wire format.</p>
+ *
+ * @see NbtInput
+ * @see dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtInputBuffer implements NbtInput, DataInput {
 
