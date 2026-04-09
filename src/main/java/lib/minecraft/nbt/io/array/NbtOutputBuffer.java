@@ -1,28 +1,41 @@
 package dev.sbs.minecraftapi.nbt.io.array;
 
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
+import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
+import dev.sbs.minecraftapi.nbt.io.NbtModifiedUtf8;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UTFDataFormatException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 /**
  * High-performance NBT serialization that writes directly to a byte buffer.
+ *
+ * <p>Byte-level primitive writes delegate to {@link NbtByteCodec} which uses {@code VarHandle}
+ * intrinsics against the raw {@code byte[]}. String writes use {@link NbtModifiedUtf8} to match
+ * the Mojang wire format byte-for-byte. The {@code writeListTag} and {@code writeCompoundTag}
+ * implementations are inherited from {@link NbtOutput} as default methods - this class only
+ * overrides what the raw byte-array backing can do faster than the default.</p>
  */
 public class NbtOutputBuffer implements NbtOutput, DataOutput {
 
     /**
-     * Default initial capacity (32 KB) - sized to fit a typical SkyBlock item NBT payload after enrichment
-     * without paying any resize {@code arraycopy} cost on the serialization hot path.
+     * Default initial capacity (4 KB).
+     *
+     * <p>JMH profiling (post Round 1 + Round 2) showed the prior 32 KB default dominated the
+     * serialization allocation budget at ~34 KB per op on a synthetic ~2 KB payload - 94% of the
+     * allocation was the pre-sized buffer itself, not the NBT work. 4 KB covers a typical
+     * SkyBlock item root compound including a modest ExtraAttributes subtree in a single
+     * allocation, and the {@code ensureCapacity} doubling growth gracefully handles larger
+     * enriched payloads (4 KB -&gt; 8 KB -&gt; 16 KB -&gt; 32 KB = three resizes copying ~28 KB
+     * cumulative, identical to the prior waste but now only paid for when actually needed).</p>
+     *
+     * <p>Callers with known-larger payloads can still request an explicit capacity via
+     * {@link #NbtOutputBuffer(int)}.</p>
      */
-    private static final int DEFAULT_INITIAL_CAPACITY = 32 * 1024;
+    private static final int DEFAULT_INITIAL_CAPACITY = 4 * 1024;
 
     private byte[] buffer;
     private int position;
@@ -47,13 +60,49 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Zero-copy accessors for NbtFactory
+    // ------------------------------------------------------------------
+
+    /**
+     * Returns a trimmed copy of the bytes written so far. Allocates a new array.
+     */
     public byte[] toByteArray() {
         byte[] result = new byte[this.position];
         System.arraycopy(this.buffer, 0, result, 0, this.position);
         return result;
     }
 
-    // Optimized DataOutput implementation
+    /**
+     * Returns the internal backing array without trimming. Caller must also read {@link #size()}
+     * to know how many leading bytes are valid. Intended for zero-copy handoff to compression or
+     * other consumers that accept a {@code (byte[], offset, length)} triple - skips the trimming
+     * {@code arraycopy} that {@link #toByteArray()} performs.
+     */
+    public byte[] rawBuffer() {
+        return this.buffer;
+    }
+
+    /**
+     * Returns the number of bytes written so far. Used together with {@link #rawBuffer()}.
+     */
+    public int size() {
+        return this.position;
+    }
+
+    /**
+     * Writes the bytes accumulated so far to {@code outputStream} in a single call. Zero-copy -
+     * no intermediate array is allocated. The buffer cursor is not reset; further writes append
+     * after the already-flushed bytes.
+     */
+    public void writeTo(@NotNull OutputStream outputStream) throws IOException {
+        outputStream.write(this.buffer, 0, this.position);
+    }
+
+    // ------------------------------------------------------------------
+    // DataOutput primitives
+    // ------------------------------------------------------------------
+
     @Override
     public void write(int b) {
         this.ensureCapacity(1);
@@ -92,30 +141,22 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
     @Override
     public void writeShort(int value) {
         this.ensureCapacity(2);
-        this.buffer[this.position++] = (byte) (value >>> 8);
-        this.buffer[this.position++] = (byte) value;
+        NbtByteCodec.putShort(this.buffer, this.position, value);
+        this.position += 2;
     }
 
     @Override
     public void writeInt(int value) {
         this.ensureCapacity(4);
-        this.buffer[this.position++] = (byte) (value >>> 24);
-        this.buffer[this.position++] = (byte) (value >>> 16);
-        this.buffer[this.position++] = (byte) (value >>> 8);
-        this.buffer[this.position++] = (byte) value;
+        NbtByteCodec.putInt(this.buffer, this.position, value);
+        this.position += 4;
     }
 
     @Override
     public void writeLong(long value) {
         this.ensureCapacity(8);
-        this.buffer[this.position++] = (byte) (value >>> 56);
-        this.buffer[this.position++] = (byte) (value >>> 48);
-        this.buffer[this.position++] = (byte) (value >>> 40);
-        this.buffer[this.position++] = (byte) (value >>> 32);
-        this.buffer[this.position++] = (byte) (value >>> 24);
-        this.buffer[this.position++] = (byte) (value >>> 16);
-        this.buffer[this.position++] = (byte) (value >>> 8);
-        this.buffer[this.position++] = (byte) value;
+        NbtByteCodec.putLong(this.buffer, this.position, value);
+        this.position += 8;
     }
 
     @Override
@@ -140,14 +181,53 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
 
     @Override
     public void writeUTF(@NotNull String value) throws IOException {
-        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        int strLen = value.length();
 
-        if (bytes.length > 65535)
-            throw new UTFDataFormatException("UTF string too long: " + bytes.length);
+        // Fast scan: any code unit outside [0x01..0x7F] triggers the modified UTF-8 slow path.
+        // U+0000 is excluded because modified UTF-8 encodes it as two bytes (C0 80), not one.
+        // All other ASCII code points encode the same way in modified UTF-8 and standard UTF-8,
+        // so the fast path below emits bytes identical to the spec.
+        for (int i = 0; i < strLen; i++) {
+            char c = value.charAt(i);
 
-        this.writeShort(bytes.length);
-        this.write(bytes);
+            if (c == 0 || c >= 0x80) {
+                this.writeModifiedUtf8Slow(value);
+                return;
+            }
+        }
+
+        // ASCII-without-NUL fast path: byte length equals char length, single sizing call.
+        if (strLen > 65535)
+            throw new UTFDataFormatException("UTF string too long: " + strLen);
+
+        this.ensureCapacity(2 + strLen);
+        byte[] buf = this.buffer;
+        int p = this.position;
+
+        buf[p++] = (byte) (strLen >>> 8);
+        buf[p++] = (byte) strLen;
+
+        for (int i = 0; i < strLen; i++)
+            buf[p++] = (byte) value.charAt(i);
+
+        this.position = p;
     }
+
+    private void writeModifiedUtf8Slow(@NotNull String value) throws IOException {
+        int byteLen = NbtModifiedUtf8.encodedLength(value);
+
+        if (byteLen > 65535)
+            throw new UTFDataFormatException("UTF string too long: " + byteLen);
+
+        this.ensureCapacity(2 + byteLen);
+        NbtByteCodec.putShort(this.buffer, this.position, byteLen);
+        this.position += 2;
+        this.position += NbtModifiedUtf8.encode(value, this.buffer, this.position);
+    }
+
+    // ------------------------------------------------------------------
+    // NBT bulk primitive arrays (overrides for raw byte-array speed)
+    // ------------------------------------------------------------------
 
     @Override
     public void writeByteArray(byte @NotNull [] value) {
@@ -157,45 +237,42 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
 
     @Override
     public void writeIntArray(int @NotNull [] value) {
-        this.writeInt(value.length);
+        int length = value.length;
+        // Length prefix + 4 bytes per element, sized in one call.
+        this.ensureCapacity(4 + (length << 2));
 
-        for (int i : value)
-            this.writeInt(i);
+        byte[] buf = this.buffer;
+        int p = this.position;
+
+        NbtByteCodec.putInt(buf, p, length);
+        p += 4;
+
+        for (int i = 0; i < length; i++) {
+            NbtByteCodec.putInt(buf, p, value[i]);
+            p += 4;
+        }
+
+        this.position = p;
     }
 
     @Override
     public void writeLongArray(long @NotNull [] value) {
-        this.writeInt(value.length);
+        int length = value.length;
+        // Length prefix + 8 bytes per element, sized in one call.
+        this.ensureCapacity(4 + (length << 3));
 
-        for (long l : value)
-            this.writeLong(l);
-    }
+        byte[] buf = this.buffer;
+        int p = this.position;
 
-    @Override
-    public void writeListTag(@NotNull ListTag<Tag<?>> tag, int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
+        NbtByteCodec.putInt(buf, p, length);
+        p += 4;
 
-        this.writeByte(tag.getListType());
-        this.writeInt(tag.size());
-
-        for (Tag<?> element : tag)
-            this.writeTag(element, depth);
-    }
-
-    @Override
-    public void writeCompoundTag(@NotNull CompoundTag tag, int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        for (Map.Entry<String, Tag<?>> entry : tag) {
-            Tag<?> value = entry.getValue();
-            this.writeByte(value.getId());
-            this.writeUTF(entry.getKey());
-            this.writeTag(value, depth);
+        for (int i = 0; i < length; i++) {
+            NbtByteCodec.putLong(buf, p, value[i]);
+            p += 8;
         }
 
-        this.writeByte(0);
+        this.position = p;
     }
 
 }
