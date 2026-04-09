@@ -4,6 +4,20 @@ import lombok.experimental.UtilityClass;
 
 import java.util.regex.Pattern;
 
+/**
+ * Shared syntactic constants and regular expressions for SNBT parsing and emission.
+ *
+ * <p>Used by {@link SnbtSerializer} and {@link SnbtDeserializer} as the single source of truth
+ * for the SNBT grammar: structural characters ({@code {}}, {@code []}, {@code ,}, {@code :}),
+ * string quote delimiters, array-type prefix letters ({@code B}, {@code I}, {@code L}),
+ * numeric-literal suffix regex patterns ({@code b}, {@code s}, {@code l}, {@code f}, {@code d}),
+ * and the set of characters allowed in unquoted strings. Matching what the Minecraft Wiki's
+ * <a href="https://minecraft.wiki/w/NBT_format">"SNBT format"</a> section defines is a
+ * copy-paste from this one file.</p>
+ *
+ * <p>Package-private because the constants are implementation details of the SNBT backend and
+ * should not leak into the public API surface.</p>
+ */
 @UtilityClass
 final class SnbtUtil {
 
