@@ -6,6 +6,8 @@ import dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer;
 import dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtDeserializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtSerializer;
+import dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream;
+import dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
 import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
 import dev.simplified.stream.Compression;
@@ -15,9 +17,13 @@ import lombok.Cleanup;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -70,12 +76,16 @@ public class NbtFactory {
     /**
      * Deserializes an NBT {@link File} into a {@link CompoundTag}.
      *
+     * <p>Streams directly via {@link NbtInputStream} rather than loading the whole file into a
+     * transient {@code byte[]} first - saves one full-file allocation per read.</p>
+     *
      * @param file the NBT file to read from.
      * @throws NbtException if any I/O error occurs.
      */
     public @NotNull CompoundTag fromFile(@NotNull File file) throws NbtException {
         try {
-            return this.fromByteArray(Files.readAllBytes(file.toPath()));
+            @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
+            return this.fromStream(fileInputStream);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -129,13 +139,33 @@ public class NbtFactory {
     /**
      * Deserializes an NBT {@link InputStream} into a {@link CompoundTag}.
      *
+     * <p>Streams the input directly through {@link NbtInputStream}, auto-detecting any compression
+     * wrapper via {@link Compression#wrap(InputStream)}. Avoids the transient full-payload
+     * {@code byte[]} that {@code inputStream.readAllBytes()} would allocate - safe for arbitrarily
+     * large inputs (e.g. worldgen chunk files, player .dat files, socket streams).</p>
+     *
      * @param inputStream the NBT input stream to read from.
      * @throws NbtException if any I/O error occurs.
      */
     public @NotNull CompoundTag fromStream(@NotNull InputStream inputStream) throws NbtException {
-        try {
-            return this.fromByteArray(inputStream.readAllBytes());
-        } catch (IOException exception) {
+        // Close-shield the caller's stream so the cascading close() from NbtInputStream ->
+        // Compression.wrap() -> ... stops at the boundary instead of closing the caller's
+        // InputStream. Preserves the prior contract that callers own the lifetime of their stream.
+        InputStream shielded = new FilterInputStream(inputStream) {
+            @Override
+            public void close() { /* intentionally shielded */ }
+        };
+
+        try (
+            InputStream decompressed = Compression.wrap(shielded);
+            NbtInputStream nbtInputStream = new NbtInputStream(decompressed)
+        ) {
+            if (nbtInputStream.readByte() != TagType.COMPOUND.getId())
+                throw new IOException("Root tag in NBT structure must be a CompoundTag.");
+
+            nbtInputStream.readUTF(); // Discard root name
+            return nbtInputStream.readCompoundTag();
+        } catch (Exception exception) {
             throw new NbtException(exception);
         }
     }
@@ -195,18 +225,16 @@ public class NbtFactory {
      */
     public byte[] toByteArray(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
         try {
-            // Serialize to uncompressed byte array
+            // Serialize into the growable buffer, then hand the raw backing array straight to
+            // Compression.compress(data, offset, length, compression) - this skips the full-payload
+            // trimming arraycopy that the old buffer.toByteArray() then Compression.compress(bytes)
+            // path performed.
             NbtOutputBuffer buffer = new NbtOutputBuffer();
             buffer.writeByte(TagType.COMPOUND.getId());
             buffer.writeUTF(""); // Empty root name
             buffer.writeCompoundTag(compound);
-            byte[] uncompressed = buffer.toByteArray();
 
-            // Apply compression if needed
-            if (compression == Compression.NONE)
-                return uncompressed;
-
-            return Compression.compress(uncompressed, compression);
+            return Compression.compress(buffer.rawBuffer(), 0, buffer.size(), compression);
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
@@ -226,6 +254,9 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an NBT {@link File} with the given compression.
      *
+     * <p>Streams directly through {@link NbtOutputStream} and the compressing wrapper - no
+     * transient full-payload {@code byte[]} is allocated.</p>
+     *
      * @param compound the NBT compound to write.
      * @param file the file to write to.
      * @param compression compression to use on the file.
@@ -233,13 +264,11 @@ public class NbtFactory {
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
         try {
-            byte[] data = this.toByteArray(compound, compression);
             @Cleanup FileOutputStream fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(data);
+            this.toStream(compound, fileOutputStream, compression);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
-
     }
 
     /**
@@ -324,15 +353,57 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an {@link OutputStream} with the given compression.
      *
+     * <p>Streams the output directly through {@link NbtOutputStream}, wrapping the target stream
+     * in the compressing output stream returned by
+     * {@link Compression#wrap(OutputStream, Compression)} when compression is requested. Avoids
+     * the transient full-payload {@code byte[]} that {@code toByteArray(compound, compression)}
+     * would allocate - safe for arbitrarily large compounds and for streaming destinations like
+     * sockets and in-flight HTTP response bodies.</p>
+     *
+     * <p>The target stream is wrapped in a {@link BufferedOutputStream} when not already buffered,
+     * so raw {@code FileOutputStream} / socket stream callers do not pay per-byte syscall overhead
+     * through {@link NbtOutputStream}. The buffered wrapper plus the NbtOutputStream and the
+     * compressing wrapper are all flushed and closed on return; the underlying {@code outputStream}
+     * itself is not closed, consistent with the prior behaviour.</p>
+     *
      * @param compound the NBT compound to write.
      * @param outputStream the stream to write to.
      * @param compression compression to use on the stream.
      * @throws NbtException if any I/O error occurs
      */
     public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream, @NotNull Compression compression) throws NbtException {
+        // Close-shield the caller's stream so the cascading close() from NbtOutputStream stops at
+        // the boundary instead of closing the caller's OutputStream. Preserves the prior contract:
+        // caller owns the lifetime of their stream. The shield still forwards flush() so the
+        // caller can rely on written bytes being visible after this method returns.
+        OutputStream shielded = new FilterOutputStream(outputStream) {
+            @Override
+            public void close() throws IOException {
+                this.out.flush();
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+                // FilterOutputStream's default writes byte-by-byte; forward bulk writes intact.
+                this.out.write(b, off, len);
+            }
+        };
+
         try {
-            byte[] data = this.toByteArray(compound, compression);
-            outputStream.write(data);
+            // Buffer raw streams so NbtOutputStream's small writes don't hit per-byte syscalls.
+            // For Compression.NONE, Compression.wrap returns `buffered` unchanged.
+            OutputStream buffered = new BufferedOutputStream(shielded);
+            OutputStream compressed = Compression.wrap(buffered, compression);
+
+            // Single try-with-resources on the outermost wrapper: closing NbtOutputStream
+            // cascades to close `compressed` (finishing GZIP/ZLIB), which cascades to close
+            // `buffered` (flushing), which cascades to close `shielded` (flushing the caller's
+            // stream without closing it). Single close path, no double-close hazard.
+            try (NbtOutputStream nbtOutputStream = new NbtOutputStream(compressed)) {
+                nbtOutputStream.writeByte(TagType.COMPOUND.getId());
+                nbtOutputStream.writeUTF(""); // Empty root name
+                nbtOutputStream.writeCompoundTag(compound);
+            }
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
