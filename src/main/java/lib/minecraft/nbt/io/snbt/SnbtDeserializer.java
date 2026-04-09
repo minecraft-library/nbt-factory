@@ -15,7 +15,57 @@ import java.io.StringReader;
 import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtUtil.*;
 
 /**
- * Implementation for SNBT deserialization.
+ * SNBT (stringified NBT) deserialization that reads from a {@link StringReader} and
+ * reconstructs the full Minecraft NBT tag tree without loss of type information.
+ *
+ * <p>SNBT is the type-preserving text companion to binary NBT, defined on the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page. Every
+ * numeric literal carries its own type suffix, every typed array carries a prefix marker, and
+ * every compound / list structure matches the binary framing verbatim - so a round trip through
+ * this deserializer and {@link SnbtSerializer} yields the exact same tag tree, byte-for-byte
+ * equivalent to the binary wire format.</p>
+ *
+ * <p>Type reconstruction rules (case-insensitive suffixes):</p>
+ * <ul>
+ *   <li><b>Numeric literal with suffix</b> - resolves directly to the matching primitive tag:
+ *       {@code 34b} to {@link dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag ByteTag},
+ *       {@code 31415s} to {@link dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag ShortTag},
+ *       {@code 31415926l} to {@link dev.sbs.minecraftapi.nbt.tags.primitive.LongTag LongTag},
+ *       {@code 3.14f} to {@link dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag FloatTag},
+ *       {@code 3.14d} to {@link dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag DoubleTag}.</li>
+ *   <li><b>Numeric literal without suffix</b> - {@link dev.sbs.minecraftapi.nbt.tags.primitive.IntTag IntTag}
+ *       when the literal has no decimal point,
+ *       {@link dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag DoubleTag} when it does.</li>
+ *   <li><b>Quoted string</b> - {@link dev.sbs.minecraftapi.nbt.tags.primitive.StringTag StringTag}
+ *       always, even when the contents look numeric. Either {@code "text"} or {@code 'text'}
+ *       delimiters are accepted; {@code \"}, {@code \\}, and {@code \'} escape sequences are
+ *       unescaped character-for-character.</li>
+ *   <li><b>Unquoted identifier</b> - classified by regex match against the numeric patterns
+ *       in {@link SnbtUtil}; falls back to
+ *       {@link dev.sbs.minecraftapi.nbt.tags.primitive.StringTag StringTag} on no match. Valid
+ *       unquoted characters are {@code [A-Za-z0-9._+-]}.</li>
+ *   <li><b>{@code [B;...]}</b> /
+ *       <b>{@code [I;...]}</b> /
+ *       <b>{@code [L;...]}</b> - typed arrays
+ *       ({@link dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag ByteArrayTag} /
+ *       {@link dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag IntArrayTag} /
+ *       {@link dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag LongArrayTag}).</li>
+ *   <li><b>{@code [value,value,...]}</b> -
+ *       {@link dev.sbs.minecraftapi.nbt.tags.collection.ListTag ListTag} whose element type is
+ *       decided from the first element and then enforced for the rest via
+ *       {@link dev.sbs.minecraftapi.nbt.tags.collection.ListTag#add(Tag) ListTag.add}.</li>
+ *   <li><b>{@code {key:value,...}}</b> -
+ *       {@link dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag CompoundTag}.</li>
+ * </ul>
+ *
+ * <p>Tag-type classification for list and compound children runs through {@code peekTagId()},
+ * which uses {@link StringReader#mark(int)} / {@link StringReader#reset()} lookahead to identify
+ * the next value without consuming it. The depth guard and
+ * {@link dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException} behaviour match the binary
+ * backends exactly: nesting deeper than 512 throws.</p>
+ *
+ * @see SnbtSerializer
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format - "SNBT format"</a>
  */
 public class SnbtDeserializer extends StringReader implements NbtInput {
 
