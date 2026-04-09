@@ -39,6 +39,23 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     }
 
     /**
+     * Constructs an empty, unnamed list tag pre-sized to {@code initialCapacity} with its element
+     * type fixed to {@code elementId} before the first {@link #add} call.
+     *
+     * <p>Used by the NBT deserialization hot path, where the element type is already known from
+     * the list-type byte in the wire format. Pre-seeding lets {@code add} skip the {@code isEmpty}
+     * probe on every subsequent element - one fewer method call per list entry during bulk
+     * deserialization.</p>
+     *
+     * @param elementId       the NBT tag id all future entries must carry
+     * @param initialCapacity initial capacity for the backing list
+     */
+    public ListTag(byte elementId, int initialCapacity) {
+        this(new ArrayList<>(initialCapacity));
+        this.elementId = elementId;
+    }
+
+    /**
      * Constructs a list tag with a given name and {@code List<>} value.
      *
      * @param value the tag's {@code List<>} value.
@@ -66,10 +83,14 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      */
     @Override
     public boolean add(@NotNull E element) {
-        if (this.getValue().isEmpty())
-            this.elementId = element.getId();
+        byte id = element.getId();
 
-        if (element.getId() != this.getListType())
+        // elementId == 0 (END) is used as the sentinel for "list has no fixed type yet". END is
+        // never a valid list element type, so this is unambiguous. Skipping the isEmpty() probe
+        // eliminates one ArrayList method call per add during bulk deserialization.
+        if (this.elementId == 0)
+            this.elementId = id;
+        else if (id != this.elementId)
             return false;
 
         return this.getValue().add(element);
@@ -84,10 +105,11 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      */
     @Override
     public void add(int index, E element) {
-        if (this.getValue().isEmpty())
-            this.elementId = element.getId();
+        byte id = element.getId();
 
-        if (element.getId() != this.getListType())
+        if (this.elementId == 0)
+            this.elementId = id;
+        else if (id != this.elementId)
             return;
 
         this.getValue().add(index, element);
