@@ -19,7 +19,19 @@ public class LongTag extends NumericalTag<Long> {
      * Constructs a long tag with a 0 value.
      */
     public LongTag() {
-        this(0);
+        this(0L);
+    }
+
+    /**
+     * Constructs a long tag with the given primitive {@code long} value.
+     *
+     * <p>Primitive overload - avoids the duplicate autobox the {@link #LongTag(Number)} path
+     * incurred when called from the NBT read dispatcher with a primitive argument.</p>
+     *
+     * @param value the tag's primitive {@code long} value
+     */
+    public LongTag(long value) {
+        super(value);
     }
 
     /**
@@ -28,7 +40,7 @@ public class LongTag extends NumericalTag<Long> {
      * @param value the tag's value, to be converted to {@code long}.
      */
     public LongTag(@NotNull Number value) {
-        super(value.longValue());
+        this(value.longValue());
     }
 
     @Override
