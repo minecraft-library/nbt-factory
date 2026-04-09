@@ -23,12 +23,24 @@ public class IntTag extends NumericalTag<Integer> {
     }
 
     /**
+     * Constructs an int tag with the given primitive {@code int} value.
+     *
+     * <p>Primitive overload - avoids the duplicate autobox the {@link #IntTag(Number)} path
+     * incurred when called from the NBT read dispatcher with a primitive argument.</p>
+     *
+     * @param value the tag's primitive {@code int} value
+     */
+    public IntTag(int value) {
+        super(value);
+    }
+
+    /**
      * Constructs an int tag with a given value.
      *
      * @param value the tag's value, to be converted to {@code int}.
      */
     public IntTag(@NotNull Number value) {
-        super(value.intValue());
+        this(value.intValue());
     }
 
     @Override
