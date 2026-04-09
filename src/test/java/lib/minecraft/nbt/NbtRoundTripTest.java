@@ -421,6 +421,49 @@ public class NbtRoundTripTest {
             CompoundTag output = buffer.readCompoundTag();
             assertThat(output, equalTo(input));
         }
+
+        @Test
+        void modifiedUtf8_edgeCases_roundTrip() throws Exception {
+            // Edge cases that exercise modified-UTF-8 specifically (where it diverges from
+            // standard UTF-8). If the buffer and stream backends ever drift apart on these, the
+            // byte-equal assertion below catches it immediately.
+            CompoundTag input = new CompoundTag();
+            input.put("nul", new StringTag("before\u0000after"));        // U+0000 - two bytes C0 80
+            input.put("emoji", new StringTag("grin \uD83D\uDE00 done")); // U+1F600 - surrogate pair, 2x 3 bytes
+            input.put("mixed", new StringTag("\u0000ascii \u00e9 \uD83D\uDE00"));
+            input.put("basic", new StringTag("all ASCII no NUL"));
+
+            // Factory (buffer) path.
+            byte[] viaFactory = NBT.toByteArray(input);
+            CompoundTag factoryRoundTrip = NBT.fromByteArray(viaFactory);
+            assertThat(factoryRoundTrip, equalTo(input));
+
+            // Stream path.
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (NbtOutputStream nos = new NbtOutputStream(baos)) {
+                nos.writeByte(TagType.COMPOUND.getId());
+                nos.writeUTF("");
+                nos.writeCompoundTag(input);
+            }
+            byte[] viaStream = baos.toByteArray();
+
+            ByteArrayInputStream bais = new ByteArrayInputStream(viaStream);
+            CompoundTag streamRoundTrip;
+            try (NbtInputStream nis = new NbtInputStream(bais)) {
+                assertThat(nis.readByte(), is(TagType.COMPOUND.getId()));
+                nis.readUTF();
+                streamRoundTrip = nis.readCompoundTag();
+            }
+            assertThat(streamRoundTrip, equalTo(input));
+
+            // Byte-for-byte equivalence between the two backends: this is the regression guard
+            // for the modified-UTF-8 standardization. Prior to it, the buffer backend emitted
+            // standard UTF-8 and the stream backend emitted modified UTF-8, so U+0000 and the
+            // emoji produced divergent bytes.
+            assertThat("stream and factory outputs must be byte-identical", viaStream.length, is(viaFactory.length));
+            for (int i = 0; i < viaStream.length; i++)
+                assertThat("byte " + i, viaStream[i], is(viaFactory[i]));
+        }
     }
 
     // ---------------------------------------------------------------------
