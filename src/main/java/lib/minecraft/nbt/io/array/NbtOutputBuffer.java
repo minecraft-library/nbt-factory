@@ -11,13 +11,37 @@ import java.io.OutputStream;
 import java.io.UTFDataFormatException;
 
 /**
- * High-performance NBT serialization that writes directly to a byte buffer.
+ * High-performance NBT serialization that writes directly to a growable {@code byte[]} buffer,
+ * producing Minecraft's canonical big-endian binary wire format.
+ *
+ * <p>Emits Java Edition's binary NBT layout exactly as documented on the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page: big-endian
+ * integer primitives, 2-byte big-endian unsigned length prefix + modified UTF-8 bytes for every
+ * string, 4-byte big-endian length prefix + native-sized payloads for the three typed primitive
+ * arrays, and the standard {@code (type, name, value)} / {@code TAG_End} framing for compounds
+ * and lists inherited unchanged from the {@link NbtOutput} defaults.</p>
  *
  * <p>Byte-level primitive writes delegate to {@link NbtByteCodec} which uses {@code VarHandle}
- * intrinsics against the raw {@code byte[]}. String writes use {@link NbtModifiedUtf8} to match
- * the Mojang wire format byte-for-byte. The {@code writeListTag} and {@code writeCompoundTag}
- * implementations are inherited from {@link NbtOutput} as default methods - this class only
- * overrides what the raw byte-array backing can do faster than the default.</p>
+ * intrinsics against the raw backing array to compile down to a single big-endian store
+ * instruction. String writes take a two-tier path: an ASCII-without-NUL fast path that
+ * single-sizes the buffer and writes {@code strLen} bytes directly, and a
+ * {@link NbtModifiedUtf8} slow path that handles {@code U+0000} and every non-ASCII code unit
+ * correctly. The bulk primitive array writes ({@code writeByteArray}, {@code writeIntArray},
+ * {@code writeLongArray}) are overridden to size the length prefix plus the entire payload in a
+ * single {@code ensureCapacity} call then encode all elements in a tight loop.</p>
+ *
+ * <p>Implements {@link DataOutput} as well as {@link NbtOutput} so callers that already hold a
+ * {@code DataOutput}-shaped interface can consume this directly. {@code writeChar},
+ * {@code writeChars}, and {@code writeBytes} are unsupported because none of them appear in the
+ * NBT wire format.</p>
+ *
+ * <p>Exposes {@link #rawBuffer()} and {@link #size()} for zero-copy handoff to downstream
+ * consumers (compression, network transmission) that accept a {@code (byte[], offset, length)}
+ * triple - avoids the trimming {@code arraycopy} that {@link #toByteArray()} performs.</p>
+ *
+ * @see NbtOutput
+ * @see dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtOutputBuffer implements NbtOutput, DataOutput {
 
