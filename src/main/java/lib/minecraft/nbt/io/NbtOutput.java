@@ -19,6 +19,44 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Writer-side contract shared by every NBT backend in this module - the binary byte-array
+ * backend ({@code NbtOutputBuffer}), the streaming binary backend ({@code NbtOutputStream}), and
+ * the two text-based backends ({@code SnbtSerializer},
+ * {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer}). Mirror of {@link NbtInput}.
+ *
+ * <p>The default structural writes encode Minecraft's canonical wire format verbatim, as
+ * documented on the <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a>
+ * page:</p>
+ *
+ * <ul>
+ *   <li>{@link #writeTag(Tag, int)} dispatches on {@link Tag#getId()} directly against the
+ *       concrete tag types - no intermediate {@code writeXxxTag} wrapper hop, no
+ *       {@code Tag.getValue()} chain through wrapper boxes for the primitive cases.</li>
+ *   <li>{@link #writeListTag(ListTag, int)} emits: 1-byte element type, 4-byte big-endian
+ *       length, then {@code length} elements back through {@code writeTag}.</li>
+ *   <li>{@link #writeCompoundTag(CompoundTag, int)} emits each entry as
+ *       {@code (1-byte type, modified-UTF-8 name, value)} followed by a terminating
+ *       {@code TAG_End} (id 0).</li>
+ *   <li>The three typed primitive arrays ({@code TAG_Byte_Array}, {@code TAG_Int_Array},
+ *       {@code TAG_Long_Array}) are each a 4-byte big-endian length followed by {@code length}
+ *       native-sized payloads. The primitive {@code writeByteArray}/{@code writeIntArray}/
+ *       {@code writeLongArray} methods are backend-specific so byte-array backends can emit
+ *       the length and the raw bytes in a single buffer-sized step.</li>
+ * </ul>
+ *
+ * <p>Binary backends accept the default structural writes unchanged. Text backends
+ * ({@code SnbtSerializer}, {@code NbtJsonSerializer}) override them with format-specific output
+ * (SNBT-suffixed literals and array prefixes, or plain JSON objects and arrays respectively).</p>
+ *
+ * <p><b>Depth tracking.</b> {@code writeListTag} and {@code writeCompoundTag} increment
+ * {@code depth} on entry and throw {@link NbtMaxDepthException} at depth {@code >= 512}, the
+ * same guard the reader uses. This prevents a cyclic or pathologically-nested tag graph from
+ * producing a stack overflow during serialization.</p>
+ *
+ * @see NbtInput
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
+ */
 public interface NbtOutput {
 
     /**
