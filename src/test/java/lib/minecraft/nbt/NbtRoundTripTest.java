@@ -2,8 +2,8 @@ package dev.sbs.minecraftapi.nbt;
 
 import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.nbt.exception.NbtException;
-import dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer;
-import dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer;
+import dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer;
+import dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer;
 import dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream;
 import dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream;
 import dev.sbs.minecraftapi.nbt.tags.TagType;
@@ -29,14 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.aMapWithSize;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**

@@ -1,8 +1,9 @@
-package dev.sbs.minecraftapi.nbt.io.array;
+package dev.sbs.minecraftapi.nbt.io.buffer;
 
 import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtModifiedUtf8;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
+import dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
@@ -40,7 +41,7 @@ import java.io.UTFDataFormatException;
  * triple - avoids the trimming {@code arraycopy} that {@link #toByteArray()} performs.</p>
  *
  * @see NbtOutput
- * @see dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream
+ * @see NbtOutputStream
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtOutputBuffer implements NbtOutput, DataOutput {

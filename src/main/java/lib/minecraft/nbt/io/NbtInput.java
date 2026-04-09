@@ -1,6 +1,8 @@
 package dev.sbs.minecraftapi.nbt.io;
 
+import com.google.gson.stream.JsonToken;
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
+import dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
 import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
@@ -22,7 +24,7 @@ import java.io.IOException;
  * Reader-side contract shared by every NBT backend in this module - the binary byte-array
  * backend ({@code NbtInputBuffer}), the streaming binary backend ({@code NbtInputStream}), and
  * the two text-based backends ({@code SnbtDeserializer},
- * {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer}).
+ * {@link NbtJsonDeserializer}).
  *
  * <p>Minecraft's canonical wire format is framed, big-endian binary NBT: every value is prefixed
  * by a 1-byte type id, compounds carry a stream of {@code (type, name, value)} entries terminated
@@ -37,7 +39,7 @@ import java.io.IOException;
  *       {@code readUTF}, {@code readByteArray}, {@code readIntArray}, {@code readLongArray}
  *       are backend-specific. The byte-array and stream backends decode the big-endian bytes
  *       directly; the SNBT backend parses numeric literals with type suffixes; the JSON backend
- *       infers types from {@link com.google.gson.stream.JsonToken JsonToken} peeks.</li>
+ *       infers types from {@link JsonToken JsonToken} peeks.</li>
  *   <li><b>Structural reads</b> - {@link #readTag(byte, int)}, {@link #readListTag(int)}, and
  *       {@link #readCompoundTag(int)} ship with default implementations encoded against the
  *       binary wire layout so binary backends can accept them unchanged. Text backends override

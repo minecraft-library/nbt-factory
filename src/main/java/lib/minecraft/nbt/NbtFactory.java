@@ -1,8 +1,8 @@
 package dev.sbs.minecraftapi.nbt;
 
 import dev.sbs.minecraftapi.nbt.exception.NbtException;
-import dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer;
-import dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer;
+import dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer;
+import dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer;
 import dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer;
 import dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer;
 import dev.sbs.minecraftapi.nbt.io.snbt.SnbtDeserializer;
@@ -18,19 +18,7 @@ import lombok.Cleanup;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilterInputStream;
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

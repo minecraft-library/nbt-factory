@@ -2,6 +2,7 @@ package dev.sbs.minecraftapi.nbt.io.stream;
 
 import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
+import dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
@@ -35,7 +36,7 @@ import java.io.InputStream;
  * callers can use this directly in either role.</p>
  *
  * @see NbtInput
- * @see dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer
+ * @see NbtInputBuffer
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 @SuppressWarnings("all")

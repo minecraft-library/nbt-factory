@@ -2,6 +2,7 @@ package dev.sbs.minecraftapi.nbt.io.stream;
 
 import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
+import dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
@@ -32,7 +33,7 @@ import java.io.OutputStream;
  * callers can use this directly in either role.</p>
  *
  * @see NbtOutput
- * @see dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer
+ * @see NbtOutputBuffer
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtOutputStream extends DataOutputStream implements NbtOutput {

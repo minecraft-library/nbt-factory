@@ -1,6 +1,8 @@
 package dev.sbs.minecraftapi.nbt.io;
 
 import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
+import dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer;
+import dev.sbs.minecraftapi.nbt.io.snbt.SnbtSerializer;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
 import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
@@ -22,8 +24,8 @@ import java.util.Map;
 /**
  * Writer-side contract shared by every NBT backend in this module - the binary byte-array
  * backend ({@code NbtOutputBuffer}), the streaming binary backend ({@code NbtOutputStream}), and
- * the two text-based backends ({@code SnbtSerializer},
- * {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer}). Mirror of {@link NbtInput}.
+ * the two text-based backends ({@link SnbtSerializer}, {@link NbtJsonSerializer}).
+ * Mirror of {@link NbtInput}.
  *
  * <p>The default structural writes encode Minecraft's canonical wire format verbatim, as
  * documented on the <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a>

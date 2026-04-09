@@ -1,9 +1,10 @@
-package dev.sbs.minecraftapi.nbt.io.array;
+package dev.sbs.minecraftapi.nbt.io.buffer;
 
 import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
 import dev.sbs.minecraftapi.nbt.io.NbtKnownKeys;
 import dev.sbs.minecraftapi.nbt.io.NbtModifiedUtf8;
+import dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -44,7 +45,7 @@ import java.io.IOException;
  * {@code readLine()} are unsupported because neither appears in the NBT wire format.</p>
  *
  * @see NbtInput
- * @see dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream
+ * @see NbtInputStream
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtInputBuffer implements NbtInput, DataInput {

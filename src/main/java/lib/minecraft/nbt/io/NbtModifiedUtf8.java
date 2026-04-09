@@ -14,8 +14,8 @@ import java.nio.charset.StandardCharsets;
  * as a 2-byte big-endian unsigned length prefix followed by {@code length} bytes of modified
  * UTF-8 data, per the <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a>
  * specification. This class owns the inner codec; the length-prefix framing lives in the
- * individual backends ({@link dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer NbtInputBuffer},
- * {@link dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer NbtOutputBuffer}).</p>
+ * individual backends ({@link dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer NbtInputBuffer},
+ * {@link dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer NbtOutputBuffer}).</p>
  *
  * <p>Modified UTF-8 matches standard UTF-8 for code points in {@code [0x0001..0x007F]}. Two
  * differences from standard UTF-8:</p>
