@@ -1,5 +1,6 @@
 package dev.sbs.minecraftapi.nbt.io;
 
+import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
 import dev.sbs.minecraftapi.nbt.tags.Tag;
 import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
 import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
@@ -16,6 +17,7 @@ import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Map;
 
 public interface NbtOutput {
 
@@ -70,12 +72,47 @@ public interface NbtOutput {
         this.writeListTag(tag, 0);
     }
 
-    void writeListTag(@NotNull ListTag<Tag<?>> tag, int depth) throws IOException;
+    /**
+     * Writes an NBT {@code TAG_List} payload: element type byte, big-endian length, then each
+     * element through {@link #writeTag(Tag, int)}.
+     *
+     * <p>Binary NBT backends ({@code NbtOutputBuffer}, {@code NbtOutputStream}) share this
+     * implementation. SNBT and other text-based backends override with format-specific output.</p>
+     */
+    default void writeListTag(@NotNull ListTag<Tag<?>> tag, int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
+        this.writeByte(tag.getListType());
+        this.writeInt(tag.size());
+
+        for (Tag<?> element : tag)
+            this.writeTag(element, depth);
+    }
 
     default void writeCompoundTag(@NotNull CompoundTag tag) throws IOException {
         this.writeCompoundTag(tag, 0);
     }
 
-    void writeCompoundTag(@NotNull CompoundTag tag, int depth) throws IOException;
+    /**
+     * Writes an NBT {@code TAG_Compound} payload: each {@code (type, name, value)} entry followed
+     * by a {@code TAG_End} (id 0) terminator.
+     *
+     * <p>Binary NBT backends share this implementation. SNBT and other text-based backends override
+     * with format-specific output.</p>
+     */
+    default void writeCompoundTag(@NotNull CompoundTag tag, int depth) throws IOException {
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
+        for (Map.Entry<String, Tag<?>> entry : tag) {
+            Tag<?> value = entry.getValue();
+            this.writeByte(value.getId());
+            this.writeUTF(entry.getKey());
+            this.writeTag(value, depth);
+        }
+
+        this.writeByte(0);
+    }
 
 }
