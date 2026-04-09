@@ -18,6 +18,47 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * Reader-side contract shared by every NBT backend in this module - the binary byte-array
+ * backend ({@code NbtInputBuffer}), the streaming binary backend ({@code NbtInputStream}), and
+ * the two text-based backends ({@code SnbtDeserializer},
+ * {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer}).
+ *
+ * <p>Minecraft's canonical wire format is framed, big-endian binary NBT: every value is prefixed
+ * by a 1-byte type id, compounds carry a stream of {@code (type, name, value)} entries terminated
+ * by a {@code TAG_End} (id 0), and lists carry a 1-byte element type plus a big-endian length
+ * followed by that many elements of the declared type. See the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> for the full
+ * specification. This interface splits the read path into two layers so every backend only has
+ * to implement what is native to its input source:</p>
+ *
+ * <ul>
+ *   <li><b>Primitive reads</b> - {@code readByte}, {@code readShort}, ..., {@code readDouble},
+ *       {@code readUTF}, {@code readByteArray}, {@code readIntArray}, {@code readLongArray}
+ *       are backend-specific. The byte-array and stream backends decode the big-endian bytes
+ *       directly; the SNBT backend parses numeric literals with type suffixes; the JSON backend
+ *       infers types from {@link com.google.gson.stream.JsonToken JsonToken} peeks.</li>
+ *   <li><b>Structural reads</b> - {@link #readTag(byte, int)}, {@link #readListTag(int)}, and
+ *       {@link #readCompoundTag(int)} ship with default implementations encoded against the
+ *       binary wire layout so binary backends can accept them unchanged. Text backends override
+ *       the structural methods because they have no inbound type byte - SNBT uses character
+ *       lookahead, JSON uses {@code JsonToken} peek.</li>
+ * </ul>
+ *
+ * <p>{@link #readTag(byte, int)} is the type-dispatched reader used when the element type is
+ * already known from the framing (a list element type, a compound entry type, or a caller-
+ * supplied id). Each branch constructs the concrete {@code Tag} subclass in place with the
+ * primitive value, avoiding an intermediate boxing step on the hot deserialization path.</p>
+ *
+ * <p><b>Depth tracking.</b> {@code readListTag} and {@code readCompoundTag} increment
+ * {@code depth} on entry and throw {@link NbtMaxDepthException} at depth {@code >= 512}. This
+ * prevents adversarial inputs from producing stack-overflow-sized trees during deserialization;
+ * the same guard fires on every backend, including the two text backends that override the
+ * structural methods.</p>
+ *
+ * @see NbtOutput
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
+ */
 public interface NbtInput {
 
     /**
