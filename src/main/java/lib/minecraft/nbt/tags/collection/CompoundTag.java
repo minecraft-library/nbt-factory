@@ -74,7 +74,10 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     @Override
     @SuppressWarnings("all")
     public final @NotNull CompoundTag clone() {
-        return new CompoundTag(new LinkedHashMap<>(this.getValue()));
+        Map<String, Tag<?>> source = this.getValue();
+        LinkedHashMap<String, Tag<?>> copy = LinkedHashMap.newLinkedHashMap(source.size());
+        copy.putAll(source);
+        return new CompoundTag(copy);
     }
 
     /**
