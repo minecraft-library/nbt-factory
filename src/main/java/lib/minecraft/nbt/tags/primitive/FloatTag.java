@@ -20,7 +20,21 @@ public class FloatTag extends NumericalTag<Float> {
      * Constructs a float tag with a 0 value.
      */
     public FloatTag() {
-        this(0);
+        this(0.0f);
+    }
+
+    /**
+     * Constructs a float tag with the given primitive {@code float} value.
+     *
+     * <p>Primitive overload - avoids the duplicate autobox the {@link #FloatTag(Number)} path
+     * incurred when called from the NBT read dispatcher with a primitive argument. {@code Float}
+     * has no wrapper cache, so every call through the {@code Number} path previously allocated
+     * two {@code Float} objects per tag read.</p>
+     *
+     * @param value the tag's primitive {@code float} value
+     */
+    public FloatTag(float value) {
+        super(value);
     }
 
     /**
@@ -29,7 +43,7 @@ public class FloatTag extends NumericalTag<Float> {
      * @param value the tag's value, to be converted to {@code float}.
      */
     public FloatTag(@NotNull Number value) {
-        super(value.floatValue());
+        this(value.floatValue());
     }
 
     @Override
