@@ -7,14 +7,24 @@ import java.nio.ByteOrder;
 /**
  * Static codec for big-endian primitive reads and writes against a raw {@code byte[]}.
  *
+ * <p>Java Edition NBT is always big-endian on the wire, so every primitive access in the
+ * byte-array backends ({@link dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer NbtInputBuffer}
+ * and {@link dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer NbtOutputBuffer}) flows through
+ * this class. The bulk primitive-array reads on the streaming backends
+ * ({@link dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream NbtInputStream},
+ * {@link dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream NbtOutputStream}) also use it for
+ * the scratch-buffer decode / encode step. See the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> for the on-wire
+ * layout each method implements.</p>
+ *
  * <p>Backed by {@link MethodHandles#byteArrayViewVarHandle} which the JIT intrinsifies to a single
  * machine instruction (typically {@code MOVBE} on x86-64, equivalent on ARM64). There is no
  * alignment requirement and no endianness branch - the VarHandle carries the big-endian contract
  * inside its implementation. Works identically on Linux and Windows, JDK 9+.</p>
  *
- * <p>All methods are package-final static utilities - no per-call allocation, no instance state.
- * The JIT inlines them across the NBT I/O hot path so the generated code is equivalent to writing
- * the bit shifting directly at each call site, but the source-level duplication is gone.</p>
+ * <p>All methods are static utilities - no per-call allocation, no instance state. The JIT
+ * inlines them across the NBT I/O hot path so the generated code is equivalent to writing the
+ * bit shifting directly at each call site, but the source-level duplication is gone.</p>
  */
 public final class NbtByteCodec {
 
