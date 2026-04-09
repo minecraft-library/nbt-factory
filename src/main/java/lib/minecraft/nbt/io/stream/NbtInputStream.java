@@ -10,17 +10,33 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * NBT deserialization that reads from an input stream.
+ * NBT deserialization that reads Minecraft's canonical big-endian binary wire format from an
+ * arbitrary {@link InputStream} - suitable for files, network sockets, and GZIP-wrapped payloads
+ * alike.
  *
- * <p>Wraps the provided stream in a {@link BufferedInputStream} unless it is already buffered, so
- * callers passing a raw {@code FileInputStream}, {@code GZIPInputStream}, or socket stream do not
- * pay per-byte syscall overhead through {@link DataInputStream}.</p>
+ * <p>Decodes Java Edition's binary NBT layout exactly as documented on the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page. Primitive
+ * byte-level reads and the modified-UTF-8 string decoder are inherited unchanged from
+ * {@link DataInputStream}, which natively speaks big-endian and consumes the 2-byte length
+ * prefix + modified-UTF-8 framing that NBT uses for every string. {@code readListTag} and
+ * {@code readCompoundTag} are inherited from the {@link NbtInput} defaults, which encode the
+ * {@code (type, name, value)} + {@code TAG_End} compound framing and the
+ * {@code element-type + big-endian length} list framing.</p>
  *
- * <p>Modified UTF-8 and the primitive byte-level reads are inherited from {@link DataInputStream}
- * unchanged. {@code readListTag} and {@code readCompoundTag} are inherited from {@link NbtInput}
- * as default methods - this class only overrides the bulk primitive array reads where a scratch
- * buffer plus {@link NbtByteCodec} is faster than per-element {@code readInt}/{@code readLong}
- * method calls through {@link DataInputStream}.</p>
+ * <p>The constructor wraps the provided stream in a {@link BufferedInputStream} unless it is
+ * already buffered, so callers passing a raw {@code FileInputStream}, {@code GZIPInputStream},
+ * or socket stream do not pay per-byte syscall overhead through {@code DataInputStream}. The
+ * bulk primitive array reads ({@code readByteArray}, {@code readIntArray}, {@code readLongArray})
+ * are overridden to pull all element bytes in one {@code readFully} call then decode them
+ * in-memory through {@link NbtByteCodec}, eliminating the N method-call chain the
+ * {@code DataInputStream.readInt}/{@code readLong} defaults would take for big arrays.</p>
+ *
+ * <p>Implements {@link NbtInput} on top of {@link DataInputStream} rather than wrapping it so
+ * callers can use this directly in either role.</p>
+ *
+ * @see NbtInput
+ * @see dev.sbs.minecraftapi.nbt.io.array.NbtInputBuffer
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 @SuppressWarnings("all")
 public class NbtInputStream extends DataInputStream implements NbtInput {
