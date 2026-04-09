@@ -32,10 +32,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.aMapWithSize;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Cross-format round-trip and interweaving tests covering every NBT tag type across:
@@ -44,7 +46,7 @@ import static org.hamcrest.Matchers.nullValue;
  *   <li>Binary NBT via {@link NbtOutputStream}/{@link NbtInputStream} (streaming)</li>
  *   <li>{@link Compression#GZIP}-compressed binary NBT</li>
  *   <li>SNBT via {@link NbtFactory#toSnbt(CompoundTag)}/{@link NbtFactory#fromSnbt(String)}</li>
- *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} (write-only - JSON deserializer is not implemented)</li>
+ *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer} for the round-trip contract)</li>
  * </ul>
  *
  * <p>Each fixture covers different aspects of the format: primitives, edge values, strings,
@@ -595,11 +597,71 @@ public class NbtRoundTripTest {
     }
 
     // ---------------------------------------------------------------------
-    // JSON write-only sanity checks (no JSON deserializer in this library)
+    // JSON serialization and deserialization (lossy cascade per the Minecraft Wiki)
     // ---------------------------------------------------------------------
 
+    /**
+     * Fixture curated so every value survives the wiki's "Conversion from JSON" cascade. Values
+     * are picked outside every narrower numeric range, floats use dyadic rationals that are exact
+     * in both {@code float} and {@code double}, and typed arrays keep their native form because
+     * the read side always promotes homogeneous byte/int/long arrays back to the matching array
+     * tag.
+     */
+    private static CompoundTag jsonCascadeSafeFixture() {
+        CompoundTag compound = new CompoundTag();
+
+        // Byte: value outside byte range would widen, so stay at the byte edges.
+        compound.put("byte_max", new ByteTag(Byte.MAX_VALUE));
+        compound.put("byte_neg", new ByteTag((byte) -1));
+
+        // Short: needs a value outside [-128, 127] to avoid being narrowed to a byte on read.
+        compound.put("short_big", new ShortTag((short) 1000));
+        compound.put("short_min", new ShortTag(Short.MIN_VALUE));
+
+        // Int: needs a value outside [-32768, 32767] to avoid being narrowed to a short on read.
+        compound.put("int_big", new IntTag(100_000));
+        compound.put("int_max", new IntTag(Integer.MAX_VALUE));
+
+        // Long: needs a value outside the int range to avoid being narrowed to an int on read.
+        compound.put("long_big", new LongTag(5_000_000_000L));
+        compound.put("long_min", new LongTag(Long.MIN_VALUE));
+
+        // Float: dyadic rationals are exact in both float and double, so the read side keeps them
+        // as floats (Float.parseFloat(text) == Double.parseDouble(text)). Whole-number floats are
+        // deliberately avoided because the wiki cascade evaluates them against the integer ranges
+        // first and would narrow them to ByteTag / ShortTag / IntTag.
+        compound.put("float_half", new FloatTag(0.5f));
+        compound.put("float_neg_quarter", new FloatTag(-0.25f));
+        compound.put("float_big", new FloatTag(16384.5f));
+
+        // Double: values that cannot be stored exactly in float stay as double on the read side.
+        compound.put("double_tenth", new DoubleTag(0.1));
+        compound.put("double_neg_third", new DoubleTag(-1.0 / 3.0));
+
+        // Strings: round-trip cleanly as long as the JSON escape rules cover the content.
+        compound.put("str_empty", new StringTag(""));
+        compound.put("str_ascii", new StringTag("hello world"));
+        compound.put("str_escapes", new StringTag("has \"quotes\" and \\backslash"));
+
+        // Typed arrays: homogeneous children are always promoted back to the matching array tag.
+        compound.put("byte_arr", new ByteArrayTag((byte) 1, (byte) -1, (byte) 127));
+        compound.put("int_arr", new IntArrayTag(100_000, 200_000, 300_000));
+        compound.put("long_arr", new LongArrayTag(5_000_000_000L, 6_000_000_000L));
+
+        // Empty list - becomes an empty ListTag with no fixed element type on read.
+        compound.put("empty_list", new ListTag<>());
+
+        // Nested compound to exercise the recursive path.
+        CompoundTag nested = new CompoundTag();
+        nested.put("label", new StringTag("child"));
+        nested.put("n", new IntTag(65_000));
+        compound.put("nested", nested);
+
+        return compound;
+    }
+
     @Nested
-    @DisplayName("JSON serialization (write only)")
+    @DisplayName("JSON serialization and deserialization")
     class JsonSerialization {
 
         @Test
@@ -620,6 +682,168 @@ public class NbtRoundTripTest {
             assertThat(json.contains("arrays"), is(true));
             assertThat(json.contains("byte_large"), is(true));
             assertThat(json.contains("level"), is(true));
+        }
+
+        // ---------------- round-trip on the cascade-safe fixture ----------------
+
+        @Test
+        void cascadeSafeFixture_roundTrips() throws Exception {
+            CompoundTag input = jsonCascadeSafeFixture();
+            String json = NBT.toJson(input);
+            CompoundTag output = NBT.fromJson(json);
+            assertThat(output, equalTo(input));
+        }
+
+        // ---------------- number cascade ----------------
+
+        @Test
+        void number_byteRange_asByteTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":0}");
+            assertThat(c.get("v"), instanceOf(ByteTag.class));
+            assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 0));
+        }
+
+        @Test
+        void number_shortRange_asShortTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":200}");
+            assertThat(c.get("v"), instanceOf(ShortTag.class));
+            assertThat(((ShortTag) c.get("v")).getValue(), is((short) 200));
+        }
+
+        @Test
+        void number_intRange_asIntTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":40000}");
+            assertThat(c.get("v"), instanceOf(IntTag.class));
+            assertThat(((IntTag) c.get("v")).getValue(), is(40000));
+        }
+
+        @Test
+        void number_longRange_asLongTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":3000000000}");
+            assertThat(c.get("v"), instanceOf(LongTag.class));
+            assertThat(((LongTag) c.get("v")).getValue(), is(3_000_000_000L));
+        }
+
+        @Test
+        void number_exactFloat_asFloatTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":0.5}");
+            assertThat(c.get("v"), instanceOf(FloatTag.class));
+            assertThat(((FloatTag) c.get("v")).getValue(), is(0.5f));
+        }
+
+        @Test
+        void number_inexactFloat_asDoubleTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":0.1}");
+            assertThat(c.get("v"), instanceOf(DoubleTag.class));
+            assertThat(((DoubleTag) c.get("v")).getValue(), is(0.1));
+        }
+
+        @Test
+        void number_scientificInByteRange_asByteTag() throws Exception {
+            // Wiki example: 1.27e2 == 127, still a byte.
+            CompoundTag c = NBT.fromJson("{\"v\":1.27e2}");
+            assertThat(c.get("v"), instanceOf(ByteTag.class));
+            assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 127));
+        }
+
+        @Test
+        void number_integerValuedDouble_asIntTag() throws Exception {
+            // Wiki example: 12345678.0 is in int range, should become IntTag.
+            CompoundTag c = NBT.fromJson("{\"v\":12345678.0}");
+            assertThat(c.get("v"), instanceOf(IntTag.class));
+            assertThat(((IntTag) c.get("v")).getValue(), is(12345678));
+        }
+
+        // ---------------- booleans, strings ----------------
+
+        @Test
+        void booleanTrue_asByteTagOne() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":true}");
+            assertThat(c.get("v"), instanceOf(ByteTag.class));
+            assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 1));
+        }
+
+        @Test
+        void booleanFalse_asByteTagZero() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":false}");
+            assertThat(c.get("v"), instanceOf(ByteTag.class));
+            assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 0));
+        }
+
+        @Test
+        void string_asStringTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":\"hi\"}");
+            assertThat(c.get("v"), instanceOf(StringTag.class));
+            assertThat(((StringTag) c.get("v")).getValue(), is("hi"));
+        }
+
+        // ---------------- typed arrays and lists ----------------
+
+        @Test
+        void homogeneousBytes_asByteArrayTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":[1,2,3]}");
+            assertThat(c.get("v"), instanceOf(ByteArrayTag.class));
+            assertThat(((ByteArrayTag) c.get("v")).getValue(), is(new byte[]{1, 2, 3}));
+        }
+
+        @Test
+        void homogeneousInts_asIntArrayTag() throws Exception {
+            // All elements must be outside short range [-32768, 32767] so every one of them
+            // resolves to an IntTag. A small value like 1 would narrow to ByteTag and make the
+            // array heterogeneous.
+            CompoundTag c = NBT.fromJson("{\"v\":[40000,50000,60000]}");
+            assertThat(c.get("v"), instanceOf(IntArrayTag.class));
+            assertThat(((IntArrayTag) c.get("v")).getValue(), is(new int[]{40000, 50000, 60000}));
+        }
+
+        @Test
+        void homogeneousLongs_asLongArrayTag() throws Exception {
+            // All elements must be outside int range so every one of them resolves to a LongTag.
+            CompoundTag c = NBT.fromJson("{\"v\":[3000000000,4000000000,5000000000]}");
+            assertThat(c.get("v"), instanceOf(LongArrayTag.class));
+            assertThat(((LongArrayTag) c.get("v")).getValue(), is(new long[]{3_000_000_000L, 4_000_000_000L, 5_000_000_000L}));
+        }
+
+        @Test
+        void homogeneousStrings_asListTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":[\"a\",\"b\"]}");
+            assertThat(c.get("v"), instanceOf(ListTag.class));
+            ListTag<?> list = (ListTag<?>) c.get("v");
+            assertThat(list, hasSize(2));
+            assertThat(list.get(0), instanceOf(StringTag.class));
+            assertThat(((StringTag) list.get(0)).getValue(), is("a"));
+        }
+
+        @Test
+        void emptyArray_asEmptyListTag() throws Exception {
+            CompoundTag c = NBT.fromJson("{\"v\":[]}");
+            assertThat(c.get("v"), instanceOf(ListTag.class));
+            assertThat((ListTag<?>) c.get("v"), hasSize(0));
+        }
+
+        // ---------------- errors ----------------
+
+        @Test
+        void heterogeneousArray_throws() {
+            // 1 would be ByteTag, 40000 would be IntTag - mixed types.
+            assertThrows(NbtException.class, () -> NBT.fromJson("{\"v\":[1,40000]}"));
+        }
+
+        @Test
+        void jsonNull_throws() {
+            assertThrows(NbtException.class, () -> NBT.fromJson("{\"v\":null}"));
+        }
+
+        @Test
+        void deepNesting_throws() {
+            StringBuilder json = new StringBuilder();
+            int depth = 520;
+            for (int i = 0; i < depth; i++)
+                json.append("{\"c\":");
+            json.append("1");
+            for (int i = 0; i < depth; i++)
+                json.append("}");
+            assertThrows(NbtException.class, () -> NBT.fromJson(json.toString()));
         }
     }
 
