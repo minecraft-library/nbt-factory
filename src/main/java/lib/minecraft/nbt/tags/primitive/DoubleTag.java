@@ -20,7 +20,21 @@ public class DoubleTag extends NumericalTag<Double> {
      * Constructs a double tag with a 0 value.
      */
     public DoubleTag() {
-        this(0);
+        this(0.0d);
+    }
+
+    /**
+     * Constructs a double tag with the given primitive {@code double} value.
+     *
+     * <p>Primitive overload - avoids the duplicate autobox the {@link #DoubleTag(Number)} path
+     * incurred when called from the NBT read dispatcher with a primitive argument. {@code Double}
+     * has no wrapper cache, so every call through the {@code Number} path previously allocated
+     * two {@code Double} objects per tag read.</p>
+     *
+     * @param value the tag's primitive {@code double} value
+     */
+    public DoubleTag(double value) {
+        super(value);
     }
 
     /**
@@ -29,7 +43,7 @@ public class DoubleTag extends NumericalTag<Double> {
      * @param value the tag's value, to be converted to {@code double}.
      */
     public DoubleTag(@NotNull Number value) {
-        super(value.doubleValue());
+        this(value.doubleValue());
     }
 
     @Override
