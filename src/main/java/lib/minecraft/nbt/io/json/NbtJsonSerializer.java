@@ -15,7 +15,22 @@ import java.util.Map;
 /**
  * NBT JSON serialization that writes directly to a JSON writer.
  *
- * @apiNote Destroys tag type information, making deserialization unreliable, and is thus unimplemented.
+ * <p>Produces plain JSON with no SNBT-style type suffixes or array headers: numbers are emitted
+ * as raw JSON numbers, {@code TAG_List} and the typed primitive arrays ({@code TAG_Byte_Array},
+ * {@code TAG_Int_Array}, {@code TAG_Long_Array}) all serialize to plain JSON arrays, and
+ * {@code TAG_Compound} serializes to a JSON object. Booleans are emitted as the numeric literals
+ * {@code 1} / {@code 0} to match the on-disk {@link dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag ByteTag}
+ * representation.</p>
+ *
+ * <p>This representation is convenient for tools that expect ordinary JSON, but it does not
+ * preserve NBT tag type information. Round-tripping through {@link NbtJsonDeserializer}
+ * reconstructs types using the Minecraft Wiki's "Conversion from JSON" cascade, so a
+ * {@code ShortTag(100)} will come back as a {@code ByteTag(100)}, a {@code ListTag<IntTag>} of
+ * small values may come back as a {@code ByteArrayTag}, and floats that cannot be stored
+ * exactly in {@code float} may come back as a {@code DoubleTag}. Use the binary or SNBT
+ * backends when lossless round-trip is required.</p>
+ *
+ * @see NbtJsonDeserializer
  */
 public class NbtJsonSerializer extends JsonWriter implements NbtOutput {
 
