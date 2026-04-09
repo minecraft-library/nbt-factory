@@ -9,13 +9,31 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * NBT serialization that writes directly to an output stream.
+ * NBT serialization that writes Minecraft's canonical big-endian binary wire format directly to
+ * an arbitrary {@link OutputStream} - suitable for files, network sockets, and
+ * compression-wrapping output streams alike.
  *
- * <p>Modified UTF-8 and the primitive byte-level writes are inherited from {@link DataOutputStream}
- * unchanged. {@code writeListTag} and {@code writeCompoundTag} are inherited from {@link NbtOutput}
- * as default methods - this class only overrides the bulk primitive array writes where a scratch
- * buffer plus {@link NbtByteCodec} is faster than per-element {@code writeInt}/{@code writeLong}
- * method calls through {@link DataOutputStream}.</p>
+ * <p>Emits Java Edition's binary NBT layout exactly as documented on the
+ * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page. Primitive
+ * byte-level writes and the modified-UTF-8 string encoder are inherited unchanged from
+ * {@link DataOutputStream}, which natively produces the big-endian bytes and the 2-byte length
+ * prefix + modified-UTF-8 framing NBT uses for every string. {@code writeListTag} and
+ * {@code writeCompoundTag} are inherited from the {@link NbtOutput} defaults so the
+ * {@code (type, name, value)} + {@code TAG_End} compound framing and the
+ * {@code element-type + big-endian length} list framing come in for free.</p>
+ *
+ * <p>The bulk primitive array writes ({@code writeByteArray}, {@code writeIntArray},
+ * {@code writeLongArray}) are overridden to encode the whole payload into a scratch buffer
+ * via {@link NbtByteCodec} and push it through with a single {@code write} call, skipping the
+ * per-element method-call chain the {@code DataOutputStream.writeInt}/{@code writeLong}
+ * defaults would take for big arrays.</p>
+ *
+ * <p>Implements {@link NbtOutput} on top of {@link DataOutputStream} rather than wrapping it so
+ * callers can use this directly in either role.</p>
+ *
+ * @see NbtOutput
+ * @see dev.sbs.minecraftapi.nbt.io.array.NbtOutputBuffer
+ * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
