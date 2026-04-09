@@ -1,19 +1,23 @@
 package dev.sbs.minecraftapi.nbt.io.array;
 
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
+import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtInput;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
+import dev.sbs.minecraftapi.nbt.io.NbtKnownKeys;
+import dev.sbs.minecraftapi.nbt.io.NbtModifiedUtf8;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * High-performance NBT deserialization that reads directly from a byte buffer.
+ *
+ * <p>Byte-level primitive reads delegate to {@link NbtByteCodec} which uses {@code VarHandle}
+ * intrinsics against the raw {@code byte[]}. String reads use {@link NbtModifiedUtf8} to match
+ * the Mojang wire format byte-for-byte. The {@code readListTag} and {@code readCompoundTag}
+ * implementations are inherited from {@link NbtInput} as default methods - this class only
+ * overrides what its byte-array backing can do faster than the default.</p>
  */
 public class NbtInputBuffer implements NbtInput, DataInput {
 
@@ -25,7 +29,10 @@ public class NbtInputBuffer implements NbtInput, DataInput {
         this.position = 0;
     }
 
-    // Optimized DataInput implementation
+    // ------------------------------------------------------------------
+    // DataInput primitives
+    // ------------------------------------------------------------------
+
     @Override
     public void readFully(byte[] b) throws IOException {
         this.readFully(b, 0, b.length);
@@ -35,10 +42,10 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     public void readFully(byte[] b, int off, int len) throws IOException {
         if (len < 0)
             throw new IndexOutOfBoundsException();
-        
+
         if (this.position + len > this.buffer.length)
             throw new EOFException();
-        
+
         System.arraycopy(this.buffer, this.position, b, off, len);
         this.position += len;
     }
@@ -62,7 +69,7 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     public byte readByte() throws IOException {
         if (this.position >= this.buffer.length)
             throw new EOFException();
-        
+
         return this.buffer[this.position++];
     }
 
@@ -70,7 +77,7 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     public int readUnsignedByte() throws IOException {
         if (this.position >= this.buffer.length)
             throw new EOFException();
-        
+
         return this.buffer[this.position++] & 0xFF;
     }
 
@@ -78,18 +85,20 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     public short readShort() throws IOException {
         if (this.position + 2 > this.buffer.length)
             throw new EOFException();
-        
-        return (short) (((this.buffer[this.position++] & 0xFF) << 8) |
-                        (this.buffer[this.position++] & 0xFF));
+
+        short v = NbtByteCodec.getShort(this.buffer, this.position);
+        this.position += 2;
+        return v;
     }
 
     @Override
     public int readUnsignedShort() throws IOException {
         if (this.position + 2 > this.buffer.length)
             throw new EOFException();
-        
-        return ((this.buffer[this.position++] & 0xFF) << 8) |
-               (this.buffer[this.position++] & 0xFF);
+
+        int v = NbtByteCodec.getUnsignedShort(this.buffer, this.position);
+        this.position += 2;
+        return v;
     }
 
     @Override
@@ -101,36 +110,30 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     public int readInt() throws IOException {
         if (this.position + 4 > this.buffer.length)
             throw new EOFException();
-        
-        return ((this.buffer[this.position++] & 0xFF) << 24) |
-               ((this.buffer[this.position++] & 0xFF) << 16) |
-               ((this.buffer[this.position++] & 0xFF) << 8) |
-               (this.buffer[this.position++] & 0xFF);
+
+        int v = NbtByteCodec.getInt(this.buffer, this.position);
+        this.position += 4;
+        return v;
     }
 
     @Override
     public long readLong() throws IOException {
         if (this.position + 8 > this.buffer.length)
             throw new EOFException();
-        
-        return ((long)(this.buffer[this.position++] & 0xFF) << 56) |
-               ((long)(this.buffer[this.position++] & 0xFF) << 48) |
-               ((long)(this.buffer[this.position++] & 0xFF) << 40) |
-               ((long)(this.buffer[this.position++] & 0xFF) << 32) |
-               ((long)(this.buffer[this.position++] & 0xFF) << 24) |
-               ((long)(this.buffer[this.position++] & 0xFF) << 16) |
-               ((long)(this.buffer[this.position++] & 0xFF) << 8) |
-               ((long)(this.buffer[this.position++] & 0xFF));
+
+        long v = NbtByteCodec.getLong(this.buffer, this.position);
+        this.position += 8;
+        return v;
     }
 
     @Override
     public float readFloat() throws IOException {
-        return Float.intBitsToFloat(readInt());
+        return Float.intBitsToFloat(this.readInt());
     }
 
     @Override
     public double readDouble() throws IOException {
-        return Double.longBitsToDouble(readLong());
+        return Double.longBitsToDouble(this.readLong());
     }
 
     @Override
@@ -141,15 +144,28 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     @Override
     public @NotNull String readUTF() throws IOException {
         int utfLen = this.readUnsignedShort();
+
         if (this.position + utfLen > this.buffer.length)
             throw new EOFException();
 
-        // String(byte[], UTF_8) has its own ASCII fast path; pre-scanning was redundant.
-        String result = new String(this.buffer, this.position, utfLen, StandardCharsets.UTF_8);
+        // Well-known key match: returns a shared canonical String for common NBT keys without
+        // allocating a new one. High hit rate on repeated compound-key reads (SkyBlock auction).
+        String known = NbtKnownKeys.match(this.buffer, this.position, utfLen);
+
+        if (known != null) {
+            this.position += utfLen;
+            return known;
+        }
+
+        String result = NbtModifiedUtf8.decode(this.buffer, this.position, utfLen);
         this.position += utfLen;
         return result;
     }
-    
+
+    // ------------------------------------------------------------------
+    // NBT bulk primitive arrays (overrides for raw byte-array speed)
+    // ------------------------------------------------------------------
+
     @Override
     public byte @NotNull [] readByteArray() throws IOException {
         int length = this.readInt();
@@ -161,54 +177,43 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     @Override
     public int @NotNull [] readIntArray() throws IOException {
         int length = this.readInt();
+
+        // Single upfront bounds check using long arithmetic to avoid overflow on a pathological length.
+        if (this.position + ((long) length << 2) > this.buffer.length)
+            throw new EOFException();
+
         int[] data = new int[length];
+        byte[] buf = this.buffer;
+        int p = this.position;
 
-        for (int i = 0; i < length; i++)
-            data[i] = this.readInt();
+        for (int i = 0; i < length; i++) {
+            data[i] = NbtByteCodec.getInt(buf, p);
+            p += 4;
+        }
 
+        this.position = p;
         return data;
     }
 
     @Override
     public long @NotNull [] readLongArray() throws IOException {
         int length = this.readInt();
+
+        // Single upfront bounds check using long arithmetic to avoid overflow on a pathological length.
+        if (this.position + ((long) length << 3) > this.buffer.length)
+            throw new EOFException();
+
         long[] data = new long[length];
+        byte[] buf = this.buffer;
+        int p = this.position;
 
-        for (int i = 0; i < length; i++)
-            data[i] = this.readLong();
-
-        return data;
-    }
-
-    @Override
-    public @NotNull ListTag<?> readListTag(int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        int listType = readUnsignedByte();
-        int length = Math.max(0, readInt());
-        ListTag<Tag<?>> listTag = new ListTag<>(length);
-
-        for (int i = 0; i < length; i++)
-            listTag.add(readTag((byte) listType, depth));
-
-        return listTag;
-    }
-
-    @Override
-    public @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        CompoundTag compoundTag = new CompoundTag();
-
-        for (int id = readUnsignedByte(); id != 0; id = readUnsignedByte()) {
-            String key = readUTF();
-            Tag<?> tag = readTag((byte) id, depth);
-            compoundTag.put(key, tag);
+        for (int i = 0; i < length; i++) {
+            data[i] = NbtByteCodec.getLong(buf, p);
+            p += 8;
         }
 
-        return compoundTag;
+        this.position = p;
+        return data;
     }
 
 }
