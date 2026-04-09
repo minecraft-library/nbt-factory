@@ -1,19 +1,21 @@
 package dev.sbs.minecraftapi.nbt.io.stream;
 
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
+import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
 import dev.sbs.minecraftapi.nbt.io.NbtOutput;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
 
 /**
  * NBT serialization that writes directly to an output stream.
+ *
+ * <p>Modified UTF-8 and the primitive byte-level writes are inherited from {@link DataOutputStream}
+ * unchanged. {@code writeListTag} and {@code writeCompoundTag} are inherited from {@link NbtOutput}
+ * as default methods - this class only overrides the bulk primitive array writes where a scratch
+ * buffer plus {@link NbtByteCodec} is faster than per-element {@code writeInt}/{@code writeLong}
+ * method calls through {@link DataOutputStream}.</p>
  */
 public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
@@ -29,45 +31,35 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
     @Override
     public void writeIntArray(int @NotNull [] data) throws IOException {
-        this.writeInt(data.length);
+        int length = data.length;
+        this.writeInt(length);
 
-        for (int value : data)
-            this.writeInt(value);
+        // Encode the whole array into a scratch buffer, then push it through with one write() call.
+        byte[] scratch = new byte[length << 2];
+        int p = 0;
+
+        for (int i = 0; i < length; i++) {
+            NbtByteCodec.putInt(scratch, p, data[i]);
+            p += 4;
+        }
+
+        this.write(scratch);
     }
 
     @Override
     public void writeLongArray(long @NotNull [] data) throws IOException {
-        this.writeInt(data.length);
+        int length = data.length;
+        this.writeInt(length);
 
-        for (long value : data)
-            this.writeLong(value);
-    }
+        byte[] scratch = new byte[length << 3];
+        int p = 0;
 
-    @Override
-    public void writeListTag(@NotNull ListTag<Tag<?>> tag, int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        this.writeByte(tag.getListType());
-        this.writeInt(tag.size());
-
-        for (Tag<?> element : tag)
-            this.writeTag(element, depth);
-    }
-
-    @Override
-    public void writeCompoundTag(@NotNull CompoundTag tag, int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        for (Map.Entry<String, Tag<?>> entry : tag) {
-            Tag<?> value = entry.getValue();
-            this.writeByte(value.getId());
-            this.writeUTF(entry.getKey());
-            this.writeTag(value, depth);
+        for (int i = 0; i < length; i++) {
+            NbtByteCodec.putLong(scratch, p, data[i]);
+            p += 8;
         }
 
-        this.writeByte(0);
+        this.write(scratch);
     }
 
 }
