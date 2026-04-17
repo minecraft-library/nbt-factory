@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.nbt.io;
+package lib.minecraft.nbt.io;
 
 import lombok.experimental.UtilityClass;
 
@@ -10,11 +10,11 @@ import java.nio.ByteOrder;
  * Static codec for big-endian primitive reads and writes against a raw {@code byte[]}.
  *
  * <p>Java Edition NBT is always big-endian on the wire, so every primitive access in the
- * byte-array backends ({@link dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer NbtInputBuffer}
- * and {@link dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer NbtOutputBuffer}) flows through
+ * byte-array backends ({@link lib.minecraft.nbt.io.buffer.NbtInputBuffer NbtInputBuffer}
+ * and {@link lib.minecraft.nbt.io.buffer.NbtOutputBuffer NbtOutputBuffer}) flows through
  * this class. The bulk primitive-array reads on the streaming backends
- * ({@link dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream NbtInputStream},
- * {@link dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream NbtOutputStream}) also use it for
+ * ({@link lib.minecraft.nbt.io.stream.NbtInputStream NbtInputStream},
+ * {@link lib.minecraft.nbt.io.stream.NbtOutputStream NbtOutputStream}) also use it for
  * the scratch-buffer decode / encode step. See the
  * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> for the on-wire
  * layout each method implements.</p>

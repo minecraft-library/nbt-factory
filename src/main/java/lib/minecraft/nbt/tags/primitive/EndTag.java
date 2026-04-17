@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.nbt.tags.primitive;
+package lib.minecraft.nbt.tags.primitive;
 
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

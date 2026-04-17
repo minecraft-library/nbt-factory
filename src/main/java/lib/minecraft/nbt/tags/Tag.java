@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.nbt.tags;
+package lib.minecraft.nbt.tags;
 
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
-import dev.sbs.minecraftapi.nbt.io.NbtInput;
-import dev.sbs.minecraftapi.nbt.io.NbtOutput;
+import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.io.NbtInput;
+import lib.minecraft.nbt.io.NbtOutput;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.nbt.io.snbt;
+package lib.minecraft.nbt.io.snbt;
 
 import com.google.gson.stream.JsonWriter;
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
-import dev.sbs.minecraftapi.nbt.io.NbtOutput;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.io.NbtOutput;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -13,40 +13,40 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 
-import static dev.sbs.minecraftapi.nbt.io.snbt.SnbtConstants.*;
+import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
 
 /**
  * SNBT (stringified NBT) serialization that writes directly to a JSON writer, emitting the
  * type-preserving text format documented on the
  * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page.
  *
- * <p>Unlike {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonSerializer} which strips all tag
+ * <p>Unlike {@link lib.minecraft.nbt.io.json.NbtJsonSerializer} which strips all tag
  * type information, SNBT keeps every tag disambiguated so it round-trips losslessly through
  * {@link SnbtDeserializer}. Type disambiguation rides on suffix letters for numeric literals
  * and on bracket-prefix markers for typed arrays:</p>
  *
  * <ul>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag ByteTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.primitive.ByteTag ByteTag}</b> -
  *       numeric literal with a {@code b} suffix, e.g. {@code 34b}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag ShortTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.primitive.ShortTag ShortTag}</b> -
  *       numeric literal with an {@code s} suffix, e.g. {@code 31415s}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.primitive.IntTag IntTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.primitive.IntTag IntTag}</b> -
  *       numeric literal with no suffix, e.g. {@code 31415926}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.primitive.LongTag LongTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.primitive.LongTag LongTag}</b> -
  *       numeric literal with an {@code l} suffix, e.g. {@code 31415926l}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag FloatTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.primitive.FloatTag FloatTag}</b> -
  *       numeric literal with an {@code f} suffix, e.g. {@code 3.1415926f}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag DoubleTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.primitive.DoubleTag DoubleTag}</b> -
  *       numeric literal with a {@code d} suffix, e.g. {@code 3.1415926d}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag ByteArrayTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.array.ByteArrayTag ByteArrayTag}</b> -
  *       {@code [B;1b,2b,3b]}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag IntArrayTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.array.IntArrayTag IntArrayTag}</b> -
  *       {@code [I;1,2,3]}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag LongArrayTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.array.LongArrayTag LongArrayTag}</b> -
  *       {@code [L;1l,2l,3l]}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.collection.ListTag ListTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.collection.ListTag ListTag}</b> -
  *       plain bracketed array {@code [value,value,...]}.</li>
- *   <li><b>{@link dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag CompoundTag}</b> -
+ *   <li><b>{@link lib.minecraft.nbt.tags.collection.CompoundTag CompoundTag}</b> -
  *       braced JSON-like object {@code {key:value,...}}.</li>
  * </ul>
  *

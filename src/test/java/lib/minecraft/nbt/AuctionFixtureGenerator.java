@@ -1,30 +1,33 @@
-package dev.sbs.minecraftapi.nbt;
+package lib.minecraft.nbt;
 
-import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.client.hypixel.request.HypixelContract;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuction;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctions;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.skyblock.common.NbtContent;
-import dev.simplified.collection.Concurrent;
-import dev.simplified.collection.ConcurrentList;
-import dev.simplified.util.SystemUtil;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
+import java.time.Duration;
+import java.util.Base64;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
 /**
- * Fetches the full SkyBlock auction house from Hypixel and writes every item NBT payload to a local
- * fixture file consumed by the JMH benchmarks under {@code src/jmh}.
+ * Fetches the full SkyBlock auction house from the public Hypixel endpoint and writes every item NBT
+ * payload to a local fixture file consumed by the JMH benchmarks under {@code src/jmh}.
  *
- * <p>Run via Gradle: {@code ./gradlew :minecraft-api:generateAuctionFixture}.
- * Requires the {@code HYPIXEL_API_KEY} environment variable. Idempotent - skips the fetch if the
+ * <p>Run via Gradle: {@code ./gradlew generateAuctionFixture}. No API key required - the endpoint
+ * {@code https://api.hypixel.net/v2/skyblock/auctions} is public. Idempotent - skips the fetch if the
  * fixture already exists.</p>
  *
  * <p>Fixture format ({@link DataOutputStream}-encoded big-endian):</p>
@@ -37,9 +40,11 @@ import java.util.stream.IntStream;
  */
 public final class AuctionFixtureGenerator {
 
+    private static final String ENDPOINT = "https://api.hypixel.net/v2/skyblock/auctions?page=";
+
     /**
-     * Default output path for the JMH benchmark fixture, relative to the {@code minecraft-api} module
-     * directory. Override by passing a different path as the first CLI argument.
+     * Default output path for the JMH benchmark fixture, relative to the project directory.
+     * Override by passing a different path as the first CLI argument.
      */
     public static final Path AUCTION_FIXTURE = Paths.get("src/test/resources/nbt-bench-fixture/auctions.bin");
 
@@ -54,21 +59,23 @@ public final class AuctionFixtureGenerator {
             return;
         }
 
-        MinecraftApi.getKeyManager().add(SystemUtil.getEnvPair("HYPIXEL_API_KEY"));
-
-        HypixelContract hypixelEndpoints = MinecraftApi.getClient(HypixelContract.class).getContract();
-        SkyBlockAuctions firstPage = hypixelEndpoints.getAuctions();
-        int totalPages = firstPage.getTotalPages();
+        HttpClient http = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
 
         long start = System.currentTimeMillis();
-        ConcurrentList<byte[]> payloads = IntStream.range(0, totalPages)
+        JsonObject firstPage = fetchPage(http, 0);
+        int totalPages = firstPage.get("totalPages").getAsInt();
+        System.out.println("Discovered " + totalPages + " auction pages; fetching in parallel.");
+
+        ConcurrentLinkedQueue<byte[]> payloads = new ConcurrentLinkedQueue<>();
+        extractPayloads(firstPage, payloads);
+
+        IntStream.range(1, totalPages)
             .parallel()
-            .mapToObj(page -> page == 0 ? firstPage : hypixelEndpoints.getAuctions(page))
-            .flatMap(response -> response.getAuctions().parallelStream())
-            .map(SkyBlockAuction::getItem)
-            .map(NbtContent::getData)
-            .filter(Objects::nonNull)
-            .collect(Concurrent.toList());
+            .forEach(page -> extractPayloads(fetchPage(http, page), payloads));
+
         long end = System.currentTimeMillis();
         System.out.println("Fetched + extracted " + payloads.size() + " NBT payloads in " + (end - start) + "ms.");
 
@@ -84,15 +91,53 @@ public final class AuctionFixtureGenerator {
 
         System.out.println("Saved fixture to " + output.toAbsolutePath());
 
-        // Sanity check: every payload should round-trip cleanly through NbtFactory.
+        NbtFactory nbt = new NbtFactory();
+        List<byte[]> snapshot = List.copyOf(payloads);
         long sanityStart = System.currentTimeMillis();
         int parsed = 0;
-        for (byte[] payload : payloads) {
-            CompoundTag root = MinecraftApi.getNbtFactory().fromByteArray(payload);
+        for (byte[] payload : snapshot) {
+            CompoundTag root = nbt.fromByteArray(payload);
             if (!root.isEmpty()) parsed++;
         }
         long sanityEnd = System.currentTimeMillis();
         System.out.println("Sanity-parsed " + parsed + " payloads in " + (sanityEnd - sanityStart) + "ms.");
+    }
+
+    private static @NotNull JsonObject fetchPage(@NotNull HttpClient http, int page) {
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(ENDPOINT + page))
+            .timeout(Duration.ofSeconds(30))
+            .GET()
+            .build();
+
+        try {
+            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200)
+                throw new IOException("Page " + page + " returned HTTP " + response.statusCode());
+
+            return JsonParser.parseString(response.body()).getAsJsonObject();
+        } catch (IOException | InterruptedException ex) {
+            if (ex instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to fetch auction page " + page, ex);
+        }
+    }
+
+    private static void extractPayloads(@NotNull JsonObject page, @NotNull ConcurrentLinkedQueue<byte[]> sink) {
+        JsonArray auctions = page.getAsJsonArray("auctions");
+        if (auctions == null) return;
+
+        Base64.Decoder decoder = Base64.getDecoder();
+        for (JsonElement entry : auctions) {
+            JsonElement itemBytes = entry.getAsJsonObject().get("item_bytes");
+            if (itemBytes == null || itemBytes.isJsonNull()) continue;
+
+            String encoded = itemBytes.isJsonObject()
+                ? itemBytes.getAsJsonObject().get("data").getAsString()
+                : itemBytes.getAsString();
+
+            byte[] decoded = decoder.decode(encoded);
+            if (decoded.length > 0) sink.add(decoded);
+        }
     }
 
 }

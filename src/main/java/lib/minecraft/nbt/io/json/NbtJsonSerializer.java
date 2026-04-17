@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.nbt.io.json;
+package lib.minecraft.nbt.io.json;
 
 import com.google.gson.stream.JsonWriter;
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
-import dev.sbs.minecraftapi.nbt.io.NbtOutput;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.io.NbtOutput;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.Map;
  * as raw JSON numbers, {@code TAG_List} and the typed primitive arrays ({@code TAG_Byte_Array},
  * {@code TAG_Int_Array}, {@code TAG_Long_Array}) all serialize to plain JSON arrays, and
  * {@code TAG_Compound} serializes to a JSON object. Booleans are emitted as the numeric literals
- * {@code 1} / {@code 0} to match the on-disk {@link dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag ByteTag}
+ * {@code 1} / {@code 0} to match the on-disk {@link lib.minecraft.nbt.tags.primitive.ByteTag ByteTag}
  * representation.</p>
  *
  * <p>This representation is convenient for tools that expect ordinary JSON, but it does not

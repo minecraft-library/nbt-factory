@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.nbt.tags.collection;
+package lib.minecraft.nbt.tags.collection;
 
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

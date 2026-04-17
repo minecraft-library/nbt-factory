@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.nbt.io.snbt;
+package lib.minecraft.nbt.io.snbt;
 
 import lombok.experimental.UtilityClass;
 

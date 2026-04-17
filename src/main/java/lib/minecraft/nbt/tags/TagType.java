@@ -1,18 +1,18 @@
-package dev.sbs.minecraftapi.nbt.tags;
+package lib.minecraft.nbt.tags;
 
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.EndTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.tags.array.ByteArrayTag;
+import lib.minecraft.nbt.tags.array.IntArrayTag;
+import lib.minecraft.nbt.tags.array.LongArrayTag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.tags.primitive.ByteTag;
+import lib.minecraft.nbt.tags.primitive.DoubleTag;
+import lib.minecraft.nbt.tags.primitive.EndTag;
+import lib.minecraft.nbt.tags.primitive.FloatTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
+import lib.minecraft.nbt.tags.primitive.LongTag;
+import lib.minecraft.nbt.tags.primitive.ShortTag;
+import lib.minecraft.nbt.tags.primitive.StringTag;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

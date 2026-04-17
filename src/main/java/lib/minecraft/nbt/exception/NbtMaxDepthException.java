@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.nbt.exception;
+package lib.minecraft.nbt.exception;
 
 /**
  * Thrown when the maximum nesting depth is reached while deserializing an NBT tag.

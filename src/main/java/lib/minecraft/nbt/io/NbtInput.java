@@ -1,21 +1,21 @@
-package dev.sbs.minecraftapi.nbt.io;
+package lib.minecraft.nbt.io;
 
 import com.google.gson.stream.JsonToken;
-import dev.sbs.minecraftapi.nbt.exception.NbtMaxDepthException;
-import dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer;
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.array.ByteArrayTag;
+import lib.minecraft.nbt.tags.array.IntArrayTag;
+import lib.minecraft.nbt.tags.array.LongArrayTag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.tags.primitive.ByteTag;
+import lib.minecraft.nbt.tags.primitive.DoubleTag;
+import lib.minecraft.nbt.tags.primitive.FloatTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
+import lib.minecraft.nbt.tags.primitive.LongTag;
+import lib.minecraft.nbt.tags.primitive.ShortTag;
+import lib.minecraft.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

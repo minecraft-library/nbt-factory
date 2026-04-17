@@ -1,24 +1,23 @@
-package dev.sbs.minecraftapi.nbt;
+package lib.minecraft.nbt;
 
-import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.nbt.exception.NbtException;
-import dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer;
-import dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer;
-import dev.sbs.minecraftapi.nbt.io.stream.NbtInputStream;
-import dev.sbs.minecraftapi.nbt.io.stream.NbtOutputStream;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.exception.NbtException;
+import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
+import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.io.stream.NbtInputStream;
+import lib.minecraft.nbt.io.stream.NbtOutputStream;
+import lib.minecraft.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.array.ByteArrayTag;
+import lib.minecraft.nbt.tags.array.IntArrayTag;
+import lib.minecraft.nbt.tags.array.LongArrayTag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.tags.primitive.ByteTag;
+import lib.minecraft.nbt.tags.primitive.DoubleTag;
+import lib.minecraft.nbt.tags.primitive.FloatTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
+import lib.minecraft.nbt.tags.primitive.LongTag;
+import lib.minecraft.nbt.tags.primitive.ShortTag;
+import lib.minecraft.nbt.tags.primitive.StringTag;
 import dev.simplified.stream.Compression;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *   <li>Binary NBT via {@link NbtOutputStream}/{@link NbtInputStream} (streaming)</li>
  *   <li>{@link Compression#GZIP}-compressed binary NBT</li>
  *   <li>SNBT via {@link NbtFactory#toSnbt(CompoundTag)}/{@link NbtFactory#fromSnbt(String)}</li>
- *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link dev.sbs.minecraftapi.nbt.io.json.NbtJsonDeserializer} for the round-trip contract)</li>
+ *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link lib.minecraft.nbt.io.json.NbtJsonDeserializer} for the round-trip contract)</li>
  * </ul>
  *
  * <p>Each fixture covers different aspects of the format: primitives, edge values, strings,
@@ -48,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class NbtRoundTripTest {
 
-    private static final NbtFactory NBT = MinecraftApi.getNbtFactory();
+    private static final NbtFactory NBT = new NbtFactory();
 
     // ---------------------------------------------------------------------
     // Fixture builders

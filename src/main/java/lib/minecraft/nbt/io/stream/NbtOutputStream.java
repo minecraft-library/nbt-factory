@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.nbt.io.stream;
+package lib.minecraft.nbt.io.stream;
 
-import dev.sbs.minecraftapi.nbt.io.NbtByteCodec;
-import dev.sbs.minecraftapi.nbt.io.NbtOutput;
-import dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.NbtOutput;
+import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;

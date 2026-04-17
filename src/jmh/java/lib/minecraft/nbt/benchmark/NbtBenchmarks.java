@@ -1,17 +1,16 @@
-package dev.sbs.minecraftapi.nbt.benchmark;
+package lib.minecraft.nbt.benchmark;
 
-import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.nbt.NbtFactory;
-import dev.sbs.minecraftapi.nbt.io.buffer.NbtInputBuffer;
-import dev.sbs.minecraftapi.nbt.io.buffer.NbtOutputBuffer;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.collection.ListTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.NbtFactory;
+import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
+import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.array.ByteArrayTag;
+import lib.minecraft.nbt.tags.array.IntArrayTag;
+import lib.minecraft.nbt.tags.array.LongArrayTag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
+import lib.minecraft.nbt.tags.primitive.StringTag;
 import dev.simplified.stream.Compression;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -69,7 +68,7 @@ public class NbtBenchmarks {
 
     @Setup(Level.Trial)
     public void setup() throws IOException {
-        this.nbt = MinecraftApi.getNbtFactory();
+        this.nbt = new NbtFactory();
 
         // Synthetic
         this.syntheticCompound = buildSyntheticCompound();
@@ -232,7 +231,7 @@ public class NbtBenchmarks {
     @Benchmark
     public int synthetic_traverse_compound(Blackhole bh) {
         int counter = 0;
-        for (Map.Entry<String, dev.sbs.minecraftapi.nbt.tags.Tag<?>> entry : this.syntheticCompound) {
+        for (Map.Entry<String, lib.minecraft.nbt.tags.Tag<?>> entry : this.syntheticCompound) {
             bh.consume(entry.getKey());
             counter++;
         }

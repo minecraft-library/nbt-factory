@@ -1,17 +1,17 @@
-package dev.sbs.minecraftapi.nbt.tags.collection;
+package lib.minecraft.nbt.tags.collection;
 
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
-import dev.sbs.minecraftapi.nbt.tags.array.ByteArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.IntArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.array.LongArrayTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ByteTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.DoubleTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.FloatTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.IntTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.LongTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.ShortTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.array.ByteArrayTag;
+import lib.minecraft.nbt.tags.array.IntArrayTag;
+import lib.minecraft.nbt.tags.array.LongArrayTag;
+import lib.minecraft.nbt.tags.primitive.ByteTag;
+import lib.minecraft.nbt.tags.primitive.DoubleTag;
+import lib.minecraft.nbt.tags.primitive.FloatTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
+import lib.minecraft.nbt.tags.primitive.LongTag;
+import lib.minecraft.nbt.tags.primitive.ShortTag;
+import lib.minecraft.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

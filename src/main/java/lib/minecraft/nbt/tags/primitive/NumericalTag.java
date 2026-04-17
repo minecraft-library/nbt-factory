@@ -1,6 +1,6 @@
-package dev.sbs.minecraftapi.nbt.tags.primitive;
+package lib.minecraft.nbt.tags.primitive;
 
-import dev.sbs.minecraftapi.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.NotNull;
 
 /**

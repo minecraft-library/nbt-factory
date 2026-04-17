@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.nbt.tags.array;
+package lib.minecraft.nbt.tags.array;
 
-import dev.sbs.minecraftapi.nbt.tags.Tag;
-import dev.sbs.minecraftapi.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

@@ -1,7 +1,6 @@
-package dev.sbs.minecraftapi.nbt.exception;
+package lib.minecraft.nbt.exception;
 
-import dev.sbs.minecraftapi.exception.MinecraftException;
-import dev.sbs.minecraftapi.nbt.NbtFactory;
+import lib.minecraft.nbt.NbtFactory;
 import org.intellij.lang.annotations.PrintFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Thrown when the {@link NbtFactory} is unable to parse NBT data.
  */
-public class NbtException extends MinecraftException {
+public class NbtException extends RuntimeException {
 
     public NbtException(@NotNull Throwable cause) {
         super(cause);
@@ -20,7 +19,7 @@ public class NbtException extends MinecraftException {
     }
 
     public NbtException(@NotNull Throwable cause, @NotNull String message) {
-        super(cause, message);
+        super(message, cause);
     }
 
     public NbtException(@NotNull @PrintFormat String message, @Nullable Object... args) {
