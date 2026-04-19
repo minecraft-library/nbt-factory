@@ -47,8 +47,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class NbtRoundTripTest {
 
-    private static final NbtFactory NBT = new NbtFactory();
-
     // ---------------------------------------------------------------------
     // Fixture builders
     // ---------------------------------------------------------------------
@@ -233,8 +231,8 @@ public class NbtRoundTripTest {
     class BinaryBuffer {
 
         private CompoundTag roundTrip(CompoundTag input) throws NbtException {
-            byte[] bytes = NBT.toByteArray(input);
-            return NBT.fromByteArray(bytes);
+            byte[] bytes = NbtFactory.toByteArray(input);
+            return NbtFactory.fromByteArray(bytes);
         }
 
         @Test
@@ -318,21 +316,21 @@ public class NbtRoundTripTest {
         @Test
         void everything_roundTrip() throws Exception {
             CompoundTag input = everythingFixture();
-            byte[] gzipped = NBT.toByteArray(input, Compression.GZIP);
-            byte[] uncompressed = NBT.toByteArray(input);
+            byte[] gzipped = NbtFactory.toByteArray(input, Compression.GZIP);
+            byte[] uncompressed = NbtFactory.toByteArray(input);
 
             // Compression should normally make it smaller for non-trivial payloads.
             assertThat(gzipped.length, not(is(uncompressed.length)));
 
-            CompoundTag output = NBT.fromByteArray(gzipped);
+            CompoundTag output = NbtFactory.fromByteArray(gzipped);
             assertThat(output, equalTo(input));
         }
 
         @Test
         void base64_roundTrip() throws Exception {
             CompoundTag input = everythingFixture();
-            String base64 = NBT.toBase64(input);
-            CompoundTag output = NBT.fromBase64(base64);
+            String base64 = NbtFactory.toBase64(input);
+            CompoundTag output = NbtFactory.fromBase64(base64);
             assertThat(output, equalTo(input));
         }
     }
@@ -373,7 +371,7 @@ public class NbtRoundTripTest {
         void streamMatchesBuffer() throws Exception {
             // Both implementations should produce equivalent in-memory output.
             CompoundTag input = everythingFixture();
-            byte[] viaBuffer = NBT.toByteArray(input);
+            byte[] viaBuffer = NbtFactory.toByteArray(input);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (NbtOutputStream nos = new NbtOutputStream(baos)) {
@@ -393,7 +391,7 @@ public class NbtRoundTripTest {
         void rawBufferOutputMatchesNbtOutputBuffer() throws Exception {
             // Direct NbtOutputBuffer use must produce the same bytes as NbtFactory.toByteArray.
             CompoundTag input = everythingFixture();
-            byte[] viaFactory = NBT.toByteArray(input);
+            byte[] viaFactory = NbtFactory.toByteArray(input);
 
             NbtOutputBuffer buffer = new NbtOutputBuffer();
             buffer.writeByte(TagType.COMPOUND.getId());
@@ -407,7 +405,7 @@ public class NbtRoundTripTest {
         @Test
         void rawInputBufferReadsFactoryOutput() throws Exception {
             CompoundTag input = everythingFixture();
-            byte[] bytes = NBT.toByteArray(input);
+            byte[] bytes = NbtFactory.toByteArray(input);
 
             NbtInputBuffer buffer = new NbtInputBuffer(bytes);
             assertThat(buffer.readByte(), is(TagType.COMPOUND.getId()));
@@ -428,8 +426,8 @@ public class NbtRoundTripTest {
             input.put("basic", new StringTag("all ASCII no NUL"));
 
             // Factory (buffer) path.
-            byte[] viaFactory = NBT.toByteArray(input);
-            CompoundTag factoryRoundTrip = NBT.fromByteArray(viaFactory);
+            byte[] viaFactory = NbtFactory.toByteArray(input);
+            CompoundTag factoryRoundTrip = NbtFactory.fromByteArray(viaFactory);
             assertThat(factoryRoundTrip, equalTo(input));
 
             // Stream path.
@@ -469,8 +467,8 @@ public class NbtRoundTripTest {
     class Snbt {
 
         private CompoundTag snbtRoundTrip(CompoundTag input) throws Exception {
-            String snbt = NBT.toSnbt(input);
-            return NBT.fromSnbt(snbt);
+            String snbt = NbtFactory.toSnbt(input);
+            return NbtFactory.fromSnbt(snbt);
         }
 
         @Test
@@ -522,16 +520,16 @@ public class NbtRoundTripTest {
             CompoundTag input = everythingFixture();
 
             // binary -> compound
-            byte[] binary = NBT.toByteArray(input);
-            CompoundTag fromBinary = NBT.fromByteArray(binary);
+            byte[] binary = NbtFactory.toByteArray(input);
+            CompoundTag fromBinary = NbtFactory.fromByteArray(binary);
 
             // compound -> snbt -> compound
-            String snbt = NBT.toSnbt(fromBinary);
-            CompoundTag fromSnbt = NBT.fromSnbt(snbt);
+            String snbt = NbtFactory.toSnbt(fromBinary);
+            CompoundTag fromSnbt = NbtFactory.fromSnbt(snbt);
 
             // compound -> binary -> compound
-            byte[] roundTripBinary = NBT.toByteArray(fromSnbt);
-            CompoundTag finalCompound = NBT.fromByteArray(roundTripBinary);
+            byte[] roundTripBinary = NbtFactory.toByteArray(fromSnbt);
+            CompoundTag finalCompound = NbtFactory.fromByteArray(roundTripBinary);
 
             assertThat(finalCompound, equalTo(input));
         }
@@ -540,14 +538,14 @@ public class NbtRoundTripTest {
         void snbt_then_binary_then_snbt() throws Exception {
             CompoundTag input = everythingFixture();
 
-            String snbtA = NBT.toSnbt(input);
-            CompoundTag fromSnbtA = NBT.fromSnbt(snbtA);
+            String snbtA = NbtFactory.toSnbt(input);
+            CompoundTag fromSnbtA = NbtFactory.fromSnbt(snbtA);
 
-            byte[] binary = NBT.toByteArray(fromSnbtA);
-            CompoundTag fromBinary = NBT.fromByteArray(binary);
+            byte[] binary = NbtFactory.toByteArray(fromSnbtA);
+            CompoundTag fromBinary = NbtFactory.fromByteArray(binary);
 
-            String snbtB = NBT.toSnbt(fromBinary);
-            CompoundTag fromSnbtB = NBT.fromSnbt(snbtB);
+            String snbtB = NbtFactory.toSnbt(fromBinary);
+            CompoundTag fromSnbtB = NbtFactory.fromSnbt(snbtB);
 
             assertThat(fromSnbtB, equalTo(input));
 
@@ -559,14 +557,14 @@ public class NbtRoundTripTest {
         void gzip_then_snbt_then_gzip() throws Exception {
             CompoundTag input = everythingFixture();
 
-            byte[] gzipA = NBT.toByteArray(input, Compression.GZIP);
-            CompoundTag fromGzipA = NBT.fromByteArray(gzipA);
+            byte[] gzipA = NbtFactory.toByteArray(input, Compression.GZIP);
+            CompoundTag fromGzipA = NbtFactory.fromByteArray(gzipA);
 
-            String snbt = NBT.toSnbt(fromGzipA);
-            CompoundTag fromSnbt = NBT.fromSnbt(snbt);
+            String snbt = NbtFactory.toSnbt(fromGzipA);
+            CompoundTag fromSnbt = NbtFactory.fromSnbt(snbt);
 
-            byte[] gzipB = NBT.toByteArray(fromSnbt, Compression.GZIP);
-            CompoundTag fromGzipB = NBT.fromByteArray(gzipB);
+            byte[] gzipB = NbtFactory.toByteArray(fromSnbt, Compression.GZIP);
+            CompoundTag fromGzipB = NbtFactory.fromByteArray(gzipB);
 
             assertThat(fromGzipB, equalTo(input));
         }
@@ -575,14 +573,14 @@ public class NbtRoundTripTest {
         void base64_then_snbt_then_base64() throws Exception {
             CompoundTag input = everythingFixture();
 
-            String base64A = NBT.toBase64(input);
-            CompoundTag fromBase64A = NBT.fromBase64(base64A);
+            String base64A = NbtFactory.toBase64(input);
+            CompoundTag fromBase64A = NbtFactory.fromBase64(base64A);
 
-            String snbt = NBT.toSnbt(fromBase64A);
-            CompoundTag fromSnbt = NBT.fromSnbt(snbt);
+            String snbt = NbtFactory.toSnbt(fromBase64A);
+            CompoundTag fromSnbt = NbtFactory.fromSnbt(snbt);
 
-            String base64B = NBT.toBase64(fromSnbt);
-            CompoundTag fromBase64B = NBT.fromBase64(base64B);
+            String base64B = NbtFactory.toBase64(fromSnbt);
+            CompoundTag fromBase64B = NbtFactory.fromBase64(base64B);
 
             assertThat(fromBase64B, equalTo(input));
         }
@@ -658,7 +656,7 @@ public class NbtRoundTripTest {
 
         @Test
         void primitives_writesJson() throws Exception {
-            String json = NBT.toJson(primitivesFixture());
+            String json = NbtFactory.toJson(primitivesFixture());
             assertThat(json, notNullValue());
             assertThat(json.length(), not(is(0)));
             assertThat(json.contains("byte_min"), is(true));
@@ -667,7 +665,7 @@ public class NbtRoundTripTest {
 
         @Test
         void everything_writesJson() throws Exception {
-            String json = NBT.toJson(everythingFixture());
+            String json = NbtFactory.toJson(everythingFixture());
             assertThat(json, notNullValue());
             // Spot-check some keys are present.
             assertThat(json.contains("primitives"), is(true));
@@ -681,8 +679,8 @@ public class NbtRoundTripTest {
         @Test
         void cascadeSafeFixture_roundTrips() throws Exception {
             CompoundTag input = jsonCascadeSafeFixture();
-            String json = NBT.toJson(input);
-            CompoundTag output = NBT.fromJson(json);
+            String json = NbtFactory.toJson(input);
+            CompoundTag output = NbtFactory.fromJson(json);
             assertThat(output, equalTo(input));
         }
 
@@ -690,42 +688,42 @@ public class NbtRoundTripTest {
 
         @Test
         void number_byteRange_asByteTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":0}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":0}");
             assertThat(c.get("v"), instanceOf(ByteTag.class));
             assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 0));
         }
 
         @Test
         void number_shortRange_asShortTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":200}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":200}");
             assertThat(c.get("v"), instanceOf(ShortTag.class));
             assertThat(((ShortTag) c.get("v")).getValue(), is((short) 200));
         }
 
         @Test
         void number_intRange_asIntTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":40000}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":40000}");
             assertThat(c.get("v"), instanceOf(IntTag.class));
             assertThat(((IntTag) c.get("v")).getValue(), is(40000));
         }
 
         @Test
         void number_longRange_asLongTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":3000000000}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":3000000000}");
             assertThat(c.get("v"), instanceOf(LongTag.class));
             assertThat(((LongTag) c.get("v")).getValue(), is(3_000_000_000L));
         }
 
         @Test
         void number_exactFloat_asFloatTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":0.5}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":0.5}");
             assertThat(c.get("v"), instanceOf(FloatTag.class));
             assertThat(((FloatTag) c.get("v")).getValue(), is(0.5f));
         }
 
         @Test
         void number_inexactFloat_asDoubleTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":0.1}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":0.1}");
             assertThat(c.get("v"), instanceOf(DoubleTag.class));
             assertThat(((DoubleTag) c.get("v")).getValue(), is(0.1));
         }
@@ -733,7 +731,7 @@ public class NbtRoundTripTest {
         @Test
         void number_scientificInByteRange_asByteTag() throws Exception {
             // Wiki example: 1.27e2 == 127, still a byte.
-            CompoundTag c = NBT.fromJson("{\"v\":1.27e2}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":1.27e2}");
             assertThat(c.get("v"), instanceOf(ByteTag.class));
             assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 127));
         }
@@ -741,7 +739,7 @@ public class NbtRoundTripTest {
         @Test
         void number_integerValuedDouble_asIntTag() throws Exception {
             // Wiki example: 12345678.0 is in int range, should become IntTag.
-            CompoundTag c = NBT.fromJson("{\"v\":12345678.0}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":12345678.0}");
             assertThat(c.get("v"), instanceOf(IntTag.class));
             assertThat(((IntTag) c.get("v")).getValue(), is(12345678));
         }
@@ -750,21 +748,21 @@ public class NbtRoundTripTest {
 
         @Test
         void booleanTrue_asByteTagOne() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":true}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":true}");
             assertThat(c.get("v"), instanceOf(ByteTag.class));
             assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 1));
         }
 
         @Test
         void booleanFalse_asByteTagZero() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":false}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":false}");
             assertThat(c.get("v"), instanceOf(ByteTag.class));
             assertThat(((ByteTag) c.get("v")).getValue(), is((byte) 0));
         }
 
         @Test
         void string_asStringTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":\"hi\"}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":\"hi\"}");
             assertThat(c.get("v"), instanceOf(StringTag.class));
             assertThat(((StringTag) c.get("v")).getValue(), is("hi"));
         }
@@ -773,7 +771,7 @@ public class NbtRoundTripTest {
 
         @Test
         void homogeneousBytes_asByteArrayTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":[1,2,3]}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":[1,2,3]}");
             assertThat(c.get("v"), instanceOf(ByteArrayTag.class));
             assertThat(((ByteArrayTag) c.get("v")).getValue(), is(new byte[]{1, 2, 3}));
         }
@@ -783,7 +781,7 @@ public class NbtRoundTripTest {
             // All elements must be outside short range [-32768, 32767] so every one of them
             // resolves to an IntTag. A small value like 1 would narrow to ByteTag and make the
             // array heterogeneous.
-            CompoundTag c = NBT.fromJson("{\"v\":[40000,50000,60000]}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":[40000,50000,60000]}");
             assertThat(c.get("v"), instanceOf(IntArrayTag.class));
             assertThat(((IntArrayTag) c.get("v")).getValue(), is(new int[]{40000, 50000, 60000}));
         }
@@ -791,14 +789,14 @@ public class NbtRoundTripTest {
         @Test
         void homogeneousLongs_asLongArrayTag() throws Exception {
             // All elements must be outside int range so every one of them resolves to a LongTag.
-            CompoundTag c = NBT.fromJson("{\"v\":[3000000000,4000000000,5000000000]}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":[3000000000,4000000000,5000000000]}");
             assertThat(c.get("v"), instanceOf(LongArrayTag.class));
             assertThat(((LongArrayTag) c.get("v")).getValue(), is(new long[]{3_000_000_000L, 4_000_000_000L, 5_000_000_000L}));
         }
 
         @Test
         void homogeneousStrings_asListTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":[\"a\",\"b\"]}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":[\"a\",\"b\"]}");
             assertThat(c.get("v"), instanceOf(ListTag.class));
             ListTag<?> list = (ListTag<?>) c.get("v");
             assertThat(list, hasSize(2));
@@ -808,7 +806,7 @@ public class NbtRoundTripTest {
 
         @Test
         void emptyArray_asEmptyListTag() throws Exception {
-            CompoundTag c = NBT.fromJson("{\"v\":[]}");
+            CompoundTag c = NbtFactory.fromJson("{\"v\":[]}");
             assertThat(c.get("v"), instanceOf(ListTag.class));
             assertThat((ListTag<?>) c.get("v"), hasSize(0));
         }
@@ -818,12 +816,12 @@ public class NbtRoundTripTest {
         @Test
         void heterogeneousArray_throws() {
             // 1 would be ByteTag, 40000 would be IntTag - mixed types.
-            assertThrows(NbtException.class, () -> NBT.fromJson("{\"v\":[1,40000]}"));
+            assertThrows(NbtException.class, () -> NbtFactory.fromJson("{\"v\":[1,40000]}"));
         }
 
         @Test
         void jsonNull_throws() {
-            assertThrows(NbtException.class, () -> NBT.fromJson("{\"v\":null}"));
+            assertThrows(NbtException.class, () -> NbtFactory.fromJson("{\"v\":null}"));
         }
 
         @Test
@@ -835,7 +833,7 @@ public class NbtRoundTripTest {
             json.append("1");
             for (int i = 0; i < depth; i++)
                 json.append("}");
-            assertThrows(NbtException.class, () -> NBT.fromJson(json.toString()));
+            assertThrows(NbtException.class, () -> NbtFactory.fromJson(json.toString()));
         }
     }
 
@@ -1003,7 +1001,7 @@ public class NbtRoundTripTest {
             root.putPath("a.b.d", new IntTag(7));
             root.putPath("a.e", new LongTag(99L));
 
-            CompoundTag roundTrip = NBT.fromByteArray(NBT.toByteArray(root));
+            CompoundTag roundTrip = NbtFactory.fromByteArray(NbtFactory.toByteArray(root));
             StringTag c = roundTrip.getPath("a.b.c");
             IntTag d = roundTrip.getPath("a.b.d");
             LongTag e = roundTrip.getPath("a.e");

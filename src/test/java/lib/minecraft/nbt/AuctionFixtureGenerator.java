@@ -91,12 +91,11 @@ public final class AuctionFixtureGenerator {
 
         System.out.println("Saved fixture to " + output.toAbsolutePath());
 
-        NbtFactory nbt = new NbtFactory();
         List<byte[]> snapshot = List.copyOf(payloads);
         long sanityStart = System.currentTimeMillis();
         int parsed = 0;
         for (byte[] payload : snapshot) {
-            CompoundTag root = nbt.fromByteArray(payload);
+            CompoundTag root = NbtFactory.fromByteArray(payload);
             if (!root.isEmpty()) parsed++;
         }
         long sanityEnd = System.currentTimeMillis();

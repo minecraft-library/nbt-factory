@@ -15,7 +15,7 @@ import dev.simplified.stream.Compression;
 import dev.simplified.util.StringUtil;
 import dev.simplified.util.SystemUtil;
 import lombok.Cleanup;
-import lombok.Getter;
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -30,7 +30,7 @@ import java.nio.file.Paths;
  * @see <a href="https://wiki.vg/NBT">Official NBT Wiki</a>
  * @see <a href="https://minecraft.fandom.com/wiki/NBT_format">Fandom NBT Wiki</a>
  */
-@Getter
+@UtilityClass
 public class NbtFactory {
 
     /**
@@ -40,7 +40,7 @@ public class NbtFactory {
      * @throws NbtException if any I/O error occurs.
      */
     public @NotNull CompoundTag fromBase64(@NotNull String encoded) throws NbtException {
-        return this.fromByteArray(StringUtil.decodeBase64(encoded));
+        return fromByteArray(StringUtil.decodeBase64(encoded));
     }
 
     /**
@@ -76,7 +76,7 @@ public class NbtFactory {
     public @NotNull CompoundTag fromFile(@NotNull File file) throws NbtException {
         try {
             @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
-            return this.fromStream(fileInputStream);
+            return fromStream(fileInputStream);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -132,7 +132,7 @@ public class NbtFactory {
     public @NotNull CompoundTag fromSnbt(@NotNull File file) throws NbtException {
         try {
             String snbt = Files.readString(Paths.get(file.toURI()), StandardCharsets.UTF_8);
-            return this.fromSnbt(snbt);
+            return fromSnbt(snbt);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -162,7 +162,7 @@ public class NbtFactory {
     public @NotNull CompoundTag fromResource(@NotNull String path) {
         try {
             @Cleanup InputStream inputStream = SystemUtil.getResource(path);
-            return this.fromStream(inputStream);
+            return fromStream(inputStream);
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
@@ -211,7 +211,7 @@ public class NbtFactory {
     public @NotNull CompoundTag fromUrl(@NotNull URL url) {
         try {
             @Cleanup InputStream inputStream = url.openStream();
-            return this.fromStream(inputStream);
+            return fromStream(inputStream);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -224,7 +224,7 @@ public class NbtFactory {
      * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toBase64(@NotNull CompoundTag compound) throws NbtException {
-        return this.toBase64(compound, Compression.GZIP);
+        return toBase64(compound, Compression.GZIP);
     }
 
     /**
@@ -235,7 +235,7 @@ public class NbtFactory {
      * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toBase64(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
-        return StringUtil.encodeBase64ToString(this.toByteArray(compound, compression));
+        return StringUtil.encodeBase64ToString(toByteArray(compound, compression));
     }
 
     /**
@@ -245,7 +245,7 @@ public class NbtFactory {
      * @throws NbtException if any I/O error occurs.
      */
     public byte[] toByteArray(@NotNull CompoundTag compound) throws NbtException {
-        return this.toByteArray(compound, Compression.NONE);
+        return toByteArray(compound, Compression.NONE);
     }
 
     /**
@@ -280,7 +280,7 @@ public class NbtFactory {
      * @throws NbtException if any I/O error occurs.
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
-        this.toFile(compound, file, Compression.GZIP);
+        toFile(compound, file, Compression.GZIP);
     }
 
     /**
@@ -297,7 +297,7 @@ public class NbtFactory {
     public void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
         try {
             @Cleanup FileOutputStream fileOutputStream = new FileOutputStream(file);
-            this.toStream(compound, fileOutputStream, compression);
+            toStream(compound, fileOutputStream, compression);
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
@@ -389,7 +389,7 @@ public class NbtFactory {
      * @throws NbtException if any I/O error occurs
      */
     public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream) throws NbtException {
-        this.toStream(compound, outputStream, Compression.GZIP);
+        toStream(compound, outputStream, Compression.GZIP);
     }
 
     /**

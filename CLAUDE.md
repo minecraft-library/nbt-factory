@@ -14,7 +14,7 @@ Guidance for Claude Code working in this repo. Assumes the global `~/.claude/CLA
 
 ## Architecture
 
-`NbtFactory` is the single public entry point. Construct one and reuse. It dispatches to format-specific codecs under `io/`.
+`NbtFactory` is the single public entry point. All methods are static (`@UtilityClass`). It dispatches to format-specific codecs under `io/`.
 
 | Package | Role |
 |---------|------|

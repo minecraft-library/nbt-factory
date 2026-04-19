@@ -54,8 +54,6 @@ public class NbtBenchmarks {
     private static final Path AUCTION_FIXTURE = Paths.get("minecraft-api/src/test/resources/nbt-bench-fixture/auctions.bin");
     private static final Path AUCTION_FIXTURE_FALLBACK = Paths.get("src/test/resources/nbt-bench-fixture/auctions.bin");
 
-    private NbtFactory nbt;
-
     // Synthetic corpus
     private CompoundTag syntheticCompound;
     private byte[] syntheticBytesUncompressed;
@@ -68,13 +66,11 @@ public class NbtBenchmarks {
 
     @Setup(Level.Trial)
     public void setup() throws IOException {
-        this.nbt = new NbtFactory();
-
         // Synthetic
         this.syntheticCompound = buildSyntheticCompound();
-        this.syntheticBytesUncompressed = this.nbt.toByteArray(this.syntheticCompound);
-        this.syntheticBytesGzipped = this.nbt.toByteArray(this.syntheticCompound, Compression.GZIP);
-        this.syntheticSnbt = this.nbt.toSnbt(this.syntheticCompound);
+        this.syntheticBytesUncompressed = NbtFactory.toByteArray(this.syntheticCompound);
+        this.syntheticBytesGzipped = NbtFactory.toByteArray(this.syntheticCompound, Compression.GZIP);
+        this.syntheticSnbt = NbtFactory.toSnbt(this.syntheticCompound);
 
         // Auction (optional)
         Path fixture = Files.exists(AUCTION_FIXTURE) ? AUCTION_FIXTURE
@@ -98,7 +94,7 @@ public class NbtBenchmarks {
                 byte[] payload = new byte[len];
                 in.readFully(payload);
                 this.auctionPayloads[i] = payload;
-                this.auctionCompounds[i] = this.nbt.fromByteArray(payload);
+                this.auctionCompounds[i] = NbtFactory.fromByteArray(payload);
             }
         }
 
@@ -166,17 +162,17 @@ public class NbtBenchmarks {
 
     @Benchmark
     public CompoundTag synthetic_deserialize_binary() {
-        return this.nbt.fromByteArray(this.syntheticBytesUncompressed);
+        return NbtFactory.fromByteArray(this.syntheticBytesUncompressed);
     }
 
     @Benchmark
     public CompoundTag synthetic_deserialize_binary_gzip() {
-        return this.nbt.fromByteArray(this.syntheticBytesGzipped);
+        return NbtFactory.fromByteArray(this.syntheticBytesGzipped);
     }
 
     @Benchmark
     public CompoundTag synthetic_deserialize_snbt() {
-        return this.nbt.fromSnbt(this.syntheticSnbt);
+        return NbtFactory.fromSnbt(this.syntheticSnbt);
     }
 
     // ---------------------------------------------------------------------
@@ -185,22 +181,22 @@ public class NbtBenchmarks {
 
     @Benchmark
     public byte[] synthetic_serialize_binary() {
-        return this.nbt.toByteArray(this.syntheticCompound);
+        return NbtFactory.toByteArray(this.syntheticCompound);
     }
 
     @Benchmark
     public byte[] synthetic_serialize_binary_gzip() {
-        return this.nbt.toByteArray(this.syntheticCompound, Compression.GZIP);
+        return NbtFactory.toByteArray(this.syntheticCompound, Compression.GZIP);
     }
 
     @Benchmark
     public String synthetic_serialize_snbt() {
-        return this.nbt.toSnbt(this.syntheticCompound);
+        return NbtFactory.toSnbt(this.syntheticCompound);
     }
 
     @Benchmark
     public String synthetic_serialize_json() {
-        return this.nbt.toJson(this.syntheticCompound);
+        return NbtFactory.toJson(this.syntheticCompound);
     }
 
     // ---------------------------------------------------------------------
@@ -259,7 +255,7 @@ public class NbtBenchmarks {
     public List<CompoundTag> auction_deserializeAll() {
         List<CompoundTag> out = new ArrayList<>(this.auctionPayloads.length);
         for (byte[] payload : this.auctionPayloads)
-            out.add(this.nbt.fromByteArray(payload));
+            out.add(NbtFactory.fromByteArray(payload));
         return out;
     }
 
@@ -267,7 +263,7 @@ public class NbtBenchmarks {
     public List<byte[]> auction_serializeAll() {
         List<byte[]> out = new ArrayList<>(this.auctionCompounds.length);
         for (CompoundTag c : this.auctionCompounds)
-            out.add(this.nbt.toByteArray(c));
+            out.add(NbtFactory.toByteArray(c));
         return out;
     }
 
@@ -275,7 +271,7 @@ public class NbtBenchmarks {
     public List<byte[]> auction_serializeAll_gzip() {
         List<byte[]> out = new ArrayList<>(this.auctionCompounds.length);
         for (CompoundTag c : this.auctionCompounds)
-            out.add(this.nbt.toByteArray(c, Compression.GZIP));
+            out.add(NbtFactory.toByteArray(c, Compression.GZIP));
         return out;
     }
 
@@ -283,7 +279,7 @@ public class NbtBenchmarks {
     public List<String> auction_serializeAll_snbt() {
         List<String> out = new ArrayList<>(this.auctionCompounds.length);
         for (CompoundTag c : this.auctionCompounds)
-            out.add(this.nbt.toSnbt(c));
+            out.add(NbtFactory.toSnbt(c));
         return out;
     }
 
@@ -295,8 +291,8 @@ public class NbtBenchmarks {
     public int auction_roundTrip() {
         int sum = 0;
         for (byte[] payload : this.auctionPayloads) {
-            CompoundTag c = this.nbt.fromByteArray(payload);
-            byte[] reserialized = this.nbt.toByteArray(c);
+            CompoundTag c = NbtFactory.fromByteArray(payload);
+            byte[] reserialized = NbtFactory.toByteArray(c);
             sum += reserialized.length;
         }
         return sum;

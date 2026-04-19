@@ -102,13 +102,11 @@ cd nbt-factory
 
 ### Usage
 
-Every format goes through `NbtFactory`. Construct one instance and reuse it.
+Every format goes through `NbtFactory`. All methods are static - call them directly.
 
 ```java
-NbtFactory nbt = new NbtFactory();
-
 // Decode a base64-encoded gzipped NBT payload (e.g. a Hypixel item)
-CompoundTag root = nbt.fromBase64(base64String);
+CompoundTag root = NbtFactory.fromBase64(base64String);
 
 // Read typed values
 String name = root.getString("id");
@@ -118,18 +116,18 @@ int count = root.getInt("Count");
 root.put("Lore", new StringTag("Enchanted"));
 
 // Re-encode to any format
-byte[] bytes = nbt.toByteArray(root);                  // gzipped
-byte[] raw   = nbt.toByteArray(root, Compression.NONE);
-String snbt  = nbt.toSnbt(root);
-String json  = nbt.toJson(root);
-String b64   = nbt.toBase64(root);
+byte[] bytes = NbtFactory.toByteArray(root);                  // gzipped
+byte[] raw   = NbtFactory.toByteArray(root, Compression.NONE);
+String snbt  = NbtFactory.toSnbt(root);
+String json  = NbtFactory.toJson(root);
+String b64   = NbtFactory.toBase64(root);
 ```
 
 Stream-based I/O:
 
 ```java
 try (var in = new FileInputStream("level.dat")) {
-    CompoundTag level = nbt.fromStream(in, Compression.GZIP);
+    CompoundTag level = NbtFactory.fromStream(in);
 }
 ```
 
