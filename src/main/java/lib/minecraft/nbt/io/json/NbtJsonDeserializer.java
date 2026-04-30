@@ -4,6 +4,9 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
+import lib.minecraft.nbt.io.util.ByteList;
+import lib.minecraft.nbt.io.util.IntList;
+import lib.minecraft.nbt.io.util.LongList;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
@@ -120,43 +123,31 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
     @Override
     public byte @NotNull [] readByteArray() throws IOException {
         this.beginArray();
-        List<Byte> values = new ArrayList<>();
+        ByteList values = new ByteList();
         while (this.hasNext())
             values.add((byte) this.nextLong());
         this.endArray();
-
-        byte[] out = new byte[values.size()];
-        for (int i = 0; i < out.length; i++)
-            out[i] = values.get(i);
-        return out;
+        return values.toArray();
     }
 
     @Override
     public int @NotNull [] readIntArray() throws IOException {
         this.beginArray();
-        List<Integer> values = new ArrayList<>();
+        IntList values = new IntList();
         while (this.hasNext())
             values.add((int) this.nextLong());
         this.endArray();
-
-        int[] out = new int[values.size()];
-        for (int i = 0; i < out.length; i++)
-            out[i] = values.get(i);
-        return out;
+        return values.toArray();
     }
 
     @Override
     public long @NotNull [] readLongArray() throws IOException {
         this.beginArray();
-        List<Long> values = new ArrayList<>();
+        LongList values = new LongList();
         while (this.hasNext())
             values.add(this.nextLong());
         this.endArray();
-
-        long[] out = new long[values.size()];
-        for (int i = 0; i < out.length; i++)
-            out[i] = values.get(i);
-        return out;
+        return values.toArray();
     }
 
     // ------------------------------------------------------------------
@@ -225,8 +216,27 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
      * {@code "1.0"} and {@code "1.27e2"} resolve the same way as {@code "1"} and {@code "127"}.
      * Non-integer literals fall back to {@link FloatTag} if the exact float parse equals the
      * exact double parse, otherwise {@link DoubleTag}.</p>
+     *
+     * <p>Plain integer literals (no decimal point, no exponent, fitting within {@code long})
+     * take a fast path that bypasses the {@link BigDecimal}/{@link BigInteger} pipeline. The
+     * slow path is reserved for decimal, scientific, or out-of-{@code long}-range literals.</p>
      */
     private static @NotNull Tag<?> inferNumber(@NotNull String text) throws IOException {
+        // Fast path: plain integer literal (no '.', no 'e'/'E'). Length cap of 20 covers signed
+        // Long.MIN_VALUE/MAX_VALUE (-9223372036854775808 .. 9223372036854775807). Any overflow or
+        // unexpected formatting falls through to the BigDecimal slow path below.
+        if (isPlainIntegerLiteral(text) && text.length() <= 20) {
+            try {
+                long l = Long.parseLong(text);
+                if ((byte) l == l) return new ByteTag((byte) l);
+                if ((short) l == l) return new ShortTag((short) l);
+                if ((int) l == l) return new IntTag((int) l);
+                return new LongTag(l);
+            } catch (NumberFormatException ignored) {
+                // Out-of-long-range or unexpected sign placement - fall through to BigDecimal.
+            }
+        }
+
         final BigDecimal bd;
         try {
             bd = new BigDecimal(text);
@@ -261,64 +271,102 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
     }
 
     /**
+     * Returns {@code true} iff the literal contains no decimal point and no exponent marker -
+     * i.e. it is a candidate for the {@link Long#parseLong(String)} fast path.
+     */
+    private static boolean isPlainIntegerLiteral(@NotNull String text) {
+        for (int i = 0, n = text.length(); i < n; i++) {
+            char c = text.charAt(i);
+            if (c == '.' || c == 'e' || c == 'E') return false;
+        }
+        return true;
+    }
+
+    /**
      * Reads a JSON array and resolves it to the typed-array or list tag type the wiki cascade
-     * produces. Children are buffered before the decision is made so the shared element type
-     * can be inspected in a single pass.
+     * produces.
+     *
+     * <p>The first element's inferred tag id selects the dispatch path. For the byte/int/long
+     * primitive paths the elements stream directly into a primitive growable buffer
+     * ({@link ByteList}/{@link IntList}/{@link LongList}), eliminating both the boxed
+     * {@code ArrayList<Tag<?>>} buffer and the second narrow-conversion walk. The generic path
+     * (homogeneous non-numeric, e.g. all strings or all compounds) falls back to buffering into
+     * an {@code ArrayList<Tag<?>>} so the homogeneity contract is preserved.</p>
      */
     private @NotNull Tag<?> readArrayOrTypedArray(int depth) throws IOException {
         if (++depth >= 512)
             throw new NbtMaxDepthException();
 
         this.beginArray();
+
+        // Empty array has no element type to key off - match the existing ListTag() convention
+        // used by listsFixture().empty_list in the round-trip tests.
+        if (!this.hasNext()) {
+            this.endArray();
+            return new ListTag<>();
+        }
+
+        Tag<?> first = this.readValue(depth);
+        byte commonId = first.getId();
+
+        // Primitive typed-array fast paths: stream directly into the matching primitive buffer.
+        // (byte) / (int) Number.longValue() truncation matches the previous post-buffer cast.
+        if (commonId == TagType.BYTE.getId()) {
+            ByteList out = new ByteList();
+            out.add(((NumericalTag<?>) first).byteValue());
+            while (this.hasNext()) {
+                Tag<?> element = this.readValue(depth);
+                if (element.getId() != commonId)
+                    throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                out.add(((NumericalTag<?>) element).byteValue());
+            }
+            this.endArray();
+            return new ByteArrayTag(out.toArray());
+        }
+
+        if (commonId == TagType.INT.getId()) {
+            IntList out = new IntList();
+            out.add(((NumericalTag<?>) first).intValue());
+            while (this.hasNext()) {
+                Tag<?> element = this.readValue(depth);
+                if (element.getId() != commonId)
+                    throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                out.add(((NumericalTag<?>) element).intValue());
+            }
+            this.endArray();
+            return new IntArrayTag(out.toArray());
+        }
+
+        if (commonId == TagType.LONG.getId()) {
+            LongList out = new LongList();
+            out.add(((NumericalTag<?>) first).longValue());
+            while (this.hasNext()) {
+                Tag<?> element = this.readValue(depth);
+                if (element.getId() != commonId)
+                    throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                out.add(((NumericalTag<?>) element).longValue());
+            }
+            this.endArray();
+            return new LongArrayTag(out.toArray());
+        }
+
+        // Generic path: homogeneous non-numeric (strings, compounds, lists, floats, doubles, shorts).
+        // The heterogeneity check still requires holding every element until endArray, so a buffered
+        // ArrayList remains the cheapest data structure here.
         List<Tag<?>> buffered = new ArrayList<>();
-        byte commonId = 0;
-        boolean homogeneous = true;
+        buffered.add(first);
 
         while (this.hasNext()) {
             Tag<?> element = this.readValue(depth);
-            byte elementId = element.getId();
-
-            if (buffered.isEmpty())
-                commonId = elementId;
-            else if (homogeneous && elementId != commonId)
-                homogeneous = false;
-
+            if (element.getId() != commonId)
+                throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
             buffered.add(element);
         }
 
         this.endArray();
 
-        // Empty array has no element type to key off - match the existing ListTag() convention
-        // used by listsFixture().empty_list in the round-trip tests.
-        if (buffered.isEmpty())
-            return new ListTag<>();
-
-        if (!homogeneous)
-            throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
-
-        if (commonId == TagType.BYTE.getId()) {
-            byte[] out = new byte[buffered.size()];
-            for (int i = 0; i < out.length; i++)
-                out[i] = ((NumericalTag<?>) buffered.get(i)).byteValue();
-            return new ByteArrayTag(out);
-        }
-
-        if (commonId == TagType.INT.getId()) {
-            int[] out = new int[buffered.size()];
-            for (int i = 0; i < out.length; i++)
-                out[i] = ((NumericalTag<?>) buffered.get(i)).intValue();
-            return new IntArrayTag(out);
-        }
-
-        if (commonId == TagType.LONG.getId()) {
-            long[] out = new long[buffered.size()];
-            for (int i = 0; i < out.length; i++)
-                out[i] = ((NumericalTag<?>) buffered.get(i)).longValue();
-            return new LongArrayTag(out);
-        }
-
-        // Homogeneous non-typed-array: build a ListTag pre-seeded with the common element id so
-        // add() skips the isEmpty probe on every entry (mirrors NbtInput.readListTag's hot path).
+        // Pre-seed the ListTag with the common element id so add() skips the isEmpty probe on
+        // every entry (mirrors NbtInput.readListTag's hot path).
         @SuppressWarnings({"rawtypes", "unchecked"})
         ListTag<Tag<?>> listTag = new ListTag(commonId, buffered.size());
         listTag.addAll((List) buffered);

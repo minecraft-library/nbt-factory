@@ -59,6 +59,7 @@ public class NbtBenchmarks {
     private byte[] syntheticBytesUncompressed;
     private byte[] syntheticBytesGzipped;
     private String syntheticSnbt;
+    private String syntheticJson;
 
     // Auction corpus (loaded from fixture if present)
     private byte[][] auctionPayloads;
@@ -71,6 +72,7 @@ public class NbtBenchmarks {
         this.syntheticBytesUncompressed = NbtFactory.toByteArray(this.syntheticCompound);
         this.syntheticBytesGzipped = NbtFactory.toByteArray(this.syntheticCompound, Compression.GZIP);
         this.syntheticSnbt = NbtFactory.toSnbt(this.syntheticCompound);
+        this.syntheticJson = NbtFactory.toJson(this.syntheticCompound);
 
         // Auction (optional)
         Path fixture = Files.exists(AUCTION_FIXTURE) ? AUCTION_FIXTURE
@@ -173,6 +175,11 @@ public class NbtBenchmarks {
     @Benchmark
     public CompoundTag synthetic_deserialize_snbt() {
         return NbtFactory.fromSnbt(this.syntheticSnbt);
+    }
+
+    @Benchmark
+    public CompoundTag synthetic_deserialize_json() {
+        return NbtFactory.fromJson(this.syntheticJson);
     }
 
     // ---------------------------------------------------------------------
