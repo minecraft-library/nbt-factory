@@ -2,18 +2,16 @@ package lib.minecraft.nbt.io.snbt;
 
 import lombok.experimental.UtilityClass;
 
-import java.util.regex.Pattern;
-
 /**
- * Shared syntactic constants and regular expressions for SNBT parsing and emission.
+ * Shared syntactic constants for SNBT parsing and emission.
  *
  * <p>Used by {@link SnbtSerializer} and {@link SnbtDeserializer} as the single source of truth
  * for the SNBT grammar: structural characters ({@code {}}, {@code []}, {@code ,}, {@code :}),
  * string quote delimiters, array-type prefix letters ({@code B}, {@code I}, {@code L}),
- * numeric-literal suffix regex patterns ({@code b}, {@code s}, {@code l}, {@code f}, {@code d}),
- * and the set of characters allowed in unquoted strings. Matching what the Minecraft Wiki's
- * <a href="https://minecraft.wiki/w/NBT_format">"SNBT format"</a> section defines is a
- * copy-paste from this one file.</p>
+ * numeric-literal suffix letters ({@code b}, {@code s}, {@code l}, {@code f}, {@code d}),
+ * and the lookup tables that classify characters allowed in unquoted identifiers. Matching what
+ * the Minecraft Wiki's <a href="https://minecraft.wiki/w/NBT_format">"SNBT format"</a> section
+ * defines is a copy-paste from this one file.</p>
  *
  * <p>Package-private because the constants are implementation details of the SNBT backend and
  * should not leak into the public API surface.</p>
@@ -41,22 +39,44 @@ final class SnbtConstants {
     public static final char STRING_DELIMITER_2    = '\'';
     public static final char STRING_ESCAPE         = '\\';
 
-    public static final Pattern BYTE_PATTERN       = Pattern.compile("^[+-]?\\d+b$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern SHORT_PATTERN      = Pattern.compile("^[+-]?\\d+s$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern INT_PATTERN        = Pattern.compile("^[+-]?\\d+$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern LONG_PATTERN       = Pattern.compile("^[+-]?\\d+l$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern FLOAT_PATTERN      = Pattern.compile("^[+-]?[0-9]*\\.?[0-9]+f$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern DOUBLE_PATTERN     = Pattern.compile("^[+-]?[0-9]*\\.?[0-9]+d$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern NON_QUOTE_PATTERN  = Pattern.compile("[a-zA-Z_.+\\-]+");
+    /**
+     * ASCII lookup table marking characters that the deserializer accepts inside an unquoted
+     * identifier. Mirrors the prior {@code VALID_UNQUOTED_CHARS} string
+     * ({@code [A-Za-z0-9._+-]}) byte-for-byte; any code unit {@code >= 128} or absent from the
+     * set forces the deserializer to terminate the identifier scan.
+     */
+    public static final boolean[] IS_VALID_UNQUOTED = buildValidUnquotedTable();
 
     /**
-     * Used to find and delete suffixes from numeric literals.
+     * ASCII lookup table marking characters that the serializer is willing to emit unquoted.
+     * Mirrors the prior {@code NON_QUOTE_PATTERN} regex ({@code [a-zA-Z_.+\-]}) byte-for-byte:
+     * digits are deliberately excluded so that pure-numeric strings such as {@code "127"} stay
+     * quoted on emission and round-trip back as {@code StringTag} rather than being reparsed
+     * as a numeric tag.
      */
-    public static final Pattern LITERAL_SUFFIX_PATTERN = Pattern.compile("[BbDdFfLlSs]$");
+    public static final boolean[] IS_NON_QUOTE = buildNonQuoteTable();
 
-    /**
-     * All characters that can be used in strings without quotation marks (including tag names).
-     */
-    public static final String VALID_UNQUOTED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+_.";
+    private static boolean[] buildValidUnquotedTable() {
+        boolean[] table = new boolean[128];
+        for (char c = 'a'; c <= 'z'; c++) table[c] = true;
+        for (char c = 'A'; c <= 'Z'; c++) table[c] = true;
+        for (char c = '0'; c <= '9'; c++) table[c] = true;
+        table['_'] = true;
+        table['.'] = true;
+        table['+'] = true;
+        table['-'] = true;
+        return table;
+    }
+
+    private static boolean[] buildNonQuoteTable() {
+        boolean[] table = new boolean[128];
+        for (char c = 'a'; c <= 'z'; c++) table[c] = true;
+        for (char c = 'A'; c <= 'Z'; c++) table[c] = true;
+        table['_'] = true;
+        table['.'] = true;
+        table['+'] = true;
+        table['-'] = true;
+        return table;
+    }
 
 }

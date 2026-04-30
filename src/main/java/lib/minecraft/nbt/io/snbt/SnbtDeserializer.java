@@ -43,8 +43,9 @@ import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
  *       always, even when the contents look numeric. Either {@code "text"} or {@code 'text'}
  *       delimiters are accepted; {@code \"}, {@code \\}, and {@code \'} escape sequences are
  *       unescaped character-for-character.</li>
- *   <li><b>Unquoted identifier</b> - classified by regex match against the numeric patterns
- *       in {@link SnbtConstants}; falls back to
+ *   <li><b>Unquoted identifier</b> - classified by a single-pass scan that dispatches on the
+ *       trailing suffix character ({@code b/B/s/S/l/L/f/F/d/D}) and validates the leading
+ *       numeric body; falls back to
  *       {@link lib.minecraft.nbt.tags.primitive.StringTag StringTag} on no match. Valid
  *       unquoted characters are {@code [A-Za-z0-9._+-]}.</li>
  *   <li><b>{@code [B;...]}</b> /
@@ -259,7 +260,16 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
     }
 
     private @NotNull String readNumberAsString() throws IOException {
-        return LITERAL_SUFFIX_PATTERN.matcher(this.readUTF()).replaceFirst("");
+        String value = this.readUTF();
+        int n = value.length();
+        if (n == 0) return value;
+
+        char last = value.charAt(n - 1);
+        // Mirrors the prior LITERAL_SUFFIX_PATTERN [BbDdFfLlSs] character class.
+        return switch (last) {
+            case 'B', 'b', 'D', 'd', 'F', 'f', 'L', 'l', 'S', 's' -> value.substring(0, n - 1);
+            default -> value;
+        };
     }
 
     private @NotNull String readUTF(boolean peek) throws IOException {
@@ -299,7 +309,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
             builder.append((char) firstChar);
             if (!peek) this.mark(1);
 
-            while (VALID_UNQUOTED_CHARS.indexOf(lastChar = this.read()) != -1) {
+            while ((lastChar = this.read()) >= 0 && lastChar < 128 && IS_VALID_UNQUOTED[lastChar]) {
                 builder.append((char) lastChar);
                 if (!peek) this.mark(1);
             }
@@ -350,23 +360,101 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 if (isQuoted)
                     yield TagType.STRING.getId();
 
-                // Try to parse the string as a numeric value.
-                if (INT_PATTERN.matcher(peekString).matches())
-                    yield TagType.INT.getId();
-                else if (DOUBLE_PATTERN.matcher(peekString).matches())
-                    yield TagType.DOUBLE.getId();
-                else if (BYTE_PATTERN.matcher(peekString).matches())
-                    yield TagType.BYTE.getId();
-                else if (SHORT_PATTERN.matcher(peekString).matches())
-                    yield TagType.SHORT.getId();
-                else if (LONG_PATTERN.matcher(peekString).matches())
-                    yield TagType.LONG.getId();
-                else if (FLOAT_PATTERN.matcher(peekString).matches())
-                    yield TagType.FLOAT.getId();
-                else // Fall-back to string value.
-                    yield TagType.STRING.getId();
+                yield classifyNumericLiteral(peekString);
             }
         };
+    }
+
+    /**
+     * Classifies an unquoted token by inspecting its trailing suffix character and validating
+     * the leading numeric body in a single pass.
+     *
+     * <p>Replaces six sequential regex {@code .matches()} calls (one per type pattern) with a
+     * trailing-char dispatch on {@code b/B/s/S/l/L/f/F/d/D} plus a fall-through scan for
+     * unsuffixed integer literals. Mirrors the prior pattern semantics exactly: a token only
+     * resolves to a numeric tag id when the body matches {@code [+-]?\d+} (integer suffixes) or
+     * {@code [+-]?[0-9]*\.?[0-9]+} (decimal suffixes); otherwise it is a string.</p>
+     *
+     * @param token the unquoted token whose tag id to determine
+     * @return the resolved {@link TagType} id
+     */
+    private static byte classifyNumericLiteral(@NotNull String token) {
+        int n = token.length();
+        if (n == 0)
+            return TagType.STRING.getId();
+
+        char last = token.charAt(n - 1);
+        return switch (last) {
+            case 'b', 'B' -> isIntegerBody(token, 0, n - 1) ? TagType.BYTE.getId() : TagType.STRING.getId();
+            case 's', 'S' -> isIntegerBody(token, 0, n - 1) ? TagType.SHORT.getId() : TagType.STRING.getId();
+            case 'l', 'L' -> isIntegerBody(token, 0, n - 1) ? TagType.LONG.getId() : TagType.STRING.getId();
+            case 'f', 'F' -> isDecimalBody(token, 0, n - 1) ? TagType.FLOAT.getId() : TagType.STRING.getId();
+            case 'd', 'D' -> isDecimalBody(token, 0, n - 1) ? TagType.DOUBLE.getId() : TagType.STRING.getId();
+            default -> isIntegerBody(token, 0, n) ? TagType.INT.getId() : TagType.STRING.getId();
+        };
+    }
+
+    /**
+     * Returns whether {@code [start, end)} of {@code s} matches {@code [+-]?\d+}.
+     */
+    private static boolean isIntegerBody(@NotNull String s, int start, int end) {
+        int i = start;
+        if (i >= end) return false;
+
+        char c = s.charAt(i);
+        if (c == '+' || c == '-') {
+            i++;
+            if (i >= end) return false;
+        }
+
+        for (; i < end; i++) {
+            char d = s.charAt(i);
+            if (d < '0' || d > '9') return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns whether {@code [start, end)} of {@code s} matches {@code [+-]?[0-9]*\.?[0-9]+}
+     * (the body of the prior {@code FLOAT_PATTERN} / {@code DOUBLE_PATTERN}).
+     */
+    private static boolean isDecimalBody(@NotNull String s, int start, int end) {
+        int i = start;
+        if (i >= end) return false;
+
+        char c = s.charAt(i);
+        if (c == '+' || c == '-') {
+            i++;
+            if (i >= end) return false;
+        }
+
+        // Scan optional leading digits.
+        int digitsBeforeDot = 0;
+        while (i < end) {
+            char d = s.charAt(i);
+            if (d < '0' || d > '9') break;
+            digitsBeforeDot++;
+            i++;
+        }
+
+        boolean sawDot = false;
+        if (i < end && s.charAt(i) == '.') {
+            sawDot = true;
+            i++;
+        }
+
+        // Must have at least one digit after the dot when present, or a digit before.
+        int digitsAfterDot = 0;
+        while (i < end) {
+            char d = s.charAt(i);
+            if (d < '0' || d > '9') return false;
+            digitsAfterDot++;
+            i++;
+        }
+
+        // Pattern requires at least one trailing digit (the regex anchors {@code [0-9]+} at the end).
+        return digitsAfterDot > 0 || (!sawDot && digitsBeforeDot > 0);
     }
 
     /**

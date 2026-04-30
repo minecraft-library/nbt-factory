@@ -62,6 +62,15 @@ import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
  */
 public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
+    /**
+     * Reusable scratch buffer for primitive numeric writes. Lets {@code writeByte} / {@code
+     * writeShort} / {@code writeLong} / {@code writeFloat} / {@code writeDouble} build their
+     * suffixed text representation without allocating a fresh {@code StringBuilder} per call.
+     * The instance is single-threaded by contract (callers must not share the serializer across
+     * threads, same as {@link JsonWriter}), so reset-and-reuse is safe.
+     */
+    private final StringBuilder primitiveBuf = new StringBuilder(24);
+
     public SnbtSerializer(@NotNull Writer writer) {
         super(writer);
         this.setIndent("    ");
@@ -74,12 +83,12 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeByte(int value) throws IOException {
-        this.jsonValue(value + "b");
+        this.jsonValue(this.formatSuffixed(Integer.toString(value), 'b'));
     }
 
     @Override
     public void writeShort(int value) throws IOException {
-        this.jsonValue(value + "s");
+        this.jsonValue(this.formatSuffixed(Integer.toString(value), 's'));
     }
 
     @Override
@@ -89,17 +98,33 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeLong(long value) throws IOException {
-        this.jsonValue(value + "l");
+        this.jsonValue(this.formatSuffixed(Long.toString(value), 'l'));
     }
 
     @Override
     public void writeFloat(float value) throws IOException {
-        this.jsonValue(value + "f");
+        this.jsonValue(this.formatSuffixed(Float.toString(value), 'f'));
     }
 
     @Override
     public void writeDouble(double value) throws IOException {
-        this.jsonValue(value + "d");
+        this.jsonValue(this.formatSuffixed(Double.toString(value), 'd'));
+    }
+
+    /**
+     * Builds a numeric literal followed by a one-char SNBT type suffix using the reusable
+     * {@link #primitiveBuf}, avoiding the per-call {@code value + "b"} string-concat
+     * allocation that the prior implementation performed.
+     *
+     * @param numeric the already-formatted numeric body (e.g. {@code Integer.toString(value)})
+     * @param suffix the SNBT type suffix character to append
+     * @return the suffixed literal as a freshly-allocated string ready for {@code jsonValue}
+     */
+    private String formatSuffixed(@NotNull String numeric, char suffix) {
+        StringBuilder buf = this.primitiveBuf;
+        buf.setLength(0);
+        buf.append(numeric).append(suffix);
+        return buf.toString();
     }
 
     @Override
@@ -109,7 +134,8 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeByteArray(byte @NotNull [] value) throws IOException {
-        StringBuilder sb = new StringBuilder()
+        // Per-byte cost: up to 4 chars for "-128", 1 for the suffix, 1 for the separator.
+        StringBuilder sb = new StringBuilder(8 + value.length * 6)
             .append(ARRAY_START)
             .append(ARRAY_PREFIX_BYTE)
             .append(ARRAY_TYPE_INDICATOR);
@@ -125,7 +151,8 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeIntArray(int @NotNull [] value) throws IOException {
-        StringBuilder sb = new StringBuilder()
+        // Per-int cost: up to 11 chars for "-2147483648", 1 for the separator.
+        StringBuilder sb = new StringBuilder(8 + value.length * 12)
             .append(ARRAY_START)
             .append(ARRAY_PREFIX_INT)
             .append(ARRAY_TYPE_INDICATOR);
@@ -141,7 +168,8 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeLongArray(long @NotNull [] value) throws IOException {
-        StringBuilder sb = new StringBuilder()
+        // Per-long cost: up to 20 chars for "-9223372036854775808", 1 for the suffix, 1 for the separator.
+        StringBuilder sb = new StringBuilder(8 + value.length * 22)
             .append(ARRAY_START)
             .append(ARRAY_PREFIX_LONG)
             .append(ARRAY_TYPE_INDICATOR);
@@ -184,24 +212,47 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
     }
 
     private static String escapeString(@NotNull String value) {
-        if (!NON_QUOTE_PATTERN.matcher(value).matches()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(STRING_DELIMITER_1);
+        // Single-pass scan: find the first character that requires quoting. Mirrors the prior
+        // NON_QUOTE_PATTERN [a-zA-Z_.+\-] check character-by-character via the IS_NON_QUOTE
+        // table, but bails out at the first offender so an unquoted-eligible string never pays
+        // the cost of a full re-walk.
+        int len = value.length();
+        if (len == 0)
+            return "\"\"";
 
-            for (int i = 0; i < value.length(); i++) {
-                char current = value.charAt(i);
-
-                if (current == STRING_ESCAPE || current == STRING_DELIMITER_1)
-                    sb.append(STRING_ESCAPE);
-
-                sb.append(current);
+        int firstOffending = -1;
+        for (int i = 0; i < len; i++) {
+            char c = value.charAt(i);
+            if (c >= 128 || !IS_NON_QUOTE[c]) {
+                firstOffending = i;
+                break;
             }
-
-            sb.append(STRING_DELIMITER_1);
-            return sb.toString();
         }
 
-        return value;
+        // Fast path: every character was unquoted-eligible, so emit the value verbatim.
+        if (firstOffending == -1)
+            return value;
+
+        // Slow path: at least one character requires quoting. Pre-size for {@code "value"} plus
+        // a small allowance for the escape backslashes.
+        StringBuilder sb = new StringBuilder(len + 4);
+        sb.append(STRING_DELIMITER_1);
+
+        // Copy the prefix that was already verified clean - no escape check needed inside it
+        // because IS_NON_QUOTE excludes both STRING_ESCAPE ('\') and STRING_DELIMITER_1 ('"').
+        if (firstOffending > 0)
+            sb.append(value, 0, firstOffending);
+
+        // Walk the remaining tail char-by-char, escaping the two SNBT escapees.
+        for (int i = firstOffending; i < len; i++) {
+            char c = value.charAt(i);
+            if (c == STRING_ESCAPE || c == STRING_DELIMITER_1)
+                sb.append(STRING_ESCAPE);
+            sb.append(c);
+        }
+
+        sb.append(STRING_DELIMITER_1);
+        return sb.toString();
     }
 
 }
