@@ -2,6 +2,9 @@ package lib.minecraft.nbt.io.snbt;
 
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
+import lib.minecraft.nbt.io.util.ByteList;
+import lib.minecraft.nbt.io.util.IntList;
+import lib.minecraft.nbt.io.util.LongList;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.collection.CompoundTag;
@@ -374,69 +377,6 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
             this.mark(1);
         } while (Character.isWhitespace(this.read()));
         this.reset();
-    }
-
-    /**
-     * Tiny growable {@code byte[]} buffer used during SNBT byte-array parsing to avoid {@code Byte} boxing.
-     */
-    private static final class ByteList {
-
-        private byte[] data = new byte[16];
-        private int size = 0;
-
-        void add(byte value) {
-            if (this.size == this.data.length)
-                this.data = java.util.Arrays.copyOf(this.data, this.data.length << 1);
-
-            this.data[this.size++] = value;
-        }
-
-        byte @NotNull [] toArray() {
-            return java.util.Arrays.copyOf(this.data, this.size);
-        }
-
-    }
-
-    /**
-     * Tiny growable {@code int[]} buffer used during SNBT int-array parsing to avoid {@code Integer} boxing.
-     */
-    private static final class IntList {
-
-        private int[] data = new int[16];
-        private int size = 0;
-
-        void add(int value) {
-            if (this.size == this.data.length)
-                this.data = java.util.Arrays.copyOf(this.data, this.data.length << 1);
-
-            this.data[this.size++] = value;
-        }
-
-        int @NotNull [] toArray() {
-            return java.util.Arrays.copyOf(this.data, this.size);
-        }
-
-    }
-
-    /**
-     * Tiny growable {@code long[]} buffer used during SNBT long-array parsing to avoid {@code Long} boxing.
-     */
-    private static final class LongList {
-
-        private long[] data = new long[16];
-        private int size = 0;
-
-        void add(long value) {
-            if (this.size == this.data.length)
-                this.data = java.util.Arrays.copyOf(this.data, this.data.length << 1);
-
-            this.data[this.size++] = value;
-        }
-
-        long @NotNull [] toArray() {
-            return java.util.Arrays.copyOf(this.data, this.size);
-        }
-
     }
 
 }
