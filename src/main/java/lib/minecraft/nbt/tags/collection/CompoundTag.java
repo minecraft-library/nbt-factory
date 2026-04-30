@@ -96,7 +96,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     }
 
     public boolean containsListOf(@NotNull String key, byte of) {
-        return this.containsType(key, TagType.LIST) && this.getListTag(key).getListType() == of;
+        // Single map lookup folds the prior containsType + getListTag pair into one probe.
+        Tag<?> tag = this.getValue().get(key);
+        return tag instanceof ListTag<?> listTag && listTag.getListType() == of;
     }
 
     public boolean containsType(@NotNull String key, @NotNull TagType tagType) {
@@ -110,12 +112,10 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * @param typeId the tag type ID to test for.
      * @return true if this compound contains an entry with a given name (key) and if that entry is of a given tag type, false otherwise.
      */
-    @SuppressWarnings("")
     public boolean containsType(@NotNull String key, byte typeId) {
-        if (!this.containsKey(key))
-            return false;
-
-        return Objects.requireNonNull(this.get(key)).getId() == typeId;
+        // Single get-and-null-check replaces the prior containsKey + get pair (two hash probes).
+        Tag<?> tag = this.getValue().get(key);
+        return tag != null && tag.getId() == typeId;
     }
 
     /**
@@ -520,11 +520,85 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     }
 
     /**
+     * Maximum tag-tree depth rendered by {@link #toString}. Beyond this, nested compounds and lists
+     * collapse to {@code {...}} / {@code [...]} placeholders to keep IDE debugger evaluations fast
+     * even on deep auction-style payloads.
+     */
+    static final int TO_STRING_MAX_DEPTH = 3;
+
+    /**
+     * Per-level entry cap rendered by {@link #toString}. Entries beyond this collapse to
+     * {@code ... (N more)}.
+     */
+    static final int TO_STRING_MAX_ENTRIES = 50;
+
+    @Override
+    public boolean equals(Object o) {
+        // Strict class match preserves the Tag.equals contract: two compounds of different runtime
+        // classes (e.g. the EMPTY anonymous subclass vs a plain CompoundTag) never compare equal.
+        // Size short-circuit then beats the Map.equals subtree walk on every mismatched pair without
+        // the per-entry recursion.
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CompoundTag other = (CompoundTag) o;
+        if (this.size() != other.size()) return false;
+        return this.getValue().equals(other.getValue());
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public @NotNull String toString() {
-        return this.getValue().toString();
+        StringBuilder builder = new StringBuilder();
+        this.appendTo(builder, 0);
+        return builder.toString();
+    }
+
+    /**
+     * Appends a depth- and width-truncated rendering of this compound to the given builder.
+     *
+     * @param builder the destination
+     * @param depth   current nesting depth (0 at the root)
+     */
+    void appendTo(@NotNull StringBuilder builder, int depth) {
+        if (depth >= TO_STRING_MAX_DEPTH) {
+            builder.append("{...}");
+            return;
+        }
+
+        Map<String, Tag<?>> map = this.getValue();
+        if (map.isEmpty()) {
+            builder.append("{}");
+            return;
+        }
+
+        builder.append('{');
+        int i = 0;
+        int total = map.size();
+        for (Map.Entry<String, Tag<?>> entry : map.entrySet()) {
+            if (i >= TO_STRING_MAX_ENTRIES) {
+                builder.append(", ... (").append(total - TO_STRING_MAX_ENTRIES).append(" more)");
+                break;
+            }
+            if (i > 0) builder.append(", ");
+            builder.append(entry.getKey()).append('=');
+            appendChild(builder, entry.getValue(), depth + 1);
+            i++;
+        }
+        builder.append('}');
+    }
+
+    /**
+     * Renders a child tag, recursing into nested compounds and lists with depth tracking.
+     */
+    static void appendChild(@NotNull StringBuilder builder, Tag<?> tag, int depth) {
+        if (tag instanceof CompoundTag compoundTag)
+            compoundTag.appendTo(builder, depth);
+        else if (tag instanceof ListTag<?> listTag)
+            listTag.appendTo(builder, depth);
+        else
+            builder.append(tag);
     }
 
 }

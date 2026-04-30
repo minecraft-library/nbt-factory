@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 /**
@@ -111,6 +112,20 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
 
     @Override
     public final void forEach(@NotNull Consumer<? super Integer> action) {
+        for (int i : this.getValue())
+            action.accept(i);
+    }
+
+    /**
+     * Performs the given action for each element of the backing {@code int[]} without boxing.
+     *
+     * <p>Use this overload in preference to {@link #forEach(Consumer)} when the action does not
+     * require a boxed {@link Integer}; named distinctly to avoid creating an overload-resolution
+     * ambiguity for callers that pass a method reference such as {@code System.out::println}.</p>
+     *
+     * @param action the action to perform on each int
+     */
+    public final void forEachInt(@NotNull IntConsumer action) {
         for (int i : this.getValue())
             action.accept(i);
     }

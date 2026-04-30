@@ -40,6 +40,19 @@ final class SnbtConstants {
     public static final char STRING_ESCAPE         = '\\';
 
     /**
+     * Maximum lookahead in characters reserved by {@code SnbtDeserializer.readUTF(true)} when peeking
+     * an unquoted token to classify it via {@code peekTagId}.
+     *
+     * <p>Replaces a prior {@code mark(Integer.MAX_VALUE)} call. {@code BufferedReader} sizes its
+     * internal buffer to the {@code mark} limit on call, so an unbounded value would have
+     * {@code BufferedReader} pin an unbounded buffer for the duration of the peek. 4 KiB
+     * comfortably covers every realistic SNBT identifier, including the 1 KiB+ corner cases that
+     * the round-trip suite probes; the NBT wire format implicitly caps identifier length below
+     * the {@code unsigned short} ceiling of 32 KiB regardless.</p>
+     */
+    public static final int MAX_PEEK_LOOKAHEAD     = 4096;
+
+    /**
      * ASCII lookup table marking characters that the deserializer accepts inside an unquoted
      * identifier. Mirrors the prior {@code VALID_UNQUOTED_CHARS} string
      * ({@code [A-Za-z0-9._+-]}) byte-for-byte; any code unit {@code >= 128} or absent from the

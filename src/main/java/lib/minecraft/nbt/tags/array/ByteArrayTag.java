@@ -107,6 +107,39 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
             action.accept(b);
     }
 
+    /**
+     * Performs the given action for each element of the backing {@code byte[]} without boxing.
+     *
+     * <p>The JDK does not ship a {@code ByteConsumer} primitive functional interface, so this tag
+     * declares its own. Use this overload in preference to {@link #forEach(Consumer)} when the
+     * action does not require a boxed {@link Byte}.</p>
+     *
+     * @param action the action to perform on each byte
+     */
+    public final void forEachByte(@NotNull ByteConsumer action) {
+        for (byte b : this.getValue())
+            action.accept(b);
+    }
+
+    /**
+     * Primitive {@code byte} consumer functional interface.
+     *
+     * <p>Mirrors {@link java.util.function.IntConsumer} / {@link java.util.function.LongConsumer}
+     * which the JDK ships, filling the gap left by the absence of a primitive {@code byte}
+     * variant.</p>
+     */
+    @FunctionalInterface
+    public interface ByteConsumer {
+
+        /**
+         * Performs this operation on the given byte argument.
+         *
+         * @param value the input byte
+         */
+        void accept(byte value);
+
+    }
+
     @Override
     public final @NotNull Iterator<Byte> iterator() {
         final byte[] array = this.getValue();

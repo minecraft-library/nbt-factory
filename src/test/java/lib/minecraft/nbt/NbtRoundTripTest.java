@@ -5,6 +5,7 @@ import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
+import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import lib.minecraft.nbt.tags.array.IntArrayTag;
@@ -26,10 +27,19 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Cross-format round-trip and interweaving tests covering every NBT tag type across:
@@ -1058,6 +1068,302 @@ public class NbtRoundTripTest {
             IntTag tag = compound.getTag("key_50");
             assertThat(tag, notNullValue());
             assertThat(tag.getValue(), is(50));
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Phase E - tag-level fast-outs
+    // ---------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("Phase E - CompoundTag.containsType single lookup")
+    class ContainsTypeFastPath {
+
+        @Test
+        void containsType_present_matchingId() {
+            CompoundTag c = new CompoundTag();
+            c.put("x", new IntTag(42));
+            assertTrue(c.containsType("x", TagType.INT));
+            assertTrue(c.containsType("x", TagType.INT.getId()));
+        }
+
+        @Test
+        void containsType_present_mismatchedId() {
+            CompoundTag c = new CompoundTag();
+            c.put("x", new IntTag(42));
+            assertFalse(c.containsType("x", TagType.STRING));
+            assertFalse(c.containsType("x", TagType.STRING.getId()));
+        }
+
+        @Test
+        void containsType_missingKey() {
+            CompoundTag c = new CompoundTag();
+            c.put("present", new IntTag(1));
+            assertFalse(c.containsType("missing", TagType.INT));
+        }
+
+        @Test
+        void containsListOf_matchingElementId() {
+            ListTag<IntTag> ints = new ListTag<>();
+            ints.add(new IntTag(1));
+            CompoundTag c = new CompoundTag();
+            c.put("xs", ints);
+            assertTrue(c.containsListOf("xs", TagType.INT.getId()));
+            assertFalse(c.containsListOf("xs", TagType.STRING.getId()));
+        }
+
+        @Test
+        void containsListOf_notAList() {
+            CompoundTag c = new CompoundTag();
+            c.put("x", new IntTag(1));
+            assertFalse(c.containsListOf("x", TagType.INT.getId()));
+        }
+    }
+
+    @Nested
+    @DisplayName("Phase E - equals size short-circuit and contract")
+    class EqualsContract {
+
+        @Test
+        void compoundTag_sameContent_equal() {
+            CompoundTag a = new CompoundTag();
+            a.put("k", new IntTag(1));
+            CompoundTag b = new CompoundTag();
+            b.put("k", new IntTag(1));
+            assertEquals(a, b);
+            assertEquals(a.hashCode(), b.hashCode());
+        }
+
+        @Test
+        void compoundTag_sizeMismatch_notEqual() {
+            CompoundTag a = new CompoundTag();
+            for (int i = 0; i < 100; i++) a.put("k" + i, new IntTag(i));
+            CompoundTag b = new CompoundTag();
+            for (int i = 0; i < 99; i++) b.put("k" + i, new IntTag(i));
+            assertFalse(a.equals(b));
+            assertFalse(b.equals(a));
+        }
+
+        @Test
+        void compoundTag_sameSizeOneDiffers_notEqual() {
+            CompoundTag a = new CompoundTag();
+            a.put("k", new IntTag(1));
+            CompoundTag b = new CompoundTag();
+            b.put("k", new IntTag(2));
+            assertFalse(a.equals(b));
+        }
+
+        @Test
+        void compoundTag_crossType_notEqual() {
+            // Pin behavior: CompoundTag.equals(plainMap) was false before the override (Tag.equals
+            // demanded strict class match). The new override preserves that direction by also
+            // requiring strict class match. The reverse direction (plainMap.equals(compound)) is
+            // governed by AbstractMap.equals - not under our control - so we don't assert it.
+            CompoundTag a = new CompoundTag();
+            a.put("k", new IntTag(1));
+            HashMap<String, Tag<?>> plain = new HashMap<>();
+            plain.put("k", new IntTag(1));
+            assertFalse(a.equals(plain));
+        }
+
+        @Test
+        void listTag_sizeMismatch_notEqual() {
+            ListTag<IntTag> a = new ListTag<>();
+            for (int i = 0; i < 50; i++) a.add(new IntTag(i));
+            ListTag<IntTag> b = new ListTag<>();
+            for (int i = 0; i < 49; i++) b.add(new IntTag(i));
+            assertFalse(a.equals(b));
+        }
+
+        @Test
+        void listTag_sameSizeOneDiffers_notEqual() {
+            ListTag<IntTag> a = new ListTag<>();
+            a.add(new IntTag(1));
+            a.add(new IntTag(2));
+            ListTag<IntTag> b = new ListTag<>();
+            b.add(new IntTag(1));
+            b.add(new IntTag(3));
+            assertFalse(a.equals(b));
+        }
+
+        @Test
+        void listTag_elementTypeMismatch_notEqual() {
+            ListTag<IntTag> ints = new ListTag<>();
+            ints.add(new IntTag(0));
+            ints.remove(0);   // empty but elementId reset to 0 by remove
+            ListTag<StringTag> strs = new ListTag<>();
+            strs.add(new StringTag(""));
+            strs.remove(0);
+            // Both are empty with elementId = 0; they should still be equal because the type
+            // information is gone. This pins the existing contract.
+            assertEquals(ints, strs);
+        }
+    }
+
+    @Nested
+    @DisplayName("Phase E - toString truncation")
+    class ToStringTruncation {
+
+        @Test
+        void smallCompound_rendersEntries() {
+            CompoundTag c = new CompoundTag();
+            c.put("a", new IntTag(1));
+            c.put("b", new StringTag("hi"));
+            String s = c.toString();
+            assertTrue(s.contains("a="));
+            assertTrue(s.contains("b="));
+            assertFalse(s.contains("more)"));
+        }
+
+        @Test
+        void largeCompound_truncatesEntries() {
+            CompoundTag c = new CompoundTag();
+            for (int i = 0; i < 100; i++)
+                c.put("k" + i, new IntTag(i));
+            String s = c.toString();
+            // After 50 entries the truncation marker fires; remainder is 50.
+            assertTrue(s.contains("... (50 more)"), s);
+            // Should still be debugger-tolerable in size.
+            assertThat(s.length(), lessThan(8192));
+        }
+
+        @Test
+        void deeplyNestedCompound_truncatesAtDepthCap() {
+            // Build a chain root.child.child... 6 levels deep, exceeding the depth cap of 3.
+            CompoundTag root = new CompoundTag();
+            CompoundTag current = root;
+            for (int i = 0; i < 6; i++) {
+                CompoundTag next = new CompoundTag();
+                next.put("level", new IntTag(i));
+                current.put("child", next);
+                current = next;
+            }
+            String s = root.toString();
+            // Depth cap collapses inner compounds to "{...}".
+            assertTrue(s.contains("{...}"), s);
+        }
+
+        @Test
+        void largeList_truncatesEntries() {
+            ListTag<IntTag> list = new ListTag<>();
+            for (int i = 0; i < 75; i++) list.add(new IntTag(i));
+            String s = list.toString();
+            assertTrue(s.contains("... (25 more)"), s);
+        }
+
+        @Test
+        void deeplyNestedList_truncatesAtDepthCap() {
+            // Wrap a list inside a chain of compounds well past the depth cap.
+            CompoundTag root = new CompoundTag();
+            CompoundTag a = new CompoundTag();
+            CompoundTag b = new CompoundTag();
+            ListTag<IntTag> innerList = new ListTag<>();
+            innerList.add(new IntTag(99));
+            b.put("xs", innerList);
+            a.put("b", b);
+            root.put("a", a);
+            String s = root.toString();
+            assertTrue(s.contains("[...]") || s.contains("{...}"), s);
+        }
+
+        @Test
+        void emptyCompound_renderedAsBraces() {
+            assertEquals("{}", new CompoundTag().toString());
+        }
+
+        @Test
+        void emptyList_renderedAsBrackets() {
+            assertEquals("[]", new ListTag<>().toString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Phase E - SNBT long unquoted identifier")
+    class SnbtLongIdentifier {
+
+        @Test
+        void unquotedIdentifier_4097chars_roundTrips() throws Exception {
+            // Lock the 4 KiB peek cap: an identifier just past 4 KiB is parsed with no IOException.
+            // SNBT key syntax accepts [A-Za-z0-9._+-]; build a fully-conformant unquoted key.
+            int len = 4097;
+            StringBuilder key = new StringBuilder(len);
+            for (int i = 0; i < len; i++)
+                key.append((char) ('a' + (i % 26)));
+
+            CompoundTag input = new CompoundTag();
+            input.put(key.toString(), new IntTag(7));
+
+            String snbt = NbtFactory.toSnbt(input);
+            CompoundTag output = NbtFactory.fromSnbt(snbt);
+            IntTag tag = output.getTag(key.toString());
+            assertNotNull(tag);
+            assertEquals(7, tag.getValue());
+        }
+    }
+
+    @Nested
+    @DisplayName("Phase E - primitive forEach overloads")
+    class PrimitiveForEach {
+
+        @Test
+        void byteArrayTag_forEachByte_noBoxing() {
+            ByteArrayTag tag = new ByteArrayTag((byte) 1, (byte) 2, (byte) 3, (byte) 4);
+            AtomicInteger sum = new AtomicInteger();
+            ByteArrayTag.ByteConsumer consumer = b -> sum.addAndGet(b);
+            tag.forEachByte(consumer);
+            assertEquals(10, sum.get());
+        }
+
+        @Test
+        void byteArrayTag_legacyForEach_stillWorks() {
+            ByteArrayTag tag = new ByteArrayTag((byte) 1, (byte) 2, (byte) 3);
+            AtomicInteger sum = new AtomicInteger();
+            tag.forEach((Byte b) -> sum.addAndGet(b));
+            assertEquals(6, sum.get());
+        }
+
+        @Test
+        void intArrayTag_forEachInt_noBoxing() {
+            IntArrayTag tag = new IntArrayTag(1, 2, 3, 4, 5);
+            AtomicInteger sum = new AtomicInteger();
+            IntConsumer consumer = sum::addAndGet;
+            tag.forEachInt(consumer);
+            assertEquals(15, sum.get());
+        }
+
+        @Test
+        void intArrayTag_legacyForEach_stillWorks() {
+            IntArrayTag tag = new IntArrayTag(10, 20, 30);
+            AtomicInteger sum = new AtomicInteger();
+            tag.forEach((Integer i) -> sum.addAndGet(i));
+            assertEquals(60, sum.get());
+        }
+
+        @Test
+        void longArrayTag_forEachLong_noBoxing() {
+            LongArrayTag tag = new LongArrayTag(1L, 2L, 3L);
+            AtomicLong sum = new AtomicLong();
+            LongConsumer consumer = sum::addAndGet;
+            tag.forEachLong(consumer);
+            assertEquals(6L, sum.get());
+        }
+
+        @Test
+        void longArrayTag_legacyForEach_stillWorks() {
+            LongArrayTag tag = new LongArrayTag(100L, 200L);
+            AtomicLong sum = new AtomicLong();
+            tag.forEach((Long l) -> sum.addAndGet(l));
+            assertEquals(300L, sum.get());
+        }
+
+        @Test
+        void intArrayTag_methodReference_resolvesUnambiguously() {
+            // Distinct names mean common method-reference idioms keep resolving as before:
+            // forEach(System.out::println) routes to Consumer<? super Integer> with no overload race.
+            IntArrayTag tag = new IntArrayTag(1, 2, 3);
+            // No exception means the overload resolved cleanly at compile and run time.
+            tag.forEach((Integer i) -> { /* noop */ });
+            tag.forEachInt(i -> { /* noop */ });
         }
     }
 

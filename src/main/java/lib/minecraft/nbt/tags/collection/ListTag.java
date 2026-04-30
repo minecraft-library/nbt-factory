@@ -191,13 +191,18 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public boolean equals(Object o) {
+        // Size short-circuit before the per-element List.equals walk: a single int compare wins on
+        // every length-mismatched list with no element recursion. The element-id pre-check stays in
+        // place so two lists holding e.g. an empty content set still compare unequal when their
+        // declared element types differ.
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         ListTag<?> listTag = (ListTag<?>) o;
 
-        return this.getListType() == listTag.getListType()
-            && Objects.equals(this.getValue(), listTag.getValue());
+        if (this.getListType() != listTag.getListType()) return false;
+        if (this.size() != listTag.size()) return false;
+        return this.getValue().equals(listTag.getValue());
     }
 
     @Override
@@ -369,7 +374,39 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public @NotNull String toString() {
-        return this.getValue().toString();
+        StringBuilder builder = new StringBuilder();
+        this.appendTo(builder, 0);
+        return builder.toString();
+    }
+
+    /**
+     * Appends a depth- and width-truncated rendering of this list to the given builder.
+     *
+     * @param builder the destination
+     * @param depth   current nesting depth (0 at the root)
+     */
+    void appendTo(@NotNull StringBuilder builder, int depth) {
+        if (depth >= CompoundTag.TO_STRING_MAX_DEPTH) {
+            builder.append("[...]");
+            return;
+        }
+
+        List<E> list = this.getValue();
+        if (list.isEmpty()) {
+            builder.append("[]");
+            return;
+        }
+
+        builder.append('[');
+        int total = list.size();
+        int rendered = Math.min(total, CompoundTag.TO_STRING_MAX_ENTRIES);
+        for (int i = 0; i < rendered; i++) {
+            if (i > 0) builder.append(", ");
+            CompoundTag.appendChild(builder, list.get(i), depth + 1);
+        }
+        if (total > rendered)
+            builder.append(", ... (").append(total - rendered).append(" more)");
+        builder.append(']');
     }
 
 }

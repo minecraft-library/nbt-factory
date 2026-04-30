@@ -273,8 +273,11 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
     }
 
     private @NotNull String readUTF(boolean peek) throws IOException {
+        // Cap the readahead: prior code passed Integer.MAX_VALUE which prompts BufferedReader-backed
+        // readers to size their internal buffer to the mark. MAX_PEEK_LOOKAHEAD comfortably covers
+        // every realistic SNBT identifier.
         if (peek)
-            this.mark(Integer.MAX_VALUE);
+            this.mark(MAX_PEEK_LOOKAHEAD);
 
         final StringBuilder builder = new StringBuilder();
         final int firstChar = this.read();

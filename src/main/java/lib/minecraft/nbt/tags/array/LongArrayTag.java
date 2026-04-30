@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.stream.LongStream;
 
 /**
@@ -111,6 +112,20 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
 
     @Override
     public final void forEach(@NotNull Consumer<? super Long> action) {
+        for (long l : this.getValue())
+            action.accept(l);
+    }
+
+    /**
+     * Performs the given action for each element of the backing {@code long[]} without boxing.
+     *
+     * <p>Use this overload in preference to {@link #forEach(Consumer)} when the action does not
+     * require a boxed {@link Long}; named distinctly to avoid creating an overload-resolution
+     * ambiguity for callers that pass a method reference such as {@code System.out::println}.</p>
+     *
+     * @param action the action to perform on each long
+     */
+    public final void forEachLong(@NotNull LongConsumer action) {
         for (long l : this.getValue())
             action.accept(l);
     }
