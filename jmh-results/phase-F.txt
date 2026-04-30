@@ -1,0 +1,857 @@
+> Task :Simplified-Dev:utils:processResources NO-SOURCE
+> Task :Simplified-Dev:collections:compileJava UP-TO-DATE
+> Task :Simplified-Dev:collections:processResources UP-TO-DATE
+> Task :Simplified-Dev:collections:classes UP-TO-DATE
+> Task :processResources NO-SOURCE
+> Task :processTestResources UP-TO-DATE
+> Task :Simplified-Dev:utils:compileJava UP-TO-DATE
+> Task :Simplified-Dev:collections:jar UP-TO-DATE
+> Task :Simplified-Dev:utils:classes UP-TO-DATE
+> Task :Simplified-Dev:utils:jar UP-TO-DATE
+> Task :processJmhResources NO-SOURCE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+> Task :compileJmhJava
+> Task :jmhClasses
+
+> Task :jmhRunBytecodeGenerator
+Processing 2 classes from W:\Workspace\Java\Minecraft-Library\nbt-factory\build\classes\java\jmh with "reflection" generator
+Writing out Java source to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-sources and resources to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-resources
+Processing 17 classes from W:\Workspace\Java\Minecraft-Library\nbt-factory\build\classes\java\test with "reflection" generator
+Writing out Java source to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-sources and resources to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-resources
+
+> Task :jmhCompileGeneratedClasses UP-TO-DATE
+> Task :jmhJar
+
+> Task :jmh
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_read
+# Parameters: (strategyName = STREAMWISE)
+
+# Run progress: 0.00% complete, ETA 00:06:40
+# Fork: 1 of 1
+# Warmup Iteration   1: 3038.369 us/op
+# Warmup Iteration   2: 2918.058 us/op
+# Warmup Iteration   3: 2916.526 us/op
+Iteration   1: 2923.515 us/op
+Iteration   2: 2923.003 us/op
+Iteration   3: 2924.049 us/op
+Iteration   4: 2978.616 us/op
+Iteration   5: 2950.213 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_read":
+  2939.879 ±(99.9%) 94.527 us/op [Average]
+  (min, avg, max) = (2923.003, 2939.879, 2978.616), stdev = 24.548
+  CI (99.9%): [2845.352, 3034.407] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_read
+# Parameters: (strategyName = CHUNKED_THREADLOCAL)
+
+# Run progress: 4.00% complete, ETA 00:06:31
+# Fork: 1 of 1
+# Warmup Iteration   1: 123.702 us/op
+# Warmup Iteration   2: 118.346 us/op
+# Warmup Iteration   3: 119.549 us/op
+Iteration   1: 118.400 us/op
+Iteration   2: 117.906 us/op
+Iteration   3: 118.676 us/op
+Iteration   4: 118.511 us/op
+Iteration   5: 118.091 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_read":
+  118.317 ±(99.9%) 1.209 us/op [Average]
+  (min, avg, max) = (117.906, 118.317, 118.676), stdev = 0.314
+  CI (99.9%): [117.108, 119.526] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_write
+# Parameters: (strategyName = STREAMWISE)
+
+# Run progress: 8.00% complete, ETA 00:06:15
+# Fork: 1 of 1
+# Warmup Iteration   1: 1378.821 us/op
+# Warmup Iteration   2: 1351.048 us/op
+# Warmup Iteration   3: 1357.730 us/op
+Iteration   1: 1331.841 us/op
+Iteration   2: 1324.303 us/op
+Iteration   3: 1329.002 us/op
+Iteration   4: 1457.978 us/op
+Iteration   5: 1340.102 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_write":
+  1356.645 ±(99.9%) 219.246 us/op [Average]
+  (min, avg, max) = (1324.303, 1356.645, 1457.978), stdev = 56.938
+  CI (99.9%): [1137.399, 1575.892] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_write
+# Parameters: (strategyName = CHUNKED_THREADLOCAL)
+
+# Run progress: 12.00% complete, ETA 00:05:58
+# Fork: 1 of 1
+# Warmup Iteration   1: 183.892 us/op
+# Warmup Iteration   2: 170.514 us/op
+# Warmup Iteration   3: 171.246 us/op
+Iteration   1: 168.619 us/op
+Iteration   2: 168.844 us/op
+Iteration   3: 167.908 us/op
+Iteration   4: 170.385 us/op
+Iteration   5: 170.652 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeIntArray_write":
+  169.282 ±(99.9%) 4.563 us/op [Average]
+  (min, avg, max) = (167.908, 169.282, 170.652), stdev = 1.185
+  CI (99.9%): [164.719, 173.844] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_read
+# Parameters: (strategyName = STREAMWISE)
+
+# Run progress: 16.00% complete, ETA 00:05:42
+# Fork: 1 of 1
+# Warmup Iteration   1: 1554.960 us/op
+# Warmup Iteration   2: 1503.970 us/op
+# Warmup Iteration   3: 1514.796 us/op
+Iteration   1: 1519.997 us/op
+Iteration   2: 1640.183 us/op
+Iteration   3: 1519.273 us/op
+Iteration   4: 1507.688 us/op
+Iteration   5: 1499.753 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_read":
+  1537.379 ±(99.9%) 223.669 us/op [Average]
+  (min, avg, max) = (1499.753, 1537.379, 1640.183), stdev = 58.086
+  CI (99.9%): [1313.710, 1761.047] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_read
+# Parameters: (strategyName = CHUNKED_THREADLOCAL)
+
+# Run progress: 20.00% complete, ETA 00:05:26
+# Fork: 1 of 1
+# Warmup Iteration   1: 76.842 us/op
+# Warmup Iteration   2: 69.594 us/op
+# Warmup Iteration   3: 68.421 us/op
+Iteration   1: 68.812 us/op
+Iteration   2: 68.608 us/op
+Iteration   3: 68.515 us/op
+Iteration   4: 68.598 us/op
+Iteration   5: 593.214 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_read":
+  173.550 ±(99.9%) 903.360 us/op [Average]
+  (min, avg, max) = (68.515, 173.550, 593.214), stdev = 234.600
+  CI (99.9%): [≈ 0, 1076.910] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_write
+# Parameters: (strategyName = STREAMWISE)
+
+# Run progress: 24.00% complete, ETA 00:05:25
+# Fork: 1 of 1
+# Warmup Iteration   1: 892.274 us/op
+# Warmup Iteration   2: 857.761 us/op
+# Warmup Iteration   3: 887.298 us/op
+Iteration   1: 858.730 us/op
+Iteration   2: 959.153 us/op
+Iteration   3: 858.527 us/op
+Iteration   4: 814.182 us/op
+Iteration   5: 818.968 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_write":
+  861.912 ±(99.9%) 224.527 us/op [Average]
+  (min, avg, max) = (814.182, 861.912, 959.153), stdev = 58.309
+  CI (99.9%): [637.385, 1086.439] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_write
+# Parameters: (strategyName = CHUNKED_THREADLOCAL)
+
+# Run progress: 28.00% complete, ETA 00:05:06
+# Fork: 1 of 1
+# Warmup Iteration   1: 131.856 us/op
+# Warmup Iteration   2: 120.194 us/op
+# Warmup Iteration   3: 120.185 us/op
+Iteration   1: 120.808 us/op
+Iteration   2: 120.379 us/op
+Iteration   3: 120.330 us/op
+Iteration   4: 120.358 us/op
+Iteration   5: 119.903 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtArrayStrategyBenchmarks.largeLongArray_write":
+  120.356 ±(99.9%) 1.234 us/op [Average]
+  (min, avg, max) = (119.903, 120.356, 120.808), stdev = 0.320
+  CI (99.9%): [119.122, 121.590] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_deserializeAll
+
+# Run progress: 32.00% complete, ETA 00:04:47
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+687020.033 us/op
+# Warmup Iteration   2: 551072.275 us/op
+# Warmup Iteration   3: 555004.725 us/op
+Iteration   1: 551863.775 us/op
+Iteration   2: 563742.025 us/op
+Iteration   3: 557118.675 us/op
+Iteration   4: 563678.375 us/op
+Iteration   5: 561874.075 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_deserializeAll":
+  559655.385 ±(99.9%) 19724.145 us/op [Average]
+  (min, avg, max) = (551863.775, 559655.385, 563742.025), stdev = 5122.298
+  CI (99.9%): [539931.240, 579379.530] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_roundTrip
+
+# Run progress: 36.00% complete, ETA 00:04:34
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+673106.800 us/op
+# Warmup Iteration   2: 633276.375 us/op
+# Warmup Iteration   3: 627194.425 us/op
+Iteration   1: 668494.533 us/op
+Iteration   2: 643161.825 us/op
+Iteration   3: 627572.650 us/op
+Iteration   4: 626593.875 us/op
+Iteration   5: 639756.225 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_roundTrip":
+  641115.822 ±(99.9%) 65288.940 us/op [Average]
+  (min, avg, max) = (626593.875, 641115.822, 668494.533), stdev = 16955.330
+  CI (99.9%): [575826.882, 706404.762] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_serializeAll
+
+# Run progress: 40.00% complete, ETA 00:04:22
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+116604.806 us/op
+# Warmup Iteration   2: 106310.442 us/op
+# Warmup Iteration   3: 106977.189 us/op
+Iteration   1: 106684.511 us/op
+Iteration   2: 105648.380 us/op
+Iteration   3: 105442.215 us/op
+Iteration   4: 104767.430 us/op
+Iteration   5: 109451.363 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_serializeAll":
+  106398.780 ±(99.9%) 7084.381 us/op [Average]
+  (min, avg, max) = (104767.430, 106398.780, 109451.363), stdev = 1839.791
+  CI (99.9%): [99314.399, 113483.160] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_serializeAll_gzip
+
+# Run progress: 44.00% complete, ETA 00:04:05
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+1412795.300 us/op
+# Warmup Iteration   2: 1379795.900 us/op
+# Warmup Iteration   3: 1383161.000 us/op
+Iteration   1: 1372767.100 us/op
+Iteration   2: 1375138.350 us/op
+Iteration   3: 1354634.800 us/op
+Iteration   4: 1351499.550 us/op
+Iteration   5: 1359363.350 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_serializeAll_gzip":
+  1362680.630 ±(99.9%) 41189.650 us/op [Average]
+  (min, avg, max) = (1351499.550, 1362680.630, 1375138.350), stdev = 10696.821
+  CI (99.9%): [1321490.980, 1403870.280] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_serializeAll_snbt
+
+# Run progress: 48.00% complete, ETA 00:03:54
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+365813.283 us/op
+# Warmup Iteration   2: 348430.900 us/op
+# Warmup Iteration   3: 311399.000 us/op
+Iteration   1: 306794.786 us/op
+Iteration   2: 309251.971 us/op
+Iteration   3: 314304.686 us/op
+Iteration   4: 309080.000 us/op
+Iteration   5: 312398.771 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.auction_serializeAll_snbt":
+  310366.043 ±(99.9%) 11438.071 us/op [Average]
+  (min, avg, max) = (306794.786, 310366.043, 314304.686), stdev = 2970.431
+  CI (99.9%): [298927.972, 321804.113] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_binary
+
+# Run progress: 52.00% complete, ETA 00:03:36
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+2.032 us/op
+# Warmup Iteration   2: 1.952 us/op
+# Warmup Iteration   3: 1.954 us/op
+Iteration   1: 1.934 us/op
+Iteration   2: 1.928 us/op
+Iteration   3: 1.939 us/op
+Iteration   4: 1.934 us/op
+Iteration   5: 1.933 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_binary":
+  1.934 ±(99.9%) 0.016 us/op [Average]
+  (min, avg, max) = (1.928, 1.934, 1.939), stdev = 0.004
+  CI (99.9%): [1.918, 1.949] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_binary_gzip
+
+# Run progress: 56.00% complete, ETA 00:03:17
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+10.838 us/op
+# Warmup Iteration   2: 9.677 us/op
+# Warmup Iteration   3: 9.626 us/op
+Iteration   1: 9.619 us/op
+Iteration   2: 10.082 us/op
+Iteration   3: 9.890 us/op
+Iteration   4: 9.676 us/op
+Iteration   5: 9.593 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_binary_gzip":
+  9.772 ±(99.9%) 0.805 us/op [Average]
+  (min, avg, max) = (9.593, 9.772, 10.082), stdev = 0.209
+  CI (99.9%): [8.967, 10.577] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_json
+
+# Run progress: 60.00% complete, ETA 00:02:59
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+17.033 us/op
+# Warmup Iteration   2: 16.450 us/op
+# Warmup Iteration   3: 16.294 us/op
+Iteration   1: 16.209 us/op
+Iteration   2: 16.147 us/op
+Iteration   3: 16.214 us/op
+Iteration   4: 16.084 us/op
+Iteration   5: 15.978 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_json":
+  16.126 ±(99.9%) 0.379 us/op [Average]
+  (min, avg, max) = (15.978, 16.126, 16.214), stdev = 0.098
+  CI (99.9%): [15.748, 16.505] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_snbt
+
+# Run progress: 64.00% complete, ETA 00:02:41
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+64.145 us/op
+# Warmup Iteration   2: 64.392 us/op
+# Warmup Iteration   3: 63.324 us/op
+Iteration   1: 62.648 us/op
+Iteration   2: 62.859 us/op
+Iteration   3: 62.812 us/op
+Iteration   4: 62.692 us/op
+Iteration   5: 63.819 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_deserialize_snbt":
+  62.966 ±(99.9%) 1.865 us/op [Average]
+  (min, avg, max) = (62.648, 62.966, 63.819), stdev = 0.484
+  CI (99.9%): [61.100, 64.831] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_inputBuffer_direct
+
+# Run progress: 68.00% complete, ETA 00:02:23
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+2.053 us/op
+# Warmup Iteration   2: 2.008 us/op
+# Warmup Iteration   3: 1.981 us/op
+Iteration   1: 2.018 us/op
+Iteration   2: 2.021 us/op
+Iteration   3: 2.557 us/op
+Iteration   4: 2.011 us/op
+Iteration   5: 2.133 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_inputBuffer_direct":
+  2.148 ±(99.9%) 0.902 us/op [Average]
+  (min, avg, max) = (2.011, 2.148, 2.557), stdev = 0.234
+  CI (99.9%): [1.246, 3.050] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_outputBuffer_direct
+
+# Run progress: 72.00% complete, ETA 00:02:04
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+2.100 us/op
+# Warmup Iteration   2: 1.996 us/op
+# Warmup Iteration   3: 2.016 us/op
+Iteration   1: 2.005 us/op
+Iteration   2: 2.012 us/op
+Iteration   3: 2.082 us/op
+Iteration   4: 1.989 us/op
+Iteration   5: 2.003 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_outputBuffer_direct":
+  2.018 ±(99.9%) 0.142 us/op [Average]
+  (min, avg, max) = (1.989, 2.018, 2.082), stdev = 0.037
+  CI (99.9%): [1.877, 2.160] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_binary
+
+# Run progress: 76.00% complete, ETA 00:01:46
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+2.073 us/op
+# Warmup Iteration   2: 2.022 us/op
+# Warmup Iteration   3: 1.941 us/op
+Iteration   1: 1.945 us/op
+Iteration   2: 1.966 us/op
+Iteration   3: 1.953 us/op
+Iteration   4: 2.203 us/op
+Iteration   5: 2.061 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_binary":
+  2.026 ±(99.9%) 0.422 us/op [Average]
+  (min, avg, max) = (1.945, 2.026, 2.203), stdev = 0.109
+  CI (99.9%): [1.604, 2.447] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_binary_gzip
+
+# Run progress: 80.00% complete, ETA 00:01:29
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+19.851 us/op
+# Warmup Iteration   2: 18.840 us/op
+# Warmup Iteration   3: 18.562 us/op
+Iteration   1: 21.889 us/op
+Iteration   2: 19.692 us/op
+Iteration   3: 19.904 us/op
+Iteration   4: 18.454 us/op
+Iteration   5: 18.504 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_binary_gzip":
+  19.689 ±(99.9%) 5.382 us/op [Average]
+  (min, avg, max) = (18.454, 19.689, 21.889), stdev = 1.398
+  CI (99.9%): [14.307, 25.070] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_json
+
+# Run progress: 84.00% complete, ETA 00:01:11
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+30.817 us/op
+# Warmup Iteration   2: 33.535 us/op
+# Warmup Iteration   3: 34.664 us/op
+Iteration   1: 31.163 us/op
+Iteration   2: 31.223 us/op
+Iteration   3: 30.799 us/op
+Iteration   4: 34.468 us/op
+Iteration   5: 30.380 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_json":
+  31.607 ±(99.9%) 6.294 us/op [Average]
+  (min, avg, max) = (30.380, 31.607, 34.468), stdev = 1.634
+  CI (99.9%): [25.313, 37.900] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_snbt
+
+# Run progress: 88.00% complete, ETA 00:00:53
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+9.485 us/op
+# Warmup Iteration   2: 8.960 us/op
+# Warmup Iteration   3: 10.944 us/op
+Iteration   1: 10.232 us/op
+Iteration   2: 8.678 us/op
+Iteration   3: 8.588 us/op
+Iteration   4: 8.719 us/op
+Iteration   5: 8.279 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_serialize_snbt":
+  8.899 ±(99.9%) 2.945 us/op [Average]
+  (min, avg, max) = (8.279, 8.899, 10.232), stdev = 0.765
+  CI (99.9%): [5.955, 11.844] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_traverse_compound
+
+# Run progress: 92.00% complete, ETA 00:00:35
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+0.002 us/op
+# Warmup Iteration   2: 0.002 us/op
+# Warmup Iteration   3: 0.002 us/op
+Iteration   1: 0.002 us/op
+Iteration   2: 0.002 us/op
+Iteration   3: 0.002 us/op
+Iteration   4: 0.002 us/op
+Iteration   5: 0.002 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_traverse_compound":
+  0.002 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.002, 0.002, 0.002), stdev = 0.001
+  CI (99.9%): [0.002, 0.002] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 2 s each
+# Measurement: 5 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_traverse_intArray
+
+# Run progress: 96.00% complete, ETA 00:00:17
+# Fork: 1 of 1
+# Warmup Iteration   1: Loaded 41098 auction NBT payloads from src\test\resources\nbt-bench-fixture\auctions.bin
+0.036 us/op
+# Warmup Iteration   2: 0.036 us/op
+# Warmup Iteration   3: 0.036 us/op
+Iteration   1: 0.038 us/op
+Iteration   2: 0.037 us/op
+Iteration   3: 0.036 us/op
+Iteration   4: 0.036 us/op
+Iteration   5: 0.037 us/op
+
+
+Result "lib.minecraft.nbt.benchmark.NbtBenchmarks.synthetic_traverse_intArray":
+  0.037 ±(99.9%) 0.002 us/op [Average]
+  (min, avg, max) = (0.036, 0.037, 0.038), stdev = 0.001
+  CI (99.9%): [0.034, 0.039] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:07:22
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                             (strategyName)  Mode  Cnt        Score       Error  Units
+NbtArrayStrategyBenchmarks.largeIntArray_read             STREAMWISE  avgt    5     2939.879 ±    94.527  us/op
+NbtArrayStrategyBenchmarks.largeIntArray_read    CHUNKED_THREADLOCAL  avgt    5      118.317 ±     1.209  us/op
+NbtArrayStrategyBenchmarks.largeIntArray_write            STREAMWISE  avgt    5     1356.645 ±   219.246  us/op
+NbtArrayStrategyBenchmarks.largeIntArray_write   CHUNKED_THREADLOCAL  avgt    5      169.282 ±     4.563  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_read            STREAMWISE  avgt    5     1537.379 ±   223.669  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_read   CHUNKED_THREADLOCAL  avgt    5      173.550 ±   903.360  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_write           STREAMWISE  avgt    5      861.912 ±   224.527  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_write  CHUNKED_THREADLOCAL  avgt    5      120.356 ±     1.234  us/op
+NbtBenchmarks.auction_deserializeAll                             N/A  avgt    5   559655.385 ± 19724.145  us/op
+NbtBenchmarks.auction_roundTrip                                  N/A  avgt    5   641115.822 ± 65288.940  us/op
+NbtBenchmarks.auction_serializeAll                               N/A  avgt    5   106398.780 ±  7084.381  us/op
+NbtBenchmarks.auction_serializeAll_gzip                          N/A  avgt    5  1362680.630 ± 41189.650  us/op
+NbtBenchmarks.auction_serializeAll_snbt                          N/A  avgt    5   310366.043 ± 11438.071  us/op
+NbtBenchmarks.synthetic_deserialize_binary                       N/A  avgt    5        1.934 ±     0.016  us/op
+NbtBenchmarks.synthetic_deserialize_binary_gzip                  N/A  avgt    5        9.772 ±     0.805  us/op
+NbtBenchmarks.synthetic_deserialize_json                         N/A  avgt    5       16.126 ±     0.379  us/op
+NbtBenchmarks.synthetic_deserialize_snbt                         N/A  avgt    5       62.966 ±     1.865  us/op
+NbtBenchmarks.synthetic_inputBuffer_direct                       N/A  avgt    5        2.148 ±     0.902  us/op
+NbtBenchmarks.synthetic_outputBuffer_direct                      N/A  avgt    5        2.018 ±     0.142  us/op
+NbtBenchmarks.synthetic_serialize_binary                         N/A  avgt    5        2.026 ±     0.422  us/op
+NbtBenchmarks.synthetic_serialize_binary_gzip                    N/A  avgt    5       19.689 ±     5.382  us/op
+NbtBenchmarks.synthetic_serialize_json                           N/A  avgt    5       31.607 ±     6.294  us/op
+NbtBenchmarks.synthetic_serialize_snbt                           N/A  avgt    5        8.899 ±     2.945  us/op
+NbtBenchmarks.synthetic_traverse_compound                        N/A  avgt    5        0.002 ±     0.001  us/op
+NbtBenchmarks.synthetic_traverse_intArray                        N/A  avgt    5        0.037 ±     0.002  us/op
+
+Benchmark result is saved to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\results\jmh\results.txt
+
+[Incubating] Problems report is available at: file:///W:/Workspace/Java/Minecraft-Library/nbt-factory/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 7m 26s
+13 actionable tasks: 4 executed, 9 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html

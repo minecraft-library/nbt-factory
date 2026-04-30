@@ -39,10 +39,14 @@ import java.io.OutputStream;
 public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
     /**
-     * Default strategy used by the no-arg constructor. Phase F of the optimization plan flips
-     * this to whichever strategy wins the JMH comparison.
+     * Default strategy used by the no-arg constructor.
+     *
+     * <p>Set to {@link ArrayWriteStrategy#CHUNKED_THREADLOCAL} based on Phase D JMH evidence:
+     * encoding megabyte-scale {@code int[]} payloads is ~9x faster and {@code long[]} payloads
+     * ~7x faster than the streamwise path, with {@link ArrayWriteStrategy#STREAMWISE} retained
+     * as an explicit opt-in via the two-arg constructor for callers with unusual workloads.</p>
      */
-    static final ArrayWriteStrategy DEFAULT_STRATEGY = ArrayWriteStrategy.STREAMWISE;
+    static final ArrayWriteStrategy DEFAULT_STRATEGY = ArrayWriteStrategy.CHUNKED_THREADLOCAL;
 
     /**
      * Maximum size (bytes) of the {@link ThreadLocal} scratch buffer used by

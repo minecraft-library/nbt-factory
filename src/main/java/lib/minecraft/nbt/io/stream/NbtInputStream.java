@@ -43,10 +43,14 @@ import java.io.InputStream;
 public class NbtInputStream extends DataInputStream implements NbtInput {
 
     /**
-     * Default strategy used by the no-arg constructor. Phase F of the optimization plan flips
-     * this to whichever strategy wins the JMH comparison.
+     * Default strategy used by the no-arg constructor.
+     *
+     * <p>Set to {@link ArrayReadStrategy#CHUNKED_THREADLOCAL} based on Phase D JMH evidence:
+     * decoding megabyte-scale {@code int[]} payloads is ~26x faster and {@code long[]} payloads
+     * ~28x faster than the streamwise path, with {@link ArrayReadStrategy#STREAMWISE} retained
+     * as an explicit opt-in via the two-arg constructor for callers with unusual workloads.</p>
      */
-    static final ArrayReadStrategy DEFAULT_STRATEGY = ArrayReadStrategy.STREAMWISE;
+    static final ArrayReadStrategy DEFAULT_STRATEGY = ArrayReadStrategy.CHUNKED_THREADLOCAL;
 
     /**
      * Maximum size (bytes) of the {@link ThreadLocal} scratch buffer used by
