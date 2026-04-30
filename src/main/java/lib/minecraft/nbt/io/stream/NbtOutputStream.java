@@ -24,22 +24,52 @@ import java.io.OutputStream;
  * {@code element-type + big-endian length} list framing come in for free.</p>
  *
  * <p>The bulk primitive array writes ({@code writeByteArray}, {@code writeIntArray},
- * {@code writeLongArray}) are overridden to encode the whole payload into a scratch buffer
- * via {@link NbtByteCodec} and push it through with a single {@code write} call, skipping the
- * per-element method-call chain the {@code DataOutputStream.writeInt}/{@code writeLong}
- * defaults would take for big arrays.</p>
+ * {@code writeLongArray}) are overridden to dispatch on the configured
+ * {@link ArrayWriteStrategy} - see that enum's javadoc for the streamwise vs. chunked
+ * thread-local trade-off.</p>
  *
  * <p>Implements {@link NbtOutput} on top of {@link DataOutputStream} rather than wrapping it so
  * callers can use this directly in either role.</p>
  *
  * @see NbtOutput
  * @see NbtOutputBuffer
+ * @see ArrayWriteStrategy
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
+    /**
+     * Default strategy used by the no-arg constructor. Phase F of the optimization plan flips
+     * this to whichever strategy wins the JMH comparison.
+     */
+    static final ArrayWriteStrategy DEFAULT_STRATEGY = ArrayWriteStrategy.STREAMWISE;
+
+    /**
+     * Maximum size (bytes) of the {@link ThreadLocal} scratch buffer used by
+     * {@link ArrayWriteStrategy#CHUNKED_THREADLOCAL}. Arrays larger than the cap are encoded in
+     * chunks of this size; the thread-local never retains anything larger so per-carrier
+     * footprint stays bounded for virtual threads and fork-join pools.
+     */
+    private static final int SCRATCH_CAP_BYTES = 65_536;
+
+    private static final ThreadLocal<byte[]> SCRATCH = ThreadLocal.withInitial(() -> new byte[SCRATCH_CAP_BYTES]);
+
+    private final ArrayWriteStrategy strategy;
+
     public NbtOutputStream(@NotNull OutputStream outputStream) {
+        this(outputStream, DEFAULT_STRATEGY);
+    }
+
+    public NbtOutputStream(@NotNull OutputStream outputStream, @NotNull ArrayWriteStrategy strategy) {
         super(outputStream);
+        this.strategy = strategy;
+    }
+
+    /**
+     * Returns the array-encode strategy this stream was constructed with.
+     */
+    public @NotNull ArrayWriteStrategy getStrategy() {
+        return this.strategy;
     }
 
     @Override
@@ -53,16 +83,32 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
         int length = data.length;
         this.writeInt(length);
 
-        // Encode the whole array into a scratch buffer, then push it through with one write() call.
-        byte[] scratch = new byte[length << 2];
-        int p = 0;
+        if (this.strategy == ArrayWriteStrategy.STREAMWISE) {
+            for (int i = 0; i < length; i++)
+                this.writeInt(data[i]);
 
-        for (int i = 0; i < length; i++) {
-            NbtByteCodec.putInt(scratch, p, data[i]);
-            p += 4;
+            return;
         }
 
-        this.write(scratch);
+        // CHUNKED_THREADLOCAL: encode into the capped thread-local buffer in chunks, flushing
+        // each chunk through a single write() call.
+        byte[] scratch = SCRATCH.get();
+        int elementsPerChunk = SCRATCH_CAP_BYTES >>> 2; // 16384 ints per pass
+        int remaining = length;
+        int readIndex = 0;
+
+        while (remaining > 0) {
+            int chunkElements = Math.min(remaining, elementsPerChunk);
+            int p = 0;
+
+            for (int i = 0; i < chunkElements; i++) {
+                NbtByteCodec.putInt(scratch, p, data[readIndex++]);
+                p += 4;
+            }
+
+            this.write(scratch, 0, chunkElements << 2);
+            remaining -= chunkElements;
+        }
     }
 
     @Override
@@ -70,15 +116,31 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
         int length = data.length;
         this.writeInt(length);
 
-        byte[] scratch = new byte[length << 3];
-        int p = 0;
+        if (this.strategy == ArrayWriteStrategy.STREAMWISE) {
+            for (int i = 0; i < length; i++)
+                this.writeLong(data[i]);
 
-        for (int i = 0; i < length; i++) {
-            NbtByteCodec.putLong(scratch, p, data[i]);
-            p += 8;
+            return;
         }
 
-        this.write(scratch);
+        // CHUNKED_THREADLOCAL
+        byte[] scratch = SCRATCH.get();
+        int elementsPerChunk = SCRATCH_CAP_BYTES >>> 3; // 8192 longs per pass
+        int remaining = length;
+        int readIndex = 0;
+
+        while (remaining > 0) {
+            int chunkElements = Math.min(remaining, elementsPerChunk);
+            int p = 0;
+
+            for (int i = 0; i < chunkElements; i++) {
+                NbtByteCodec.putLong(scratch, p, data[readIndex++]);
+                p += 8;
+            }
+
+            this.write(scratch, 0, chunkElements << 3);
+            remaining -= chunkElements;
+        }
     }
 
 }

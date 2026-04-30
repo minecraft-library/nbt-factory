@@ -43,6 +43,7 @@ dependencies {
     // Tests
     testImplementation(libs.hamcrest)
     testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.junit.platform.launcher)
 }

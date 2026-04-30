@@ -28,22 +28,52 @@ import java.io.InputStream;
  * already buffered, so callers passing a raw {@code FileInputStream}, {@code GZIPInputStream},
  * or socket stream do not pay per-byte syscall overhead through {@code DataInputStream}. The
  * bulk primitive array reads ({@code readByteArray}, {@code readIntArray}, {@code readLongArray})
- * are overridden to pull all element bytes in one {@code readFully} call then decode them
- * in-memory through {@link NbtByteCodec}, eliminating the N method-call chain the
- * {@code DataInputStream.readInt}/{@code readLong} defaults would take for big arrays.</p>
+ * are overridden to dispatch on the configured {@link ArrayReadStrategy} - see that enum's
+ * javadoc for the streamwise vs. chunked thread-local trade-off.</p>
  *
  * <p>Implements {@link NbtInput} on top of {@link DataInputStream} rather than wrapping it so
  * callers can use this directly in either role.</p>
  *
  * @see NbtInput
  * @see NbtInputBuffer
+ * @see ArrayReadStrategy
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
 @SuppressWarnings("all")
 public class NbtInputStream extends DataInputStream implements NbtInput {
 
+    /**
+     * Default strategy used by the no-arg constructor. Phase F of the optimization plan flips
+     * this to whichever strategy wins the JMH comparison.
+     */
+    static final ArrayReadStrategy DEFAULT_STRATEGY = ArrayReadStrategy.STREAMWISE;
+
+    /**
+     * Maximum size (bytes) of the {@link ThreadLocal} scratch buffer used by
+     * {@link ArrayReadStrategy#CHUNKED_THREADLOCAL}. Arrays larger than the cap are decoded in
+     * chunks of this size; the thread-local never retains anything larger so per-carrier footprint
+     * stays bounded for virtual threads and fork-join pools.
+     */
+    private static final int SCRATCH_CAP_BYTES = 65_536;
+
+    private static final ThreadLocal<byte[]> SCRATCH = ThreadLocal.withInitial(() -> new byte[SCRATCH_CAP_BYTES]);
+
+    private final ArrayReadStrategy strategy;
+
     public NbtInputStream(@NotNull InputStream inputStream) throws IOException {
+        this(inputStream, DEFAULT_STRATEGY);
+    }
+
+    public NbtInputStream(@NotNull InputStream inputStream, @NotNull ArrayReadStrategy strategy) throws IOException {
         super(inputStream instanceof BufferedInputStream ? inputStream : new BufferedInputStream(inputStream));
+        this.strategy = strategy;
+    }
+
+    /**
+     * Returns the array-decode strategy this stream was constructed with.
+     */
+    public @NotNull ArrayReadStrategy getStrategy() {
+        return this.strategy;
     }
 
     @Override
@@ -58,16 +88,32 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         int length = this.readInt();
         int[] data = new int[length];
 
-        // Bulk-read the raw bytes in one call (the underlying BufferedInputStream does a single
-        // arraycopy), then decode in memory via NbtByteCodec. Eliminates N method-call chains
-        // through DataInputStream.readInt.
-        byte[] scratch = new byte[length << 2];
-        this.readFully(scratch);
+        if (this.strategy == ArrayReadStrategy.STREAMWISE) {
+            for (int i = 0; i < length; i++)
+                data[i] = this.readInt();
 
-        int p = 0;
-        for (int i = 0; i < length; i++) {
-            data[i] = NbtByteCodec.getInt(scratch, p);
-            p += 4;
+            return data;
+        }
+
+        // CHUNKED_THREADLOCAL: bulk-read into a capped thread-local scratch buffer in chunks,
+        // decoding through NbtByteCodec's VarHandle path.
+        byte[] scratch = SCRATCH.get();
+        int elementsPerChunk = SCRATCH_CAP_BYTES >>> 2; // 16384 ints per pass
+        int remaining = length;
+        int writeIndex = 0;
+
+        while (remaining > 0) {
+            int chunkElements = Math.min(remaining, elementsPerChunk);
+            int chunkBytes = chunkElements << 2;
+            this.readFully(scratch, 0, chunkBytes);
+
+            int p = 0;
+            for (int i = 0; i < chunkElements; i++) {
+                data[writeIndex++] = NbtByteCodec.getInt(scratch, p);
+                p += 4;
+            }
+
+            remaining -= chunkElements;
         }
 
         return data;
@@ -78,13 +124,31 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         int length = this.readInt();
         long[] data = new long[length];
 
-        byte[] scratch = new byte[length << 3];
-        this.readFully(scratch);
+        if (this.strategy == ArrayReadStrategy.STREAMWISE) {
+            for (int i = 0; i < length; i++)
+                data[i] = this.readLong();
 
-        int p = 0;
-        for (int i = 0; i < length; i++) {
-            data[i] = NbtByteCodec.getLong(scratch, p);
-            p += 8;
+            return data;
+        }
+
+        // CHUNKED_THREADLOCAL
+        byte[] scratch = SCRATCH.get();
+        int elementsPerChunk = SCRATCH_CAP_BYTES >>> 3; // 8192 longs per pass
+        int remaining = length;
+        int writeIndex = 0;
+
+        while (remaining > 0) {
+            int chunkElements = Math.min(remaining, elementsPerChunk);
+            int chunkBytes = chunkElements << 3;
+            this.readFully(scratch, 0, chunkBytes);
+
+            int p = 0;
+            for (int i = 0; i < chunkElements; i++) {
+                data[writeIndex++] = NbtByteCodec.getLong(scratch, p);
+                p += 8;
+            }
+
+            remaining -= chunkElements;
         }
 
         return data;
