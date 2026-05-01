@@ -4,7 +4,6 @@ import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.NbtByteCodec;
 import lib.minecraft.nbt.io.NbtModifiedUtf8;
-import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import lib.minecraft.nbt.tags.array.IntArrayTag;
 import lib.minecraft.nbt.tags.array.LongArrayTag;
@@ -20,6 +19,7 @@ import lib.minecraft.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.io.UTFDataFormatException;
 
 /**
@@ -34,21 +34,15 @@ import java.io.UTFDataFormatException;
  *   <li>{@code size} is the number of populated entries in {@code elements} (the array may be
  *       over-allocated).</li>
  *   <li>{@code buffer} is a {@code byte[]} carrying the binary NBT bytes that pointer-kind tape
- *       elements address. C1 retains the entire serialized compound including its
- *       {@code 0x0A 0x00 0x00} root preamble; C2's streaming parser will retain whatever the
- *       caller passed in.</li>
+ *       elements address. {@link #encode(CompoundTag)} retains the
+ *       {@link NbtFactory#toByteArray(CompoundTag)} output (including its {@code 0x0A 0x00 0x00}
+ *       root preamble); {@link TapeParser#parse(byte[])} retains the caller's input array
+ *       directly.</li>
  * </ul>
  *
  * <p>All container traversal helpers run in {@code O(n)} where {@code n} is the number of tape
  * entries, never the buffer length, matching simdnbt's design (see
  * {@code simdnbt::borrow::tape::TapeElement::skip_offset}).</p>
- *
- * <p><b>C1 limitation</b> - {@link #encode(CompoundTag)} round-trips a fully-materialized
- * {@link CompoundTag} through {@link NbtFactory#toByteArray(CompoundTag)} just so we have bytes
- * to walk. This is testability scaffolding; C2 introduces a streaming binary parser that walks a
- * caller-supplied {@code byte[]} once without ever materializing a {@link CompoundTag}.
- * {@link #materialize()} is the inverse used by the C1 round-trip tests and by the parity test
- * that lands alongside the C5 entry point.</p>
  */
 @ApiStatus.Experimental
 public final class Tape {
@@ -70,15 +64,16 @@ public final class Tape {
 
     /**
      * Retained byte buffer that pointer-kind tape elements address. Owned by the tape; callers
-     * must not mutate it. C2 will allow callers to pass their own buffer in.
+     * must not mutate it. {@link TapeParser#parse(byte[])} retains the caller's input by
+     * reference; {@link #encode(CompoundTag)} retains its own serializer output.
      */
     final byte @NotNull [] buffer;
 
     /**
-     * Package-private all-arg constructor used by {@link #encode(CompoundTag)} and (in C2) by the
-     * streaming parser. Public construction goes through {@link #encode(CompoundTag)} only - the
-     * tape's invariants (kind ordering, matched headers, valid offsets) are not re-validated
-     * here.
+     * Package-private all-arg constructor used by {@link #encode(CompoundTag)} and by
+     * {@link TapeParser#parse(byte[])}. Public construction goes through one of those entry
+     * points - the tape's invariants (kind ordering, matched headers, valid offsets) are not
+     * re-validated here.
      *
      * @param elements packed tape entries
      * @param size number of valid entries in {@code elements}
@@ -126,21 +121,20 @@ public final class Tape {
     }
 
     // ------------------------------------------------------------------
-    // Encoder (C1 - testability scaffold; C2 replaces with streaming parser)
+    // Encoder (round-trips a CompoundTag through NbtFactory.toByteArray + TapeParser.parse)
     // ------------------------------------------------------------------
 
     /**
      * Encodes a fully-materialized {@link CompoundTag} into a tape.
      *
      * <p>Serializes {@code root} via {@link NbtFactory#toByteArray(CompoundTag)} (no compression),
-     * then walks the resulting bytes once, pushing tape entries that mirror the binary structure.
-     * The retained buffer is the full {@code NbtFactory.toByteArray} output including its
-     * {@code 0x0A 0x00 0x00} root preamble; pointer-kind tape elements address bytes inside that
-     * payload.</p>
+     * then hands the produced bytes to {@link TapeParser#parse(byte[])}. The retained buffer is
+     * the full serializer output including its {@code 0x0A 0x00 0x00} root preamble; pointer-kind
+     * tape elements address bytes inside that payload.</p>
      *
-     * <p><b>C1 only.</b> C2 replaces the body of this factory with a thin wrapper that delegates
-     * to a {@code TapeParser.parse(byte[])} that walks the bytes directly without going through
-     * {@link CompoundTag} first.</p>
+     * <p>Used by the round-trip tests as a convenience; production callers building a tape from
+     * raw NBT bytes should call {@link TapeParser#parse(byte[])} directly to avoid the extra
+     * serialize step.</p>
      *
      * @param root the compound to encode
      * @return a fully populated tape
@@ -148,208 +142,12 @@ public final class Tape {
      *     malformed (which would indicate an internal serializer/parser disagreement)
      */
     public static @NotNull Tape encode(@NotNull CompoundTag root) {
-        byte[] buffer = NbtFactory.toByteArray(root);
-        return walkBuffer(buffer);
-    }
-
-    private static @NotNull Tape walkBuffer(byte @NotNull [] buffer) {
-        // Buffer layout: [0]=COMPOUND_ID, [1..2]=root name length (always 0), [3..]=compound body
-        // terminated by TAG_End. The tape skips the root name (it has no semantic value) but
-        // emits a COMPOUND_HEADER for the root so consumers see a well-framed tree.
-        if (buffer.length < 3 || buffer[0] != TagType.COMPOUND.getId())
-            throw new NbtException("Tape encoder expected a TAG_Compound root in the serialized buffer");
-
-        // Pre-size the tape generously: each tag pushes at most 2 elements (KEY_PTR + value, or
-        // header + content + end). Doubling buffer length is a safe upper bound for a worst-case
-        // payload of all 1-byte primitives in named entries.
-        long[] elements = new long[Math.max(16, buffer.length * 2)];
-        int[] state = new int[]{0, 3}; // [tapeSize, bufferPos]
-
-        // Root compound header - back-patched once we know the matching END's tape index.
-        int rootHeaderIdx = state[0];
-        elements = ensure(elements, state[0] + 1);
-        elements[state[0]++] = TapeElement.packCompoundHeader(0, 0); // placeholder
-
-        WalkContext ctx = new WalkContext(buffer, elements, state);
-        int approxLen = walkCompoundBody(ctx);
-        elements = ctx.elements;
-
-        // Emit the root END and back-patch the header.
-        elements = ensure(elements, ctx.state[0] + 1);
-        int rootEndIdx = ctx.state[0];
-        elements[ctx.state[0]++] = TapeElement.pack(TapeKind.COMPOUND_END, rootHeaderIdx);
-        elements[rootHeaderIdx] = TapeElement.packCompoundHeader(approxLen, rootEndIdx);
-
-        return new Tape(elements, ctx.state[0], buffer);
-    }
-
-    /**
-     * Walks the body of a compound starting at {@code state[1]}, emitting {@code KEY_PTR + value}
-     * tape pairs until a TAG_End byte. Returns the number of entries (the {@code approxLen} for
-     * the matching header).
-     */
-    private static int walkCompoundBody(@NotNull WalkContext ctx) {
-        int entries = 0;
-
-        while (true) {
-            byte typeId = ctx.buffer[ctx.state[1]++];
-
-            if (typeId == TagType.END.getId())
-                return entries;
-
-            // Key (modified UTF-8): 2-byte length prefix then bytes. Tape stores the offset of
-            // the length prefix.
-            int keyOffset = ctx.state[1];
-            int keyLen = NbtByteCodec.getUnsignedShort(ctx.buffer, ctx.state[1]);
-            ctx.state[1] += 2 + keyLen;
-
-            ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-            ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.KEY_PTR, keyOffset);
-
-            walkValue(ctx, typeId);
-            entries++;
+        try {
+            byte[] buffer = NbtFactory.toByteArray(root);
+            return TapeParser.parse(buffer);
+        } catch (IOException exception) {
+            throw new NbtException(exception, "Failed to encode CompoundTag into a tape");
         }
-    }
-
-    /**
-     * Walks a single tag value of {@code typeId} starting at {@code state[1]}, emitting one or
-     * more tape elements.
-     */
-    private static void walkValue(@NotNull WalkContext ctx, byte typeId) {
-        switch (typeId) {
-            case 1 -> { // BYTE
-                byte v = ctx.buffer[ctx.state[1]++];
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.BYTE_INLINE, v);
-            }
-            case 2 -> { // SHORT
-                short v = NbtByteCodec.getShort(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 2;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.SHORT_INLINE, v);
-            }
-            case 3 -> { // INT
-                int v = NbtByteCodec.getInt(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 4;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.INT_INLINE, v);
-            }
-            case 4 -> { // LONG
-                int offset = ctx.state[1];
-                ctx.state[1] += 8;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.LONG_PTR, offset);
-            }
-            case 5 -> { // FLOAT
-                int bits = NbtByteCodec.getInt(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 4;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.FLOAT_INLINE, bits);
-            }
-            case 6 -> { // DOUBLE
-                int offset = ctx.state[1];
-                ctx.state[1] += 8;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.DOUBLE_PTR, offset);
-            }
-            case 7 -> { // BYTE_ARRAY
-                int offset = ctx.state[1];
-                int len = NbtByteCodec.getInt(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 4 + len;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.BYTE_ARRAY_PTR, offset);
-            }
-            case 8 -> { // STRING
-                int offset = ctx.state[1];
-                int len = NbtByteCodec.getUnsignedShort(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 2 + len;
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.STRING_PTR, offset);
-            }
-            case 9 -> walkList(ctx); // LIST
-            case 10 -> walkCompound(ctx); // COMPOUND
-            case 11 -> { // INT_ARRAY
-                int offset = ctx.state[1];
-                int len = NbtByteCodec.getInt(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 4 + (len << 2);
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.INT_ARRAY_PTR, offset);
-            }
-            case 12 -> { // LONG_ARRAY
-                int offset = ctx.state[1];
-                int len = NbtByteCodec.getInt(ctx.buffer, ctx.state[1]);
-                ctx.state[1] += 4 + (len << 3);
-                ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-                ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.LONG_ARRAY_PTR, offset);
-            }
-            default -> throw new NbtException("Unknown tag id encountered while walking buffer: " + typeId);
-        }
-    }
-
-    private static void walkCompound(@NotNull WalkContext ctx) {
-        int headerIdx = ctx.state[0];
-        ctx.elements = ensure(ctx.elements, headerIdx + 1);
-        ctx.elements[ctx.state[0]++] = TapeElement.packCompoundHeader(0, 0); // placeholder
-
-        int entries = walkCompoundBody(ctx);
-
-        ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-        int endIdx = ctx.state[0];
-        ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.COMPOUND_END, headerIdx);
-        ctx.elements[headerIdx] = TapeElement.packCompoundHeader(entries, endIdx);
-    }
-
-    private static void walkList(@NotNull WalkContext ctx) {
-        byte elementType = ctx.buffer[ctx.state[1]++];
-        int length = NbtByteCodec.getInt(ctx.buffer, ctx.state[1]);
-        ctx.state[1] += 4;
-
-        int headerIdx = ctx.state[0];
-        ctx.elements = ensure(ctx.elements, headerIdx + 1);
-        ctx.elements[ctx.state[0]++] = TapeElement.packListHeader(elementType, 0, 0); // placeholder
-
-        // Empty lists may still carry a non-zero wire element type (e.g. an Inventory list that
-        // happens to be empty). The element type is stashed in the header's 8-bit reserved slot
-        // so materialize() can reconstruct an empty ListTag with the same elementId, which the
-        // production parser also preserves (see NbtInput.readContainerIterative).
-        if (length > 0) {
-            for (int i = 0; i < length; i++)
-                walkValue(ctx, elementType);
-        }
-
-        ctx.elements = ensure(ctx.elements, ctx.state[0] + 1);
-        int endIdx = ctx.state[0];
-        ctx.elements[ctx.state[0]++] = TapeElement.pack(TapeKind.LIST_END, headerIdx);
-        ctx.elements[headerIdx] = TapeElement.packListHeader(elementType, length, endIdx);
-    }
-
-    private static long @NotNull [] ensure(long @NotNull [] elements, int needed) {
-        if (needed <= elements.length)
-            return elements;
-
-        int newSize = Math.max(elements.length * 2, needed);
-        long[] grown = new long[newSize];
-        System.arraycopy(elements, 0, grown, 0, elements.length);
-        return grown;
-    }
-
-    /**
-     * Mutable state carrier passed through the recursive walk - avoids boxing two ints into an
-     * {@code int[]} return on every recursive call. {@code state[0]} is the next free tape slot;
-     * {@code state[1]} is the current buffer position.
-     */
-    private static final class WalkContext {
-
-        final byte @NotNull [] buffer;
-        long @NotNull [] elements;
-        final int @NotNull [] state;
-
-        WalkContext(byte @NotNull [] buffer, long @NotNull [] elements, int @NotNull [] state) {
-            this.buffer = buffer;
-            this.elements = elements;
-            this.state = state;
-        }
-
     }
 
     // ------------------------------------------------------------------
