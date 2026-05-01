@@ -156,19 +156,12 @@ public interface NbtInput {
      * simdnbt's parsing-stack design (see {@code borrow/compound.rs}) so deeply nested adversarial
      * input trips {@link NbtMaxDepthException} instead of recursing through the JVM call stack.
      *
-     * <p>The four parallel arrays backing the work-stack live in a per-thread {@link WorkStack}
-     * instance and are reused across parse calls on the same thread (mirrors the
-     * {@code CHUNKED_THREADLOCAL} byte-buffer pattern from B1). The stack starts at 16 frames and
-     * grows by doubling up to a 512-frame ceiling that matches the legacy recursive depth gate -
-     * a {@code depth} parameter of zero plus 511 levels of nesting parses cleanly, the 512th nested
-     * container throws. Real-world payloads never outgrow the initial 16 slots; once a thread does
-     * grow its stack, the larger arrays are retained for subsequent calls. Worst-case retention is
-     * ~5 KB per thread (512 frames across {@code Object[]} + two {@code byte[]} + one {@code int[]})
-     * once the cap is reached.</p>
-     *
-     * <p>Container references are nulled out on pop so the per-thread cache does not retain the
-     * previous parse's tag tree once this call returns. Output is byte-identical to the prior
-     * recursive implementation for every input the recursive path handled.</p>
+     * <p>The stack is allocated at 16 frames and grown by doubling up to a 512-frame ceiling that
+     * matches the legacy recursive depth gate - a {@code depth} parameter of zero plus 511 levels
+     * of nesting parses cleanly, the 512th nested container throws. Real-world payloads never
+     * outgrow the initial 16 slots so a typical decode pays for one small allocation total.
+     * Output is byte-identical to the prior recursive implementation for every input the recursive
+     * path handled.</p>
      *
      * @param rootKind starting container type id - {@code 10} for {@code TAG_Compound},
      *                 {@code 9} for {@code TAG_List}
@@ -178,17 +171,16 @@ public interface NbtInput {
      * @throws NbtMaxDepthException  if nesting would exceed 512 levels
      */
     private @NotNull Tag<?> readContainerIterative(byte rootKind, int depth) throws IOException {
-        // Parallel-array work-stack pulled from a per-thread holder so the 4 arrays B3 introduced
-        // are not reallocated on every parse call. The arrays are hoisted into local variables for
-        // the hot loop because the JIT prefers locals over field reads; on growth we update both
-        // the locals (used for the rest of this call) and the holder fields (so the next call sees
-        // the grown arrays). Indexing is "sp points at the topmost live frame", with sp == -1
-        // meaning the stack is empty (we have just popped the root).
-        WorkStack workStack = WORK_STACK.get();
-        Object[] containers = workStack.containers;
-        byte[] kinds = workStack.kinds;             // 9 = LIST, 10 = COMPOUND
-        byte[] listElementIds = workStack.listElementIds; // valid only for LIST frames
-        int[] listRemaining = workStack.listRemaining;    // valid only for LIST frames
+        // Parallel-array work-stack, allocated small (16) and doubled on overflow up to the legacy
+        // 512 depth cap. Real-world payloads (auctions.bin ~depth 8, level.dat ~depth 7,
+        // simple_player.dat ~depth 5) all fit in the initial 16-slot stack so a typical decode pays
+        // for one ~256-byte allocation across the four arrays - much cheaper than a fixed 512-slot
+        // upfront alloc on the hot path. Indexing is "sp points at the topmost live frame", with
+        // sp == -1 meaning the stack is empty (we have just popped the root).
+        Object[] containers = new Object[16];
+        byte[] kinds = new byte[16];          // 9 = LIST, 10 = COMPOUND
+        byte[] listElementIds = new byte[16]; // valid only for LIST frames
+        int[] listRemaining = new int[16];    // valid only for LIST frames
 
         // Push the root frame. Mirrors the legacy `if (++depth >= 512) throw` semantic: a starting
         // depth of 511 already disallows the root push.
@@ -229,9 +221,6 @@ public interface NbtInput {
                 int id = this.readByte() & 0xFF;
 
                 if (id == 0) { // TAG_End
-                    // Null the popped slot before decrementing so the per-thread cache does not
-                    // retain a reference to this compound across parse calls.
-                    containers[sp] = null;
                     sp--;
                     continue;
                 }
@@ -250,13 +239,11 @@ public interface NbtInput {
                     int newSp = sp + 1;
 
                     if (newSp >= containers.length) {
-                        // Grow both the locals (used for the rest of this call) and the holder
-                        // fields (so the next call on this thread reuses the larger arrays).
                         int grown = Math.min(containers.length << 1, 512);
-                        workStack.containers = containers = Arrays.copyOf(containers, grown);
-                        workStack.kinds = kinds = Arrays.copyOf(kinds, grown);
-                        workStack.listElementIds = listElementIds = Arrays.copyOf(listElementIds, grown);
-                        workStack.listRemaining = listRemaining = Arrays.copyOf(listRemaining, grown);
+                        containers = Arrays.copyOf(containers, grown);
+                        kinds = Arrays.copyOf(kinds, grown);
+                        listElementIds = Arrays.copyOf(listElementIds, grown);
+                        listRemaining = Arrays.copyOf(listRemaining, grown);
                     }
 
                     Tag<?> child;
@@ -289,9 +276,6 @@ public interface NbtInput {
             int remaining = listRemaining[sp];
 
             if (remaining == 0) {
-                // Null the popped slot before decrementing so the per-thread cache does not
-                // retain a reference to this list across parse calls.
-                containers[sp] = null;
                 sp--;
                 continue;
             }
@@ -311,10 +295,10 @@ public interface NbtInput {
 
                 if (newSp >= containers.length) {
                     int grown = Math.min(containers.length << 1, 512);
-                    workStack.containers = containers = Arrays.copyOf(containers, grown);
-                    workStack.kinds = kinds = Arrays.copyOf(kinds, grown);
-                    workStack.listElementIds = listElementIds = Arrays.copyOf(listElementIds, grown);
-                    workStack.listRemaining = listRemaining = Arrays.copyOf(listRemaining, grown);
+                    containers = Arrays.copyOf(containers, grown);
+                    kinds = Arrays.copyOf(kinds, grown);
+                    listElementIds = Arrays.copyOf(listElementIds, grown);
+                    listRemaining = Arrays.copyOf(listRemaining, grown);
                 }
 
                 Tag<?> child;
@@ -345,29 +329,4 @@ public interface NbtInput {
         return rootTag;
     }
 
-    /**
-     * Per-thread holder for the four parallel arrays backing
-     * {@link #readContainerIterative(byte, int)}. Reused across parse calls on the same thread to
-     * eliminate the per-call allocation that B3's iterative rewrite introduced.
-     *
-     * <p>Fields are mutable so the hot path can swap them when the stack grows past its current
-     * capacity. Worst-case retention is ~5 KB once a thread parses an input that forces growth all
-     * the way to the 512-frame cap.</p>
-     */
-    final class WorkStack {
-
-        Object[] containers = new Object[16];
-        byte[] kinds = new byte[16];
-        byte[] listElementIds = new byte[16];
-        int[] listRemaining = new int[16];
-
-    }
-
-    /**
-     * Per-thread {@link WorkStack} cache for {@link #readContainerIterative(byte, int)}. Initialised
-     * lazily on first parse on each thread. Worst-case retention is ~5 KB per thread. Both this
-     * field and {@link WorkStack} are implicitly {@code public static final} on an interface; they
-     * remain implementation details intended for {@link #readContainerIterative(byte, int)} only.
-     */
-    ThreadLocal<WorkStack> WORK_STACK = ThreadLocal.withInitial(WorkStack::new);
 }
