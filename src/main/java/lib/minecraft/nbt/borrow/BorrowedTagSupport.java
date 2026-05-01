@@ -2,6 +2,7 @@ package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.NbtKnownKeys;
 import lib.minecraft.nbt.io.NbtModifiedUtf8;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,6 +44,39 @@ class BorrowedTagSupport {
             throw new NbtException(
                 exception, "Malformed modified UTF-8 in tape buffer at offset %d", offset);
         }
+    }
+
+    /**
+     * Decodes a length-prefixed modified-UTF-8 key at {@code offset} in {@code buffer}, returning a
+     * {@link NbtKnownKeys}-interned {@link String} on a match and falling through to
+     * {@link #decodeUtf8At(byte[], int)} otherwise.
+     *
+     * <p>Hot path used by borrow-mode {@link BorrowedCompoundTag#materialize()} and the entry
+     * iterator. Hypixel-shaped trees materialize and iterate with near-zero {@link String}
+     * allocations from key resolution because {@code id}, {@code Count}, {@code tag},
+     * {@code display}, {@code Lore}, {@code ExtraAttributes}, {@code ench} and the rest of the
+     * vanilla and SkyBlock vocabulary all live in the table. Misses pay the same full
+     * modified-UTF-8 decode plus a length-bucket probe (a single null check on a short candidate
+     * array) that today's caller already paid.</p>
+     *
+     * <p>The returned {@link String}, when matched, is {@code ==} equal to the constant pool
+     * reference exposed by {@link NbtKnownKeys}. Callers using {@link Object#equals(Object)} are
+     * unaffected; callers using reference identity against a known-key constant get the fast
+     * path.</p>
+     *
+     * @param buffer retained tape buffer
+     * @param offset byte offset of the 2-byte big-endian length prefix
+     * @return the interned key string when matched, otherwise a freshly-decoded {@link String}
+     * @throws NbtException if the bytes are not valid modified UTF-8 in the fallback path
+     */
+    static @NotNull String decodeUtf8KnownAt(byte @NotNull [] buffer, int offset) {
+        int len = NbtByteCodec.getUnsignedShort(buffer, offset);
+        String known = NbtKnownKeys.match(buffer, offset + 2, len);
+
+        if (known != null)
+            return known;
+
+        return decodeUtf8At(buffer, offset);
     }
 
 }

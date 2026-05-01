@@ -3,6 +3,7 @@ package lib.minecraft.nbt.borrow;
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.NbtKnownKeys;
 import lib.minecraft.nbt.io.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import lib.minecraft.nbt.tags.array.IntArrayTag;
@@ -196,7 +197,7 @@ public final class Tape {
                 throw new NbtException("Expected KEY_PTR or COMPOUND_END inside compound, found %s", kind);
 
             int keyOffset = (int) TapeElement.unpackValue(element);
-            String key = decodeUtf8(ctx.buffer, keyOffset);
+            String key = decodeUtf8Known(ctx.buffer, keyOffset);
             ctx.tapeIndex++;
 
             compound.put(key, readValue(ctx));
@@ -427,6 +428,26 @@ public final class Tape {
         } catch (UTFDataFormatException exception) {
             throw new NbtException(exception, "Malformed modified UTF-8 in tape buffer at offset %d", offset);
         }
+    }
+
+    /**
+     * Decodes a length-prefixed modified-UTF-8 key at {@code offset}, returning the canonical
+     * {@link NbtKnownKeys} interned string on a hit and falling through to {@link #decodeUtf8} on
+     * a miss.
+     *
+     * <p>Mirror of {@link BorrowedTagSupport#decodeUtf8KnownAt(byte[], int)} - kept private to
+     * preserve the package-private surface of {@code Tape}'s materializer. Same length-bucket
+     * probe; same allocation-free outcome on hits to {@code id}, {@code Count}, {@code tag} and
+     * the rest of the vanilla and SkyBlock vocabulary.</p>
+     */
+    private static @NotNull String decodeUtf8Known(byte @NotNull [] buffer, int offset) {
+        int len = NbtByteCodec.getUnsignedShort(buffer, offset);
+        String known = NbtKnownKeys.match(buffer, offset + 2, len);
+
+        if (known != null)
+            return known;
+
+        return decodeUtf8(buffer, offset);
     }
 
 }

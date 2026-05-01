@@ -131,7 +131,7 @@ public final class BorrowedCompoundTag implements BorrowedTag<Map<String, Tag<?>
                     idx, TapeElement.unpackKind(keyElement));
 
             int keyOffset = (int) TapeElement.unpackValue(keyElement);
-            String key = BorrowedTagSupport.decodeUtf8At(this.tape.buffer(), keyOffset);
+            String key = BorrowedTagSupport.decodeUtf8KnownAt(this.tape.buffer(), keyOffset);
             int valueIdx = idx + 1;
             BorrowedTag<?> value = BorrowedTag.fromTape(this.tape, valueIdx);
             compound.put(key, value.materialize());
@@ -172,7 +172,7 @@ public final class BorrowedCompoundTag implements BorrowedTag<Map<String, Tag<?>
                     this.cursor, TapeElement.unpackKind(keyElement));
 
             int keyOffset = (int) TapeElement.unpackValue(keyElement);
-            String key = BorrowedTagSupport.decodeUtf8At(tape.buffer(), keyOffset);
+            String key = BorrowedTagSupport.decodeUtf8KnownAt(tape.buffer(), keyOffset);
             int valueIdx = this.cursor + 1;
             BorrowedTag<?> value = BorrowedTag.fromTape(tape, valueIdx);
             this.cursor = tape.nextSibling(valueIdx);
