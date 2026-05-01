@@ -54,7 +54,7 @@ public class MutfBenchmarks {
     @Setup(Level.Trial)
     public void setup() {
         this.bytes = switch (this.payload) {
-            case "ascii-100" -> "the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy dog!".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+            case "ascii-100" -> "the quick brown fox jumps over the lazy dog 0123456789A the quick brown fox jumps over the lazy dog!".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
             case "ascii-32"  -> "abcdefghijklmnopqrstuvwxyz012345".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
             case "bmp-mixed-32" -> mixedBmp32();
             default -> throw new IllegalArgumentException("unknown payload: " + this.payload);

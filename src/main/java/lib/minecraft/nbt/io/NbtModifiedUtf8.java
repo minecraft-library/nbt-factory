@@ -104,19 +104,81 @@ public final class NbtModifiedUtf8 {
      * non-Latin characters, supplementary code points via surrogate pairs, or the
      * modified-UTF-8-specific {@code C0 80} encoding of U+0000).</p>
      *
+     * <p>The ASCII probe itself walks {@code src} 8 bytes at a time via
+     * {@link #isPlainAscii(byte[], int, int)}, ANDing each {@code long} chunk against
+     * {@code 0x8080808080808080L} - a single non-zero result short-circuits to the slow path. C2
+     * auto-vectorizes the chunked loop on x86-64 ({@code vptest} / {@code vpmovmskb}) and on
+     * ARM64. This mirrors {@code simdnbt}'s {@code is_plain_ascii} SIMD probe
+     * ({@code simdnbt/src/mutf8.rs:24-78}) using only scalar JDK intrinsics - no incubator vector
+     * API dependency.</p>
+     *
      * @throws UTFDataFormatException if the bytes are not a valid modified UTF-8 sequence
      */
     public static @NotNull String decode(byte[] src, int offset, int utfLen) throws UTFDataFormatException {
-        // ASCII scan. Any high bit set means a multi-byte sequence and triggers the slow path.
-        int end = offset + utfLen;
-        for (int i = offset; i < end; i++) {
-            if ((src[i] & 0x80) != 0)
-                return decodeSlow(src, offset, utfLen);
-        }
+        // 8-byte high-bit probe. Any high bit set means a multi-byte sequence and triggers the
+        // slow path. 0x00 has high bit zero, so the probe accepts it - the existing fast-path
+        // String constructor then emits the U+0000 character directly, matching the slow path's
+        // C0 80 -> U+0000 behavior for that specific input. See decodeSlow for the multi-byte
+        // forms (C0 80, two-byte BMP, three-byte BMP, surrogate pairs).
+        if (!isPlainAscii(src, offset, utfLen))
+            return decodeSlow(src, offset, utfLen);
 
         // All-ASCII: JDK intrinsic decoder produces a compact Latin-1 String with no scratch
         // char[] allocation on the heap.
         return new String(src, offset, utfLen, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Returns {@code true} when every byte in {@code src[offset..offset+len)} has its high bit
+     * clear (i.e., is in {@code [0x00..0x7F]}).
+     *
+     * <p>Walks the body 8 bytes at a time via {@link NbtByteCodec#getLong} and ANDs each chunk
+     * against {@code 0x8080808080808080L} - a single non-zero AND result returns {@code false}.
+     * The tail (lengths 0..7) is peeled with 4-byte ({@code 0x80808080}), 2-byte
+     * ({@code 0x8080}), and 1-byte ({@code 0x80}) probes so worst-case the tail does at most
+     * three additional reads. Endianness does not matter for the AND - the high-bit pattern is
+     * symmetric across both byte orders, so we reuse {@link NbtByteCodec}'s big-endian VarHandle
+     * directly.</p>
+     *
+     * <p>Package-private so {@code MutfStringView} (Phase C4 lazy decode) can share the same
+     * probe.</p>
+     *
+     * @param src buffer to scan
+     * @param offset start offset into {@code src}
+     * @param len number of bytes to scan
+     * @return {@code true} when all bytes have their high bit clear
+     */
+    static boolean isPlainAscii(byte[] src, int offset, int len) {
+        int i = offset;
+        int end = offset + len;
+        int chunkEnd = offset + (len & ~7);
+
+        // 8-byte body.
+        while (i < chunkEnd) {
+            if ((NbtByteCodec.getLong(src, i) & 0x8080808080808080L) != 0L)
+                return false;
+            i += 8;
+        }
+
+        // 4-byte peel.
+        if (end - i >= 4) {
+            if ((NbtByteCodec.getInt(src, i) & 0x80808080) != 0)
+                return false;
+            i += 4;
+        }
+
+        // 2-byte peel.
+        if (end - i >= 2) {
+            if ((NbtByteCodec.getUnsignedShort(src, i) & 0x8080) != 0)
+                return false;
+            i += 2;
+        }
+
+        // 1-byte peel.
+        if (i < end && (src[i] & 0x80) != 0)
+            return false;
+
+        return true;
     }
 
     private static @NotNull String decodeSlow(byte[] src, int offset, int utfLen) throws UTFDataFormatException {

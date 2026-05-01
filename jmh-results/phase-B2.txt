@@ -1,0 +1,939 @@
+> Task :Simplified-Dev:utils:processResources NO-SOURCE
+> Task :processResources NO-SOURCE
+> Task :Simplified-Dev:collections:compileJava UP-TO-DATE
+> Task :Simplified-Dev:collections:processResources UP-TO-DATE
+> Task :processTestResources UP-TO-DATE
+> Task :Simplified-Dev:collections:classes UP-TO-DATE
+> Task :Simplified-Dev:utils:compileJava UP-TO-DATE
+> Task :Simplified-Dev:utils:classes UP-TO-DATE
+> Task :Simplified-Dev:collections:jar UP-TO-DATE
+> Task :Simplified-Dev:utils:jar UP-TO-DATE
+> Task :processJmhResources NO-SOURCE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+> Task :compileJmhJava
+> Task :jmhClasses
+
+> Task :jmhRunBytecodeGenerator
+Processing 10 classes from W:\Workspace\Java\Minecraft-Library\nbt-factory\build\classes\java\jmh with "reflection" generator
+Writing out Java source to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-sources and resources to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-resources
+Processing 21 classes from W:\Workspace\Java\Minecraft-Library\nbt-factory\build\classes\java\test with "reflection" generator
+Writing out Java source to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-sources and resources to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\jmh-generated-resources
+
+> Task :jmhCompileGeneratedClasses
+> Task :jmhJar
+
+> Task :jmh
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.MutfBenchmarks.decode
+# Parameters: (payload = ascii-100)
+
+# Run progress: 0.00% complete, ETA 00:10:12
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: ascii-100=100
+0.047 ops/ns
+# Warmup Iteration   2: 0.035 ops/ns
+# Warmup Iteration   3: 0.037 ops/ns
+Iteration   1: 0.036 ops/ns
+                 payloadBytes: 3.614 ops/ns
+
+Iteration   2: 0.038 ops/ns
+                 payloadBytes: 3.780 ops/ns
+
+Iteration   3: 0.047 ops/ns
+                 payloadBytes: 4.676 ops/ns
+
+Iteration   4: 0.043 ops/ns
+                 payloadBytes: 4.329 ops/ns
+
+Iteration   5: 0.036 ops/ns
+                 payloadBytes: 3.604 ops/ns
+
+
+
+Result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode":
+  0.040 ±(99.9%) 0.018 ops/ns [Average]
+  (min, avg, max) = (0.036, 0.040, 0.047), stdev = 0.005
+  CI (99.9%): [0.022, 0.058] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode:payloadBytes":
+  4.000 ±(99.9%) 1.846 ops/ns [Average]
+  (min, avg, max) = (3.604, 4.000, 4.676), stdev = 0.479
+  CI (99.9%): [2.155, 5.846] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.MutfBenchmarks.decode
+# Parameters: (payload = ascii-32)
+
+# Run progress: 5.56% complete, ETA 00:09:43
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: ascii-32=32
+0.059 ops/ns
+# Warmup Iteration   2: 0.046 ops/ns
+# Warmup Iteration   3: 0.044 ops/ns
+Iteration   1: 0.050 ops/ns
+                 payloadBytes: 1.610 ops/ns
+
+Iteration   2: 0.051 ops/ns
+                 payloadBytes: 1.617 ops/ns
+
+Iteration   3: 0.046 ops/ns
+                 payloadBytes: 1.483 ops/ns
+
+Iteration   4: 0.046 ops/ns
+                 payloadBytes: 1.462 ops/ns
+
+Iteration   5: 0.051 ops/ns
+                 payloadBytes: 1.628 ops/ns
+
+
+
+Result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode":
+  0.049 ±(99.9%) 0.010 ops/ns [Average]
+  (min, avg, max) = (0.046, 0.049, 0.051), stdev = 0.003
+  CI (99.9%): [0.039, 0.058] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode:payloadBytes":
+  1.560 ±(99.9%) 0.309 ops/ns [Average]
+  (min, avg, max) = (1.462, 1.560, 1.628), stdev = 0.080
+  CI (99.9%): [1.251, 1.869] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.MutfBenchmarks.decode
+# Parameters: (payload = bmp-mixed-32)
+
+# Run progress: 11.11% complete, ETA 00:09:09
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: bmp-mixed-32=32
+0.015 ops/ns
+# Warmup Iteration   2: 0.019 ops/ns
+# Warmup Iteration   3: 0.019 ops/ns
+Iteration   1: 0.024 ops/ns
+                 payloadBytes: 0.770 ops/ns
+
+Iteration   2: 0.024 ops/ns
+                 payloadBytes: 0.759 ops/ns
+
+Iteration   3: 0.020 ops/ns
+                 payloadBytes: 0.641 ops/ns
+
+Iteration   4: 0.018 ops/ns
+                 payloadBytes: 0.570 ops/ns
+
+Iteration   5: 0.020 ops/ns
+                 payloadBytes: 0.625 ops/ns
+
+
+
+Result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode":
+  0.021 ±(99.9%) 0.011 ops/ns [Average]
+  (min, avg, max) = (0.018, 0.021, 0.024), stdev = 0.003
+  CI (99.9%): [0.010, 0.032] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode:payloadBytes":
+  0.673 ±(99.9%) 0.337 ops/ns [Average]
+  (min, avg, max) = (0.570, 0.673, 0.770), stdev = 0.088
+  CI (99.9%): [0.336, 1.010] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = complex_player.dat)
+
+# Run progress: 16.67% complete, ETA 00:08:36
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: complex_player.dat=3380
+0.095 ops/us
+# Warmup Iteration   2: 0.080 ops/us
+# Warmup Iteration   3: 0.082 ops/us
+Iteration   1: 0.077 ops/us
+                 payloadBytes: 260.995 ops/us
+
+Iteration   2: 0.073 ops/us
+                 payloadBytes: 245.611 ops/us
+
+Iteration   3: 0.083 ops/us
+                 payloadBytes: 279.472 ops/us
+
+Iteration   4: 0.080 ops/us
+                 payloadBytes: 271.752 ops/us
+
+Iteration   5: 0.080 ops/us
+                 payloadBytes: 271.813 ops/us
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  0.079 ±(99.9%) 0.015 ops/us [Average]
+  (min, avg, max) = (0.073, 0.079, 0.083), stdev = 0.004
+  CI (99.9%): [0.064, 0.094] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  265.929 ±(99.9%) 50.541 ops/us [Average]
+  (min, avg, max) = (245.611, 265.929, 279.472), stdev = 13.125
+  CI (99.9%): [215.387, 316.470] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = hypixel.nbt)
+
+# Run progress: 22.22% complete, ETA 00:08:01
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: hypixel.nbt=18670
+0.023 ops/us
+# Warmup Iteration   2: 0.018 ops/us
+# Warmup Iteration   3: 0.018 ops/us
+Iteration   1: 0.018 ops/us
+                 payloadBytes: 331.972 ops/us
+
+Iteration   2: 0.016 ops/us
+                 payloadBytes: 299.806 ops/us
+
+Iteration   3: 0.019 ops/us
+                 payloadBytes: 363.443 ops/us
+
+Iteration   4: 0.023 ops/us
+                 payloadBytes: 428.282 ops/us
+
+Iteration   5: 0.022 ops/us
+                 payloadBytes: 416.092 ops/us
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  0.020 ±(99.9%) 0.011 ops/us [Average]
+  (min, avg, max) = (0.016, 0.020, 0.023), stdev = 0.003
+  CI (99.9%): [0.008, 0.031] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  367.919 ±(99.9%) 210.168 ops/us [Average]
+  (min, avg, max) = (299.806, 367.919, 428.282), stdev = 54.580
+  CI (99.9%): [157.751, 578.087] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = level.dat)
+
+# Run progress: 27.78% complete, ETA 00:07:26
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: level.dat=4430
+0.059 ops/us
+# Warmup Iteration   2: 0.050 ops/us
+# Warmup Iteration   3: 0.056 ops/us
+Iteration   1: 0.054 ops/us
+                 payloadBytes: 239.995 ops/us
+
+Iteration   2: 0.059 ops/us
+                 payloadBytes: 261.154 ops/us
+
+Iteration   3: 0.055 ops/us
+                 payloadBytes: 242.419 ops/us
+
+Iteration   4: 0.059 ops/us
+                 payloadBytes: 259.738 ops/us
+
+Iteration   5: 0.054 ops/us
+                 payloadBytes: 237.173 ops/us
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  0.056 ±(99.9%) 0.010 ops/us [Average]
+  (min, avg, max) = (0.054, 0.056, 0.059), stdev = 0.003
+  CI (99.9%): [0.046, 0.066] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  248.096 ±(99.9%) 44.040 ops/us [Average]
+  (min, avg, max) = (237.173, 248.096, 261.154), stdev = 11.437
+  CI (99.9%): [204.056, 292.136] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = bigtest.nbt)
+
+# Run progress: 33.33% complete, ETA 00:06:52
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: bigtest.nbt=1544
+0.574 ops/us
+# Warmup Iteration   2: 0.474 ops/us
+# Warmup Iteration   3: 0.526 ops/us
+Iteration   1: 0.518 ops/us
+                 payloadBytes: 799.080 ops/us
+
+Iteration   2: 0.516 ops/us
+                 payloadBytes: 797.317 ops/us
+
+Iteration   3: 0.508 ops/us
+                 payloadBytes: 783.944 ops/us
+
+Iteration   4: 0.510 ops/us
+                 payloadBytes: 788.112 ops/us
+
+Iteration   5: 0.512 ops/us
+                 payloadBytes: 790.624 ops/us
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  0.513 ±(99.9%) 0.016 ops/us [Average]
+  (min, avg, max) = (0.508, 0.513, 0.518), stdev = 0.004
+  CI (99.9%): [0.497, 0.529] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  791.815 ±(99.9%) 24.365 ops/us [Average]
+  (min, avg, max) = (783.944, 791.815, 799.080), stdev = 6.327
+  CI (99.9%): [767.451, 816.180] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = simple_player.dat)
+
+# Run progress: 38.89% complete, ETA 00:06:17
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: simple_player.dat=591
+0.523 ops/us
+# Warmup Iteration   2: 0.470 ops/us
+# Warmup Iteration   3: 0.440 ops/us
+Iteration   1: 0.472 ops/us
+                 payloadBytes: 278.671 ops/us
+
+Iteration   2: 0.467 ops/us
+                 payloadBytes: 275.784 ops/us
+
+Iteration   3: 0.443 ops/us
+                 payloadBytes: 261.664 ops/us
+
+Iteration   4: 0.450 ops/us
+                 payloadBytes: 265.850 ops/us
+
+Iteration   5: 0.548 ops/us
+                 payloadBytes: 323.880 ops/us
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  0.476 ±(99.9%) 0.162 ops/us [Average]
+  (min, avg, max) = (0.443, 0.476, 0.548), stdev = 0.042
+  CI (99.9%): [0.314, 0.638] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  281.170 ±(99.9%) 95.776 ops/us [Average]
+  (min, avg, max) = (261.664, 281.170, 323.880), stdev = 24.873
+  CI (99.9%): [185.393, 376.946] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = inttest1023.nbt)
+
+# Run progress: 44.44% complete, ETA 00:05:43
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: inttest1023.nbt=4104
+0.213 ops/us
+# Warmup Iteration   2: 0.215 ops/us
+# Warmup Iteration   3: 0.229 ops/us
+Iteration   1: 0.230 ops/us
+                 payloadBytes: 942.707 ops/us
+
+Iteration   2: 0.229 ops/us
+                 payloadBytes: 939.288 ops/us
+
+Iteration   3: 0.232 ops/us
+                 payloadBytes: 950.173 ops/us
+
+Iteration   4: 0.231 ops/us
+                 payloadBytes: 949.202 ops/us
+
+Iteration   5: 0.230 ops/us
+                 payloadBytes: 942.717 ops/us
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  0.230 ±(99.9%) 0.004 ops/us [Average]
+  (min, avg, max) = (0.229, 0.230, 0.232), stdev = 0.001
+  CI (99.9%): [0.226, 0.235] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  944.817 ±(99.9%) 17.994 ops/us [Average]
+  (min, avg, max) = (939.288, 944.817, 950.173), stdev = 4.673
+  CI (99.9%): [926.824, 962.811] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MutfBenchmarks.decode
+# Parameters: (payload = ascii-100)
+
+# Run progress: 50.00% complete, ETA 00:05:09
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: ascii-100=100
+21.713 ns/op
+# Warmup Iteration   2: 20.962 ns/op
+# Warmup Iteration   3: 20.996 ns/op
+Iteration   1: 21.076 ns/op
+                 payloadBytes: 0.211 ns/op
+
+Iteration   2: 20.965 ns/op
+                 payloadBytes: 0.210 ns/op
+
+Iteration   3: 21.499 ns/op
+                 payloadBytes: 0.215 ns/op
+
+Iteration   4: 21.103 ns/op
+                 payloadBytes: 0.211 ns/op
+
+Iteration   5: 20.662 ns/op
+                 payloadBytes: 0.207 ns/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode":
+  21.061 ±(99.9%) 1.158 ns/op [Average]
+  (min, avg, max) = (20.662, 21.061, 21.499), stdev = 0.301
+  CI (99.9%): [19.903, 22.219] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode:payloadBytes":
+  0.211 ±(99.9%) 0.012 ns/op [Average]
+  (min, avg, max) = (0.207, 0.211, 0.215), stdev = 0.003
+  CI (99.9%): [0.199, 0.222] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MutfBenchmarks.decode
+# Parameters: (payload = ascii-32)
+
+# Run progress: 55.56% complete, ETA 00:04:34
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: ascii-32=32
+16.047 ns/op
+# Warmup Iteration   2: 15.501 ns/op
+# Warmup Iteration   3: 15.679 ns/op
+Iteration   1: 15.769 ns/op
+                 payloadBytes: 0.493 ns/op
+
+Iteration   2: 15.802 ns/op
+                 payloadBytes: 0.494 ns/op
+
+Iteration   3: 15.765 ns/op
+                 payloadBytes: 0.493 ns/op
+
+Iteration   4: 15.845 ns/op
+                 payloadBytes: 0.495 ns/op
+
+Iteration   5: 15.724 ns/op
+                 payloadBytes: 0.491 ns/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode":
+  15.781 ±(99.9%) 0.174 ns/op [Average]
+  (min, avg, max) = (15.724, 15.781, 15.845), stdev = 0.045
+  CI (99.9%): [15.607, 15.955] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode:payloadBytes":
+  0.493 ±(99.9%) 0.005 ns/op [Average]
+  (min, avg, max) = (0.491, 0.493, 0.495), stdev = 0.001
+  CI (99.9%): [0.488, 0.499] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MutfBenchmarks.decode
+# Parameters: (payload = bmp-mixed-32)
+
+# Run progress: 61.11% complete, ETA 00:04:00
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: bmp-mixed-32=32
+47.012 ns/op
+# Warmup Iteration   2: 46.046 ns/op
+# Warmup Iteration   3: 42.248 ns/op
+Iteration   1: 41.593 ns/op
+                 payloadBytes: 1.300 ns/op
+
+Iteration   2: 42.539 ns/op
+                 payloadBytes: 1.329 ns/op
+
+Iteration   3: 40.161 ns/op
+                 payloadBytes: 1.255 ns/op
+
+Iteration   4: 40.212 ns/op
+                 payloadBytes: 1.257 ns/op
+
+Iteration   5: 39.855 ns/op
+                 payloadBytes: 1.245 ns/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode":
+  40.872 ±(99.9%) 4.421 ns/op [Average]
+  (min, avg, max) = (39.855, 40.872, 42.539), stdev = 1.148
+  CI (99.9%): [36.451, 45.293] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.MutfBenchmarks.decode:payloadBytes":
+  1.277 ±(99.9%) 0.138 ns/op [Average]
+  (min, avg, max) = (1.245, 1.277, 1.329), stdev = 0.036
+  CI (99.9%): [1.139, 1.415] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = complex_player.dat)
+
+# Run progress: 66.67% complete, ETA 00:03:26
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: complex_player.dat=3380
+10.279 us/op
+# Warmup Iteration   2: 9.797 us/op
+# Warmup Iteration   3: 9.755 us/op
+Iteration   1: 9.797 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   2: 9.852 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   3: 10.502 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   4: 9.964 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   5: 9.914 us/op
+                 payloadBytes: 0.003 us/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  10.006 ±(99.9%) 1.096 us/op [Average]
+  (min, avg, max) = (9.797, 10.006, 10.502), stdev = 0.285
+  CI (99.9%): [8.910, 11.101] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  0.003 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.003, 0.003, 0.003), stdev = 0.001
+  CI (99.9%): [0.003, 0.003] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = hypixel.nbt)
+
+# Run progress: 72.22% complete, ETA 00:02:51
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: hypixel.nbt=18670
+40.507 us/op
+# Warmup Iteration   2: 39.008 us/op
+# Warmup Iteration   3: 38.817 us/op
+Iteration   1: 40.961 us/op
+                 payloadBytes: 0.002 us/op
+
+Iteration   2: 43.386 us/op
+                 payloadBytes: 0.002 us/op
+
+Iteration   3: 43.372 us/op
+                 payloadBytes: 0.002 us/op
+
+Iteration   4: 41.080 us/op
+                 payloadBytes: 0.002 us/op
+
+Iteration   5: 40.368 us/op
+                 payloadBytes: 0.002 us/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  41.834 ±(99.9%) 5.532 us/op [Average]
+  (min, avg, max) = (40.368, 41.834, 43.386), stdev = 1.437
+  CI (99.9%): [36.301, 47.366] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  0.002 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.002, 0.002, 0.002), stdev = 0.001
+  CI (99.9%): [0.002, 0.003] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = level.dat)
+
+# Run progress: 77.78% complete, ETA 00:02:17
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: level.dat=4430
+14.112 us/op
+# Warmup Iteration   2: 14.222 us/op
+# Warmup Iteration   3: 14.681 us/op
+Iteration   1: 15.369 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   2: 15.345 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   3: 14.502 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   4: 15.694 us/op
+                 payloadBytes: 0.004 us/op
+
+Iteration   5: 14.843 us/op
+                 payloadBytes: 0.003 us/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  15.151 ±(99.9%) 1.822 us/op [Average]
+  (min, avg, max) = (14.502, 15.151, 15.694), stdev = 0.473
+  CI (99.9%): [13.328, 16.973] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  0.003 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.003, 0.003, 0.004), stdev = 0.001
+  CI (99.9%): [0.003, 0.004] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = bigtest.nbt)
+
+# Run progress: 83.33% complete, ETA 00:01:42
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: bigtest.nbt=1544
+1.657 us/op
+# Warmup Iteration   2: 1.783 us/op
+# Warmup Iteration   3: 1.761 us/op
+Iteration   1: 1.739 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   2: 1.732 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   3: 1.945 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   4: 1.732 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   5: 1.745 us/op
+                 payloadBytes: 0.001 us/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  1.779 ±(99.9%) 0.360 us/op [Average]
+  (min, avg, max) = (1.732, 1.779, 1.945), stdev = 0.093
+  CI (99.9%): [1.419, 2.138] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  0.001 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.001, 0.001, 0.001), stdev = 0.001
+  CI (99.9%): [0.001, 0.001] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = simple_player.dat)
+
+# Run progress: 88.89% complete, ETA 00:01:08
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: simple_player.dat=591
+1.846 us/op
+# Warmup Iteration   2: 1.851 us/op
+# Warmup Iteration   3: 1.811 us/op
+Iteration   1: 1.848 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   2: 1.814 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   3: 1.902 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   4: 1.878 us/op
+                 payloadBytes: 0.003 us/op
+
+Iteration   5: 1.751 us/op
+                 payloadBytes: 0.003 us/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  1.839 ±(99.9%) 0.227 us/op [Average]
+  (min, avg, max) = (1.751, 1.839, 1.902), stdev = 0.059
+  CI (99.9%): [1.612, 2.065] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  0.003 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.003, 0.003, 0.003), stdev = 0.001
+  CI (99.9%): [0.003, 0.003] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse
+# Parameters: (filename = inttest1023.nbt)
+
+# Run progress: 94.44% complete, ETA 00:00:34
+# Fork: 1 of 1
+# Warmup Iteration   1: payload-size: inttest1023.nbt=4104
+4.419 us/op
+# Warmup Iteration   2: 4.213 us/op
+# Warmup Iteration   3: 4.228 us/op
+Iteration   1: 4.219 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   2: 4.209 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   3: 4.311 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   4: 4.230 us/op
+                 payloadBytes: 0.001 us/op
+
+Iteration   5: 4.192 us/op
+                 payloadBytes: 0.001 us/op
+
+
+
+Result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse":
+  4.232 ±(99.9%) 0.177 us/op [Average]
+  (min, avg, max) = (4.192, 4.232, 4.311), stdev = 0.046
+  CI (99.9%): [4.055, 4.409] (assumes normal distribution)
+
+Secondary result "lib.minecraft.nbt.benchmark.SimdNbtParityBenchmarks.parse:payloadBytes":
+  0.001 ±(99.9%) 0.001 us/op [Average]
+  (min, avg, max) = (0.001, 0.001, 0.001), stdev = 0.001
+  CI (99.9%): [0.001, 0.001] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:10:17
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                           (filename)     (payload)   Mode  Cnt    Score     Error   Units
+MutfBenchmarks.decode                                      N/A     ascii-100  thrpt    5    0.040 ±   0.018  ops/ns
+MutfBenchmarks.decode:payloadBytes                         N/A     ascii-100  thrpt    5    4.000 ±   1.846  ops/ns
+MutfBenchmarks.decode                                      N/A      ascii-32  thrpt    5    0.049 ±   0.010  ops/ns
+MutfBenchmarks.decode:payloadBytes                         N/A      ascii-32  thrpt    5    1.560 ±   0.309  ops/ns
+MutfBenchmarks.decode                                      N/A  bmp-mixed-32  thrpt    5    0.021 ±   0.011  ops/ns
+MutfBenchmarks.decode:payloadBytes                         N/A  bmp-mixed-32  thrpt    5    0.673 ±   0.337  ops/ns
+SimdNbtParityBenchmarks.parse               complex_player.dat           N/A  thrpt    5    0.079 ±   0.015  ops/us
+SimdNbtParityBenchmarks.parse:payloadBytes  complex_player.dat           N/A  thrpt    5  265.929 ±  50.541  ops/us
+SimdNbtParityBenchmarks.parse                      hypixel.nbt           N/A  thrpt    5    0.020 ±   0.011  ops/us
+SimdNbtParityBenchmarks.parse:payloadBytes         hypixel.nbt           N/A  thrpt    5  367.919 ± 210.168  ops/us
+SimdNbtParityBenchmarks.parse                        level.dat           N/A  thrpt    5    0.056 ±   0.010  ops/us
+SimdNbtParityBenchmarks.parse:payloadBytes           level.dat           N/A  thrpt    5  248.096 ±  44.040  ops/us
+SimdNbtParityBenchmarks.parse                      bigtest.nbt           N/A  thrpt    5    0.513 ±   0.016  ops/us
+SimdNbtParityBenchmarks.parse:payloadBytes         bigtest.nbt           N/A  thrpt    5  791.815 ±  24.365  ops/us
+SimdNbtParityBenchmarks.parse                simple_player.dat           N/A  thrpt    5    0.476 ±   0.162  ops/us
+SimdNbtParityBenchmarks.parse:payloadBytes   simple_player.dat           N/A  thrpt    5  281.170 ±  95.776  ops/us
+SimdNbtParityBenchmarks.parse                  inttest1023.nbt           N/A  thrpt    5    0.230 ±   0.004  ops/us
+SimdNbtParityBenchmarks.parse:payloadBytes     inttest1023.nbt           N/A  thrpt    5  944.817 ±  17.994  ops/us
+MutfBenchmarks.decode                                      N/A     ascii-100   avgt    5   21.061 ±   1.158   ns/op
+MutfBenchmarks.decode:payloadBytes                         N/A     ascii-100   avgt    5    0.211 ±   0.012   ns/op
+MutfBenchmarks.decode                                      N/A      ascii-32   avgt    5   15.781 ±   0.174   ns/op
+MutfBenchmarks.decode:payloadBytes                         N/A      ascii-32   avgt    5    0.493 ±   0.005   ns/op
+MutfBenchmarks.decode                                      N/A  bmp-mixed-32   avgt    5   40.872 ±   4.421   ns/op
+MutfBenchmarks.decode:payloadBytes                         N/A  bmp-mixed-32   avgt    5    1.277 ±   0.138   ns/op
+SimdNbtParityBenchmarks.parse               complex_player.dat           N/A   avgt    5   10.006 ±   1.096   us/op
+SimdNbtParityBenchmarks.parse:payloadBytes  complex_player.dat           N/A   avgt    5    0.003 ±   0.001   us/op
+SimdNbtParityBenchmarks.parse                      hypixel.nbt           N/A   avgt    5   41.834 ±   5.532   us/op
+SimdNbtParityBenchmarks.parse:payloadBytes         hypixel.nbt           N/A   avgt    5    0.002 ±   0.001   us/op
+SimdNbtParityBenchmarks.parse                        level.dat           N/A   avgt    5   15.151 ±   1.822   us/op
+SimdNbtParityBenchmarks.parse:payloadBytes           level.dat           N/A   avgt    5    0.003 ±   0.001   us/op
+SimdNbtParityBenchmarks.parse                      bigtest.nbt           N/A   avgt    5    1.779 ±   0.360   us/op
+SimdNbtParityBenchmarks.parse:payloadBytes         bigtest.nbt           N/A   avgt    5    0.001 ±   0.001   us/op
+SimdNbtParityBenchmarks.parse                simple_player.dat           N/A   avgt    5    1.839 ±   0.227   us/op
+SimdNbtParityBenchmarks.parse:payloadBytes   simple_player.dat           N/A   avgt    5    0.003 ±   0.001   us/op
+SimdNbtParityBenchmarks.parse                  inttest1023.nbt           N/A   avgt    5    4.232 ±   0.177   us/op
+SimdNbtParityBenchmarks.parse:payloadBytes     inttest1023.nbt           N/A   avgt    5    0.001 ±   0.001   us/op
+
+Benchmark result is saved to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\results\jmh\results.json
+
+[Incubating] Problems report is available at: file:///W:/Workspace/Java/Minecraft-Library/nbt-factory/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 10m 22s
+13 actionable tasks: 5 executed, 8 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html
