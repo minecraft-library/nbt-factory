@@ -1,5 +1,8 @@
 package lib.minecraft.nbt;
 
+import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.borrow.Tape;
+import lib.minecraft.nbt.borrow.TapeParser;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
@@ -16,6 +19,7 @@ import dev.simplified.util.StringUtil;
 import dev.simplified.util.SystemUtil;
 import lombok.Cleanup;
 import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -26,6 +30,12 @@ import java.nio.file.Paths;
 
 /**
  * Standard interface for reading and writing NBT data structures.
+ *
+ * <p>The materializing surface ({@link #fromByteArray(byte[])} and friends) reconstructs a fully
+ * allocated {@link CompoundTag} tree on every call. For read-only navigation of large or
+ * short-lived payloads, {@link #borrowFromByteArray(byte[])} returns a
+ * {@link BorrowedCompoundTag} backed directly by the input bytes - see that method for the
+ * lifetime contract.</p>
  *
  * @see <a href="https://wiki.vg/NBT">Official NBT Wiki</a>
  * @see <a href="https://minecraft.fandom.com/wiki/NBT_format">Fandom NBT Wiki</a>
@@ -59,6 +69,67 @@ public class NbtFactory {
 
             buffer.readUTF(); // Discard Root Name
             return buffer.readCompoundTag();
+        } catch (Exception exception) {
+            throw new NbtException(exception);
+        }
+    }
+
+    /**
+     * Deserializes an NBT {@code byte[]} array into a {@link BorrowedCompoundTag} backed by the
+     * (possibly decompressed) input bytes.
+     *
+     * <p>Mirrors {@link #fromByteArray(byte[])}'s gzip auto-detect via
+     * {@link Compression#decompress(byte[])} - raw payloads pass through, gzipped payloads are
+     * inflated - then routes the decompressed bytes through
+     * {@link TapeParser#parse(byte[])} instead of materializing a {@link CompoundTag}. The returned
+     * navigator decodes values lazily as the caller traverses the tree, so payloads where most
+     * fields are read once and discarded skip the per-value allocation overhead of the
+     * materializing path entirely.</p>
+     *
+     * <p><b>Buffer-retention contract.</b> The returned {@link BorrowedCompoundTag} holds a strong
+     * reference to the decompressed bytes (transitively, through the underlying {@link Tape}).
+     * Pointer-kind tape elements address bytes inside that retained array, so the array stays
+     * alive as long as any borrowed view derived from this call is reachable. Callers therefore
+     * must not assume the input array - or, when gzip is auto-detected, the inflated array - is
+     * eligible for garbage collection just because this method has returned. Conversely, dropping
+     * the returned navigator is sufficient to release the retained buffer; no explicit
+     * {@code close} is required.</p>
+     *
+     * <p><b>Mutation hazard.</b> Callers must not mutate the input array after invoking this
+     * method (and, for gzipped input, must not assume the inflated buffer surfaces anywhere - it
+     * does not). Mutating the retained buffer corrupts every pointer-kind tape element addressing
+     * it, including subsequent {@link BorrowedCompoundTag#materialize() materialize} calls.</p>
+     *
+     * <p><b>Thread safety.</b> Decoding is single-threaded - the {@link TapeParser} runs on the
+     * calling thread before this method returns. Once returned, the borrow tree is read-only and
+     * the underlying {@link Tape} is immutable, so navigation can be parallelized across threads.
+     * Note that {@code BorrowedStringTag} caches the materialized {@link String} the first time
+     * {@code toString()} or {@code equals} forces decoding; that cache write is not synchronized,
+     * so cross-thread first access on the same string node may decode redundantly. The cache is
+     * idempotent (every observer sees the same {@link String} value), so this is a performance
+     * concern, not a correctness one.</p>
+     *
+     * <p><b>Escape hatch.</b> Call {@link BorrowedCompoundTag#materialize()} on the returned
+     * navigator (or on any descendant) to obtain a fully-allocated {@link CompoundTag} subtree
+     * detached from the retained buffer. The materialized tree retains no reference to the input
+     * array, so the buffer becomes eligible for collection as soon as every borrowed view is
+     * dropped.</p>
+     *
+     * @param bytes the {@code byte[]} array to read from; gzipped payloads are auto-detected and
+     *     decompressed before parsing
+     * @return a borrowed view rooted at the input's root compound
+     * @throws NbtException if any I/O error occurs - empty or truncated input, gzip header
+     *     corruption, malformed binary NBT, or nesting deeper than the parser's 512-frame cap
+     */
+    @ApiStatus.Experimental
+    public @NotNull BorrowedCompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
+        try {
+            // Mirror fromByteArray's auto-detect: Compression.decompress is a no-op for raw payloads
+            // and inflates gzipped ones. Route the decompressed bytes - which the returned tape
+            // retains - through TapeParser instead of materializing a CompoundTag.
+            byte[] decompressed = Compression.decompress(bytes);
+            Tape tape = TapeParser.parse(decompressed);
+            return tape.root();
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
