@@ -312,6 +312,33 @@ public final class Tape {
     }
 
     // ------------------------------------------------------------------
+    // Borrow-mode entry point (Phase C3)
+    // ------------------------------------------------------------------
+
+    /**
+     * Returns a {@link BorrowedCompoundTag} navigator over the root compound at tape index 0.
+     *
+     * <p>This is the user-facing entry point into the borrow API in C3. C5 will wire
+     * {@code NbtFactory.borrowFromByteArray} to {@code TapeParser.parse(bytes).root()} as a
+     * one-call entry point that does not depend on internal types.</p>
+     *
+     * @return a navigator over the root compound
+     * @throws NbtException if the tape is empty or its root is not a {@code COMPOUND_HEADER}
+     */
+    public @NotNull BorrowedCompoundTag root() {
+        if (this.size < 1)
+            throw new NbtException("Empty tape has no root");
+
+        long header = this.elements[0];
+
+        if (TapeElement.unpackKind(header) != TapeKind.COMPOUND_HEADER)
+            throw new NbtException(
+                "Tape root is not a COMPOUND_HEADER: %s", TapeElement.unpackKind(header));
+
+        return new BorrowedCompoundTag(this, 0);
+    }
+
+    // ------------------------------------------------------------------
     // Helper for shape tests + future C3 navigators
     // ------------------------------------------------------------------
 
