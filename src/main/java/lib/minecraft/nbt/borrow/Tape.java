@@ -405,7 +405,6 @@ public final class Tape {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private static @NotNull lib.minecraft.nbt.tags.Tag<?> readValue(@NotNull MaterializeContext ctx) {
         long element = ctx.elements[ctx.tapeIndex];
         TapeKind kind = TapeElement.unpackKind(element);
