@@ -16,22 +16,19 @@ Guidance for Claude Code working in this repo. Assumes the global `~/.claude/CLA
 
 The JMH suite exercises three corpora: the synthetic compound, the live Hypixel auction
 fixture (`auctions.bin`, ~40 MB, gitignored), and the vendored simdnbt parity corpus
-(`src/test/resources/simdnbt-corpus/`, ~27 KB, checked in). Two GC profiles are wired:
+(`src/test/resources/simdnbt-corpus/`, ~27 KB, checked in). G1 is the only wired profile:
 
 ```bash
-./gradlew jmh -PjmhJvmProfile=g1 -PjmhInclude=SimdNbtParity        # realistic (default)
-./gradlew jmh -PjmhJvmProfile=epsilon -PjmhInclude=SimdNbtParity   # zero-GC, simdnbt-fair
+./gradlew jmh -PjmhInclude=SimdNbtParity
 ```
 
-Both profiles append `-XX:MaxInlineLevel=20 -XX:FreqInlineSize=500`. The Epsilon profile
-also adds `-XX:+UseEpsilonGC -XX:+AlwaysPreTouch -Xmx4g`. JMH writes JSON to
-`build/results/jmh/results.json` (the JMH plugin's default).
+JMH always runs with `-XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC` and
+writes JSON to `build/results/jmh/results.json` (the JMH plugin's default).
 
 Render a simdnbt-style throughput table from one or more JSON files:
 
 ```bash
 python3 tools/jmh-report.py build/results/jmh/results.json
-python3 tools/jmh-report.py jmh-results/phase-A1-g1.json jmh-results/phase-A1-epsilon.json
 ```
 
 The simdnbt parity corpus is vendored from `https://git.matdoes.dev/mat/simdnbt`

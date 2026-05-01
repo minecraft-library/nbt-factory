@@ -40,9 +40,11 @@ import java.util.zip.GZIPInputStream;
  *
  * <p>Run with:</p>
  * <pre>
- *   ./gradlew jmh -PjmhInclude=SimdNbtParity -PjmhJvmProfile=g1
- *   ./gradlew jmh -PjmhInclude=SimdNbtParity -PjmhJvmProfile=epsilon
+ *   ./gradlew jmh -PjmhInclude=SimdNbtParity
  * </pre>
+ *
+ * <p>Parity comparison vs simdnbt's mimalloc is approximate; Java has no direct mimalloc
+ * analogue, so the G1 numbers reported here are the authoritative measurement.</p>
  */
 @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
 @OutputTimeUnit(TimeUnit.MICROSECONDS)

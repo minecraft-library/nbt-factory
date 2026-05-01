@@ -4,11 +4,13 @@
 Usage::
 
     python tools/jmh-report.py build/results/jmh/results.json
-    python tools/jmh-report.py jmh-results/phase-A1-g1.json jmh-results/phase-A1-epsilon.json
+    python tools/jmh-report.py jmh-results/run-A.json jmh-results/run-B.json
 
 The script reads one or more JMH JSON result files (the format produced by
 ``-rf JSON``) and prints a single combined table with library / file /
-profile / mode / MiB/s / GiB/s columns.
+profile / mode / MiB/s / GiB/s columns. The multi-file form is retained for
+comparing two runs (e.g. before/after a change) even though G1 is the only
+configured JMH profile.
 
 Throughput conversion
 ---------------------
@@ -31,9 +33,8 @@ For ``Mode.Throughput`` results (units ``ops/ns`` etc.) the script computes::
    ``stdout``/``stderr`` capture passed via ``--sizes-log``).
 
 The ``Profile`` column is derived from the result file's basename: anything
-containing ``epsilon`` is reported as ``epsilon``, anything containing
-``g1`` is reported as ``g1``, otherwise the basename minus the extension
-is used verbatim.
+containing ``g1`` is reported as ``g1``, otherwise the basename minus the
+extension is used verbatim.
 """
 
 from __future__ import annotations
@@ -85,8 +86,6 @@ THROUGHPUT_UNIT_TO_OPS_PER_S = {
 
 def derive_profile(path: Path) -> str:
     name = path.stem.lower()
-    if "epsilon" in name:
-        return "epsilon"
     if "g1" in name:
         return "g1"
     return path.stem
