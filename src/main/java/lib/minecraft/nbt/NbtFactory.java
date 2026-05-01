@@ -32,10 +32,12 @@ import java.nio.file.Paths;
  * Standard interface for reading and writing NBT data structures.
  *
  * <p>The materializing surface ({@link #fromByteArray(byte[])} and friends) reconstructs a fully
- * allocated {@link CompoundTag} tree on every call. For read-only navigation of large or
- * short-lived payloads, {@link #borrowFromByteArray(byte[])} returns a
- * {@link BorrowedCompoundTag} backed directly by the input bytes - see that method for the
- * lifetime contract.</p>
+ * allocated {@link CompoundTag} tree on every call.</p>
+ *
+ * <p>Read-heavy callers may prefer the zero-allocation borrow API:
+ * {@link #borrowFromByteArray(byte[])} returns a {@link BorrowedCompoundTag} that defers MUTF-8
+ * decoding and primitive-array materialization until each field is accessed. See the
+ * {@code lib.minecraft.nbt.borrow} package for details.</p>
  *
  * @see <a href="https://wiki.vg/NBT">Official NBT Wiki</a>
  * @see <a href="https://minecraft.fandom.com/wiki/NBT_format">Fandom NBT Wiki</a>

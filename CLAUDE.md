@@ -57,6 +57,33 @@ The script verifies SHA-256 hashes; CI never runs it.
 | `lib.minecraft.nbt.io.stream` | `DataInputStream` / `DataOutputStream` wrappers |
 | `lib.minecraft.nbt.io.snbt` | stringified-NBT serializer + deserializer |
 | `lib.minecraft.nbt.io.json` | JSON serializer + deserializer |
+| `lib.minecraft.nbt.borrow` | zero-allocation read-only navigator API (tape + retained buffer) |
+
+## Borrow API
+
+`@ApiStatus.Experimental`. Zero-allocation read path: parses input bytes into a flat
+`long[]` tape and returns navigators that decode lazily on field access. Wins come
+from skipping decode of fields the caller never touches, not from full zero-copy.
+
+When to use: read-heavy code that touches a small subset of fields per pass (price
+checks, search filters, key probes). Don't use when you'll read every field - the
+materializing path is roughly equal there.
+
+```java
+BorrowedCompoundTag bc = NbtFactory.borrowFromByteArray(payload);
+BorrowedTag<?> display = bc.get("display");
+// payload bytes retained until bc is GC'd - do not mutate them.
+CompoundTag detached = bc.materialize(); // escape hatch; no buffer retention
+```
+
+Buffer-retention rule: the returned `BorrowedCompoundTag` holds a strong reference
+to the (possibly decompressed) input bytes. Pin lifetime to the borrow; do not mutate
+the input array.
+
+Performance ballpark from Phase C6's `BorrowVsMaterializeBenchmark`: ~2.26x on
+`complex_player.dat`, 2-3x on compound- and string-heavy NBT, 1.2-1.5x on
+primitive-array-heavy NBT. See `lib.minecraft.nbt.borrow.package-info` for the full
+contract.
 
 ## Dependencies
 
