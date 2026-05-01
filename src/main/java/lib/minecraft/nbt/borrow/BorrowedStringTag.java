@@ -4,54 +4,46 @@ import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Borrowed view over a {@link TapeKind#STRING_PTR} tape entry. The tape element addresses a
  * 2-byte big-endian length prefix followed by {@code length} bytes of modified UTF-8.
  *
- * <p>Decoding is lazy and cached: the first call to {@link #getValue()} or {@link #materialize()}
- * runs {@link lib.minecraft.nbt.io.NbtModifiedUtf8#decode(byte[], int, int) NbtModifiedUtf8.decode}
- * and stashes the result; subsequent calls return the same {@link String} reference. Phase C4
- * replaces this single-shot decode with a {@code MutfStringView} backed by the same byte range -
- * the swap is transparent to {@link #materialize()} and source-compatible with {@link #getValue()}.</p>
+ * <p>Backed by a {@link MutfStringView} that defers modified-UTF-8 decode until first access.
+ * {@link #getValue()} and {@link #materialize()} both route through {@link MutfStringView#toString()}
+ * so the decoded {@link String} is shared across calls.</p>
  *
  * @see StringTag
+ * @see MutfStringView
  */
 @ApiStatus.Experimental
 public final class BorrowedStringTag implements BorrowedTag<String> {
 
-    private final @NotNull Tape tape;
-
-    private final int tapeIndex;
-
-    /**
-     * Cached decoded form. Single-thread by convention - the borrow API does not promise
-     * thread-safe traversal, so a plain field beats the volatile/CAS overhead. Stays null until
-     * the first {@link #getValue()} call.
-     */
-    private @Nullable String cached;
+    private final @NotNull MutfStringView view;
 
     BorrowedStringTag(@NotNull Tape tape, int tapeIndex) {
-        this.tape = tape;
-        this.tapeIndex = tapeIndex;
+        int tagOffset = (int) TapeElement.unpackValue(tape.elementAt(tapeIndex));
+        this.view = MutfStringView.fromTagOffset(tape.buffer(), tagOffset);
     }
 
     /**
-     * Returns the decoded {@link String} value, decoding on first call and caching the result.
+     * Returns the decoded {@link String} value. The first call decodes via the backing
+     * {@link MutfStringView} and caches the result; subsequent calls return the same reference.
      *
      * @return the decoded string
      */
     public @NotNull String getValue() {
-        String cached = this.cached;
+        return this.view.toString();
+    }
 
-        if (cached != null)
-            return cached;
-
-        int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
-        String decoded = BorrowedTagSupport.decodeUtf8At(this.tape.buffer(), offset);
-        this.cached = decoded;
-        return decoded;
+    /**
+     * Returns the underlying {@link MutfStringView}. Exposed so callers that only need to compare
+     * or hash the string can avoid the decode on the ASCII fast path.
+     *
+     * @return the backing view
+     */
+    public @NotNull MutfStringView view() {
+        return this.view;
     }
 
     @Override
@@ -61,7 +53,7 @@ public final class BorrowedStringTag implements BorrowedTag<String> {
 
     @Override
     public @NotNull StringTag materialize() {
-        return new StringTag(this.getValue());
+        return new StringTag(this.view.toString());
     }
 
 }

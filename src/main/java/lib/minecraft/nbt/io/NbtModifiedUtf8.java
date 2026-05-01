@@ -140,15 +140,15 @@ public final class NbtModifiedUtf8 {
      * symmetric across both byte orders, so we reuse {@link NbtByteCodec}'s big-endian VarHandle
      * directly.</p>
      *
-     * <p>Package-private so {@code MutfStringView} (Phase C4 lazy decode) can share the same
-     * probe.</p>
+     * <p>Public so {@link lib.minecraft.nbt.borrow.MutfStringView MutfStringView} (Phase C4 lazy
+     * decode) can share the same probe across package boundaries.</p>
      *
      * @param src buffer to scan
      * @param offset start offset into {@code src}
      * @param len number of bytes to scan
      * @return {@code true} when all bytes have their high bit clear
      */
-    static boolean isPlainAscii(byte[] src, int offset, int len) {
+    public static boolean isPlainAscii(byte[] src, int offset, int len) {
         int i = offset;
         int end = offset + len;
         int chunkEnd = offset + (len & ~7);

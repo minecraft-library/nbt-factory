@@ -348,8 +348,15 @@ public final class Tape {
      * {@link #NOT_FOUND} when no entry matches.
      *
      * <p>Used by {@code TapeShapeTest} to assert structural invariants without depending on
-     * {@link #materialize()}. C3's {@code BorrowedCompoundTag} navigator will use the same
-     * traversal pattern.</p>
+     * {@link #materialize()}, and by {@link BorrowedCompoundTag#get(String)} as the user-facing
+     * lookup path.</p>
+     *
+     * <p>Compares each entry's key bytes against {@code key} via
+     * {@link MutfStringView#equalsString(String)} - which takes a byte-level fast path when the
+     * key is ASCII and avoids materializing a {@link String} per entry during the linear scan.
+     * Most NBT keys ({@code "id"}, {@code "Count"}, {@code "tag"}, {@code "display"},
+     * {@code "ExtraAttributes"}) are ASCII, so the typical lookup pays zero allocations for the
+     * scan itself.</p>
      *
      * @param compoundHeaderIndex tape index of a {@link TapeKind#COMPOUND_HEADER}
      * @param key the modified-UTF-8 key to match against each entry's name
@@ -373,10 +380,10 @@ public final class Tape {
                 throw new NbtException("Expected KEY_PTR inside compound at tape index %d, found %s", idx, kind);
 
             int keyOffset = (int) TapeElement.unpackValue(element);
-            String name = decodeUtf8(this.buffer, keyOffset);
+            MutfStringView view = MutfStringView.fromTagOffset(this.buffer, keyOffset);
             int valueIdx = idx + 1;
 
-            if (name.equals(key))
+            if (view.equalsString(key))
                 return valueIdx;
 
             idx = nextSibling(valueIdx);
