@@ -272,12 +272,8 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
         NbtByteCodec.putInt(buf, p, length);
         p += 4;
 
-        for (int i = 0; i < length; i++) {
-            NbtByteCodec.putInt(buf, p, value[i]);
-            p += 4;
-        }
-
-        this.position = p;
+        NbtByteCodec.putIntArrayBE(value, 0, buf, p, length);
+        this.position = p + (length << 2);
     }
 
     @Override
@@ -292,12 +288,8 @@ public class NbtOutputBuffer implements NbtOutput, DataOutput {
         NbtByteCodec.putInt(buf, p, length);
         p += 4;
 
-        for (int i = 0; i < length; i++) {
-            NbtByteCodec.putLong(buf, p, value[i]);
-            p += 8;
-        }
-
-        this.position = p;
+        NbtByteCodec.putLongArrayBE(value, 0, buf, p, length);
+        this.position = p + (length << 3);
     }
 
 }

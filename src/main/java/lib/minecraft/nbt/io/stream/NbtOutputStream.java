@@ -103,14 +103,9 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
         while (remaining > 0) {
             int chunkElements = Math.min(remaining, elementsPerChunk);
-            int p = 0;
-
-            for (int i = 0; i < chunkElements; i++) {
-                NbtByteCodec.putInt(scratch, p, data[readIndex++]);
-                p += 4;
-            }
-
+            NbtByteCodec.putIntArrayBE(data, readIndex, scratch, 0, chunkElements);
             this.write(scratch, 0, chunkElements << 2);
+            readIndex += chunkElements;
             remaining -= chunkElements;
         }
     }
@@ -135,14 +130,9 @@ public class NbtOutputStream extends DataOutputStream implements NbtOutput {
 
         while (remaining > 0) {
             int chunkElements = Math.min(remaining, elementsPerChunk);
-            int p = 0;
-
-            for (int i = 0; i < chunkElements; i++) {
-                NbtByteCodec.putLong(scratch, p, data[readIndex++]);
-                p += 8;
-            }
-
+            NbtByteCodec.putLongArrayBE(data, readIndex, scratch, 0, chunkElements);
             this.write(scratch, 0, chunkElements << 3);
+            readIndex += chunkElements;
             remaining -= chunkElements;
         }
     }

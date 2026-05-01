@@ -1,0 +1,26 @@
+Benchmark                                             (strategyName)  Mode  Cnt        Score       Error  Units
+NbtArrayStrategyBenchmarks.largeIntArray_read             STREAMWISE  avgt    5     2939.879 ±    94.527  us/op
+NbtArrayStrategyBenchmarks.largeIntArray_read    CHUNKED_THREADLOCAL  avgt    5      118.317 ±     1.209  us/op
+NbtArrayStrategyBenchmarks.largeIntArray_write            STREAMWISE  avgt    5     1356.645 ±   219.246  us/op
+NbtArrayStrategyBenchmarks.largeIntArray_write   CHUNKED_THREADLOCAL  avgt    5      169.282 ±     4.563  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_read            STREAMWISE  avgt    5     1537.379 ±   223.669  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_read   CHUNKED_THREADLOCAL  avgt    5      173.550 ±   903.360  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_write           STREAMWISE  avgt    5      861.912 ±   224.527  us/op
+NbtArrayStrategyBenchmarks.largeLongArray_write  CHUNKED_THREADLOCAL  avgt    5      120.356 ±     1.234  us/op
+NbtBenchmarks.auction_deserializeAll                             N/A  avgt    5   559655.385 ± 19724.145  us/op
+NbtBenchmarks.auction_roundTrip                                  N/A  avgt    5   641115.822 ± 65288.940  us/op
+NbtBenchmarks.auction_serializeAll                               N/A  avgt    5   106398.780 ±  7084.381  us/op
+NbtBenchmarks.auction_serializeAll_gzip                          N/A  avgt    5  1362680.630 ± 41189.650  us/op
+NbtBenchmarks.auction_serializeAll_snbt                          N/A  avgt    5   310366.043 ± 11438.071  us/op
+NbtBenchmarks.synthetic_deserialize_binary                       N/A  avgt    5        1.934 ±     0.016  us/op
+NbtBenchmarks.synthetic_deserialize_binary_gzip                  N/A  avgt    5        9.772 ±     0.805  us/op
+NbtBenchmarks.synthetic_deserialize_json                         N/A  avgt    5       16.126 ±     0.379  us/op
+NbtBenchmarks.synthetic_deserialize_snbt                         N/A  avgt    5       62.966 ±     1.865  us/op
+NbtBenchmarks.synthetic_inputBuffer_direct                       N/A  avgt    5        2.148 ±     0.902  us/op
+NbtBenchmarks.synthetic_outputBuffer_direct                      N/A  avgt    5        2.018 ±     0.142  us/op
+NbtBenchmarks.synthetic_serialize_binary                         N/A  avgt    5        2.026 ±     0.422  us/op
+NbtBenchmarks.synthetic_serialize_binary_gzip                    N/A  avgt    5       19.689 ±     5.382  us/op
+NbtBenchmarks.synthetic_serialize_json                           N/A  avgt    5       31.607 ±     6.294  us/op
+NbtBenchmarks.synthetic_serialize_snbt                           N/A  avgt    5        8.899 ±     2.945  us/op
+NbtBenchmarks.synthetic_traverse_compound                        N/A  avgt    5        0.002 ±     0.001  us/op
+NbtBenchmarks.synthetic_traverse_intArray                        N/A  avgt    5        0.037 ±     0.002  us/op

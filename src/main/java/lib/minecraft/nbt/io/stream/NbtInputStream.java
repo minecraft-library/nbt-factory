@@ -100,7 +100,7 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
         }
 
         // CHUNKED_THREADLOCAL: bulk-read into a capped thread-local scratch buffer in chunks,
-        // decoding through NbtByteCodec's VarHandle path.
+        // decoding through NbtByteCodec's bulk VarHandle byteswap.
         byte[] scratch = SCRATCH.get();
         int elementsPerChunk = SCRATCH_CAP_BYTES >>> 2; // 16384 ints per pass
         int remaining = length;
@@ -111,12 +111,8 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
             int chunkBytes = chunkElements << 2;
             this.readFully(scratch, 0, chunkBytes);
 
-            int p = 0;
-            for (int i = 0; i < chunkElements; i++) {
-                data[writeIndex++] = NbtByteCodec.getInt(scratch, p);
-                p += 4;
-            }
-
+            NbtByteCodec.getIntArrayBE(scratch, 0, data, writeIndex, chunkElements);
+            writeIndex += chunkElements;
             remaining -= chunkElements;
         }
 
@@ -146,12 +142,8 @@ public class NbtInputStream extends DataInputStream implements NbtInput {
             int chunkBytes = chunkElements << 3;
             this.readFully(scratch, 0, chunkBytes);
 
-            int p = 0;
-            for (int i = 0; i < chunkElements; i++) {
-                data[writeIndex++] = NbtByteCodec.getLong(scratch, p);
-                p += 8;
-            }
-
+            NbtByteCodec.getLongArrayBE(scratch, 0, data, writeIndex, chunkElements);
+            writeIndex += chunkElements;
             remaining -= chunkElements;
         }
 

@@ -212,15 +212,8 @@ public class NbtInputBuffer implements NbtInput, DataInput {
             throw new EOFException();
 
         int[] data = new int[length];
-        byte[] buf = this.buffer;
-        int p = this.position;
-
-        for (int i = 0; i < length; i++) {
-            data[i] = NbtByteCodec.getInt(buf, p);
-            p += 4;
-        }
-
-        this.position = p;
+        NbtByteCodec.getIntArrayBE(this.buffer, this.position, data, 0, length);
+        this.position += length << 2;
         return data;
     }
 
@@ -233,15 +226,8 @@ public class NbtInputBuffer implements NbtInput, DataInput {
             throw new EOFException();
 
         long[] data = new long[length];
-        byte[] buf = this.buffer;
-        int p = this.position;
-
-        for (int i = 0; i < length; i++) {
-            data[i] = NbtByteCodec.getLong(buf, p);
-            p += 8;
-        }
-
-        this.position = p;
+        NbtByteCodec.getLongArrayBE(this.buffer, this.position, data, 0, length);
+        this.position += length << 3;
         return data;
     }
 

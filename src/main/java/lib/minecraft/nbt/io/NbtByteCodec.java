@@ -112,4 +112,85 @@ public final class NbtByteCodec {
         putLong(buffer, offset, Double.doubleToLongBits(value));
     }
 
+    // ------------------------------------------------------------------
+    // Bulk array byteswap (Phase B1)
+    // ------------------------------------------------------------------
+
+    /**
+     * Decodes {@code count} big-endian 32-bit integers from {@code src} starting at
+     * {@code srcOffset} into {@code dst} starting at {@code dstOffset}.
+     *
+     * <p>Shaped as a single-strided {@link VarHandle} loop so C2 auto-vectorizes the byteswap on
+     * every platform that can - x86-64 emits {@code MOVBE} per element and folds adjacent loads
+     * into {@code vpshufb}-based SIMD when the loop trip count is large enough; ARM64 emits
+     * {@code REV32}. The caller is responsible for bounds checking - this method assumes
+     * {@code srcOffset + (count << 2) <= src.length} and {@code dstOffset + count <= dst.length}.</p>
+     *
+     * @param src raw big-endian bytes
+     * @param srcOffset byte offset into {@code src} of the first element
+     * @param dst destination {@code int[]}
+     * @param dstOffset element offset into {@code dst} of the first element
+     * @param count number of 32-bit integers to decode
+     */
+    public static void getIntArrayBE(byte[] src, int srcOffset, int[] dst, int dstOffset, int count) {
+        for (int i = 0; i < count; i++)
+            dst[dstOffset + i] = (int) INT_BE.get(src, srcOffset + (i << 2));
+    }
+
+    /**
+     * Decodes {@code count} big-endian 64-bit integers from {@code src} starting at
+     * {@code srcOffset} into {@code dst} starting at {@code dstOffset}.
+     *
+     * <p>Shaped identically to {@link #getIntArrayBE(byte[], int, int[], int, int)} so C2 can
+     * apply the same auto-vectorization. Caller is responsible for bounds checking.</p>
+     *
+     * @param src raw big-endian bytes
+     * @param srcOffset byte offset into {@code src} of the first element
+     * @param dst destination {@code long[]}
+     * @param dstOffset element offset into {@code dst} of the first element
+     * @param count number of 64-bit integers to decode
+     */
+    public static void getLongArrayBE(byte[] src, int srcOffset, long[] dst, int dstOffset, int count) {
+        for (int i = 0; i < count; i++)
+            dst[dstOffset + i] = (long) LONG_BE.get(src, srcOffset + (i << 3));
+    }
+
+    /**
+     * Encodes {@code count} 32-bit integers from {@code src} starting at {@code srcOffset} into
+     * {@code dst} as big-endian bytes starting at {@code dstOffset}.
+     *
+     * <p>Shape matches {@link #getIntArrayBE(byte[], int, int[], int, int)} - tight loop, hoisted
+     * VarHandle, single-strided access - so C2 auto-vectorizes the byteswap. Caller is responsible
+     * for bounds checking - this method assumes {@code dstOffset + (count << 2) <= dst.length} and
+     * {@code srcOffset + count <= src.length}.</p>
+     *
+     * @param src source {@code int[]}
+     * @param srcOffset element offset into {@code src} of the first element
+     * @param dst destination byte array
+     * @param dstOffset byte offset into {@code dst} of the first element
+     * @param count number of 32-bit integers to encode
+     */
+    public static void putIntArrayBE(int[] src, int srcOffset, byte[] dst, int dstOffset, int count) {
+        for (int i = 0; i < count; i++)
+            INT_BE.set(dst, dstOffset + (i << 2), src[srcOffset + i]);
+    }
+
+    /**
+     * Encodes {@code count} 64-bit integers from {@code src} starting at {@code srcOffset} into
+     * {@code dst} as big-endian bytes starting at {@code dstOffset}.
+     *
+     * <p>Shape matches {@link #getLongArrayBE(byte[], int, long[], int, int)}. Caller is
+     * responsible for bounds checking.</p>
+     *
+     * @param src source {@code long[]}
+     * @param srcOffset element offset into {@code src} of the first element
+     * @param dst destination byte array
+     * @param dstOffset byte offset into {@code dst} of the first element
+     * @param count number of 64-bit integers to encode
+     */
+    public static void putLongArrayBE(long[] src, int srcOffset, byte[] dst, int dstOffset, int count) {
+        for (int i = 0; i < count; i++)
+            LONG_BE.set(dst, dstOffset + (i << 3), src[srcOffset + i]);
+    }
+
 }

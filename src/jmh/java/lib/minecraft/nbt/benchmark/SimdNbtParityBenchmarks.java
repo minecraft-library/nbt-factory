@@ -57,7 +57,7 @@ public class SimdNbtParityBenchmarks {
     private static final Path CORPUS_DIR = Paths.get("src/test/resources/simdnbt-corpus");
 
     @Param({"complex_player.dat", "hypixel.nbt", "level.dat",
-            "bigtest.nbt", "simple_player.dat"})
+            "bigtest.nbt", "simple_player.dat", "inttest1023.nbt"})
     public String filename;
 
     /** Gzip-decoded NBT payload, decoded once per trial. */
