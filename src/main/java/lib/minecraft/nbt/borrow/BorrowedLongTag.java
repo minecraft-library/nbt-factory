@@ -43,7 +43,7 @@ public final class BorrowedLongTag implements BorrowedTag<Long> {
 
     @Override
     public @NotNull LongTag materialize() {
-        return new LongTag(this.getLongValue());
+        return LongTag.of(this.getLongValue());
     }
 
 }

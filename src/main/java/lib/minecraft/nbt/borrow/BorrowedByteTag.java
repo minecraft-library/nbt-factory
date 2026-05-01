@@ -40,7 +40,7 @@ public final class BorrowedByteTag implements BorrowedTag<Byte> {
 
     @Override
     public @NotNull ByteTag materialize() {
-        return new ByteTag(this.getByteValue());
+        return ByteTag.of(this.getByteValue());
     }
 
 }

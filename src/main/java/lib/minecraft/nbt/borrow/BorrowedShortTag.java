@@ -39,7 +39,7 @@ public final class BorrowedShortTag implements BorrowedTag<Short> {
 
     @Override
     public @NotNull ShortTag materialize() {
-        return new ShortTag(this.getShortValue());
+        return ShortTag.of(this.getShortValue());
     }
 
 }

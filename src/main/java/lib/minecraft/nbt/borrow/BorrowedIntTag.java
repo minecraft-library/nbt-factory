@@ -39,7 +39,7 @@ public final class BorrowedIntTag implements BorrowedTag<Integer> {
 
     @Override
     public @NotNull IntTag materialize() {
-        return new IntTag(this.getIntValue());
+        return IntTag.of(this.getIntValue());
     }
 
 }

@@ -210,15 +210,15 @@ public final class Tape {
         return switch (kind) {
             case BYTE_INLINE -> {
                 ctx.tapeIndex++;
-                yield new ByteTag((byte) TapeElement.unpackValue(element));
+                yield ByteTag.of((byte) TapeElement.unpackValue(element));
             }
             case SHORT_INLINE -> {
                 ctx.tapeIndex++;
-                yield new ShortTag((short) TapeElement.unpackValue(element));
+                yield ShortTag.of((short) TapeElement.unpackValue(element));
             }
             case INT_INLINE -> {
                 ctx.tapeIndex++;
-                yield new IntTag((int) TapeElement.unpackValue(element));
+                yield IntTag.of((int) TapeElement.unpackValue(element));
             }
             case FLOAT_INLINE -> {
                 ctx.tapeIndex++;
@@ -227,7 +227,7 @@ public final class Tape {
             case LONG_PTR -> {
                 int offset = (int) TapeElement.unpackValue(element);
                 ctx.tapeIndex++;
-                yield new LongTag(NbtByteCodec.getLong(ctx.buffer, offset));
+                yield LongTag.of(NbtByteCodec.getLong(ctx.buffer, offset));
             }
             case DOUBLE_PTR -> {
                 int offset = (int) TapeElement.unpackValue(element);

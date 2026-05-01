@@ -72,10 +72,10 @@ public interface NbtInput {
      */
     default @NotNull Tag<?> readTag(byte id, int maxDepth) throws IOException {
         return switch (id) {
-            case 1 -> new ByteTag(this.readByte());
-            case 2 -> new ShortTag(this.readShort());
-            case 3 -> new IntTag(this.readInt());
-            case 4 -> new LongTag(this.readLong());
+            case 1 -> ByteTag.of(this.readByte());
+            case 2 -> ShortTag.of(this.readShort());
+            case 3 -> IntTag.of(this.readInt());
+            case 4 -> LongTag.of(this.readLong());
             case 5 -> new FloatTag(this.readFloat());
             case 6 -> new DoubleTag(this.readDouble());
             case 7 -> new ByteArrayTag(this.readByteArray());
