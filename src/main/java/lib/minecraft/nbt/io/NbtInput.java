@@ -119,20 +119,30 @@ public interface NbtInput {
      *
      * <p>Binary NBT backends ({@code NbtInputBuffer}, {@code NbtInputStream}) share this
      * implementation. SNBT and any other text-based backend overrides with format-specific parsing.</p>
+     *
+     * <p>The explicit {@code depth >= 512} gate covers normal adversarial input. The
+     * {@link StackOverflowError} catch is belt-and-braces against thread stacks that overflow
+     * before the depth counter trips - small {@code -Xss}, mutual recursion through text-format
+     * overrides, or other JVM-specific shapes - and rethrows as {@link NbtMaxDepthException} so
+     * the parser never lets a raw {@code StackOverflowError} escape.</p>
      */
     default @NotNull ListTag<?> readListTag(int depth) throws IOException {
-        if (++depth >= 512)
+        try {
+            if (++depth >= 512)
+                throw new NbtMaxDepthException();
+
+            byte listType = this.readByte();
+            int length = Math.max(0, this.readInt());
+            // Pre-seed elementId so ListTag.add skips the "first element" probe on every entry.
+            ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
+
+            for (int i = 0; i < length; i++)
+                listTag.add(this.readTag(listType, depth));
+
+            return listTag;
+        } catch (StackOverflowError soe) {
             throw new NbtMaxDepthException();
-
-        byte listType = this.readByte();
-        int length = Math.max(0, this.readInt());
-        // Pre-seed elementId so ListTag.add skips the "first element" probe on every entry.
-        ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
-
-        for (int i = 0; i < length; i++)
-            listTag.add(this.readTag(listType, depth));
-
-        return listTag;
+        }
     }
 
     default @NotNull CompoundTag readCompoundTag() throws IOException {
@@ -145,23 +155,33 @@ public interface NbtInput {
      *
      * <p>Binary NBT backends share this implementation. SNBT and other text-based backends override
      * with format-specific parsing.</p>
+     *
+     * <p>The explicit {@code depth >= 512} gate covers normal adversarial input. The
+     * {@link StackOverflowError} catch is belt-and-braces against thread stacks that overflow
+     * before the depth counter trips - small {@code -Xss}, mutual recursion through text-format
+     * overrides, or other JVM-specific shapes - and rethrows as {@link NbtMaxDepthException} so
+     * the parser never lets a raw {@code StackOverflowError} escape.</p>
      */
     default @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
-        if (++depth >= 512)
+        try {
+            if (++depth >= 512)
+                throw new NbtMaxDepthException();
+
+            CompoundTag compoundTag = new CompoundTag();
+
+            // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte abstract
+            // on this interface, which would force SnbtDeserializer (whose readByte parses text) to
+            // provide a meaningless implementation.
+            for (int id = this.readByte() & 0xFF; id != 0; id = this.readByte() & 0xFF) {
+                String key = this.readUTF();
+                Tag<?> tag = this.readTag((byte) id, depth);
+                compoundTag.put(key, tag);
+            }
+
+            return compoundTag;
+        } catch (StackOverflowError soe) {
             throw new NbtMaxDepthException();
-
-        CompoundTag compoundTag = new CompoundTag();
-
-        // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte abstract
-        // on this interface, which would force SnbtDeserializer (whose readByte parses text) to
-        // provide a meaningless implementation.
-        for (int id = this.readByte() & 0xFF; id != 0; id = this.readByte() & 0xFF) {
-            String key = this.readUTF();
-            Tag<?> tag = this.readTag((byte) id, depth);
-            compoundTag.put(key, tag);
         }
-
-        return compoundTag;
     }
 
 }
