@@ -76,19 +76,44 @@ tasks {
 // C2 inlining tweaks are applied per the simdnbt parity ResearchPack section 5.5.
 // Result format is forced to JSON so tools/jmh-report.py can consume it.
 //
+// `--enable-preview` is scoped to the JMH source set only. Phase D5 microbenchmarks
+// the {@code java.lang.foreign.MemorySegment} read path against the existing
+// {@code byte[]} VarHandle path. FFM is preview in JDK 21 (final in JDK 22+); production
+// code in `main`/`test` deliberately does not use it, so the preview flag stays out of
+// the published artifact.
+//
 // -PjmhInclude=<regex>     filters which benchmarks run (matched against the FQN). Without
 //                            this property the full suite runs.
+tasks.named<JavaCompile>("compileJmhJava") {
+    options.compilerArgs.addAll(listOf("--enable-preview"))
+}
+
+// JMH-generated benchmark wrapper classes also touch the preview-marked benchmark class via
+// reflection-style references, so the wrapper compilation needs the same flag.
+tasks.named<JavaCompile>("jmhCompileGeneratedClasses") {
+    options.compilerArgs.addAll(listOf("--enable-preview"))
+}
+
 jmh {
     jvmArgsAppend.set(listOf(
         "-XX:MaxInlineLevel=20",
         "-XX:FreqInlineSize=500",
-        "-XX:+UseG1GC"
+        "-XX:+UseG1GC",
+        "--enable-preview"
     ))
     resultFormat.set("JSON")
 
     (project.findProperty("jmhInclude") as String?)?.let {
         includes.set(listOf(it))
     }
+}
+
+// JMH generator runs `java -cp ... JmhBytecodeGenerator`, which loads each compiled benchmark
+// via Class.forName for the reflection generator. The Phase D5 probe is compiled with
+// `--enable-preview`, so the generator JVM also needs the flag at runtime - otherwise the load
+// fails with UnsupportedClassVersionError on the preview class file marker.
+tasks.named<me.champeau.jmh.JmhBytecodeGeneratorTask>("jmhRunBytecodeGenerator") {
+    jvmArgs.add("--enable-preview")
 }
 
 idea {

@@ -1,0 +1,200 @@
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC --enable-preview
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapLongs
+# Parameters: (bufferSize = 256)
+
+# Run progress: 72.22% complete, ETA 00:02:51
+# Fork: 1 of 1
+# Warmup Iteration   1: 42.954 ns/op
+# Warmup Iteration   2: 43.487 ns/op
+# Warmup Iteration   3: 44.908 ns/op
+Iteration   1: 44.981 ns/op
+Iteration   2: 44.449 ns/op
+Iteration   3: 45.548 ns/op
+Iteration   4: 49.139 ns/op
+Iteration   5: 44.972 ns/op
+
+
+Result "lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapLongs":
+  45.818 ±(99.9%) 7.305 ns/op [Average]
+  (min, avg, max) = (44.449, 45.818, 49.139), stdev = 1.897
+  CI (99.9%): [38.513, 53.123] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC --enable-preview
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapLongs
+# Parameters: (bufferSize = 2048)
+
+# Run progress: 77.78% complete, ETA 00:02:17
+# Fork: 1 of 1
+# Warmup Iteration   1: 337.549 ns/op
+# Warmup Iteration   2: 342.805 ns/op
+# Warmup Iteration   3: 357.576 ns/op
+Iteration   1: 355.369 ns/op
+Iteration   2: 374.146 ns/op
+Iteration   3: 387.888 ns/op
+Iteration   4: 355.711 ns/op
+Iteration   5: 353.826 ns/op
+
+
+Result "lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapLongs":
+  365.388 ±(99.9%) 58.101 ns/op [Average]
+  (min, avg, max) = (353.826, 365.388, 387.888), stdev = 15.089
+  CI (99.9%): [307.287, 423.489] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC --enable-preview
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapShorts
+# Parameters: (bufferSize = 32)
+
+# Run progress: 83.33% complete, ETA 00:01:42
+# Fork: 1 of 1
+# Warmup Iteration   1: 21.320 ns/op
+# Warmup Iteration   2: 22.469 ns/op
+# Warmup Iteration   3: 22.532 ns/op
+Iteration   1: 22.558 ns/op
+Iteration   2: 24.790 ns/op
+Iteration   3: 22.652 ns/op
+Iteration   4: 22.394 ns/op
+Iteration   5: 22.596 ns/op
+
+
+Result "lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapShorts":
+  22.998 ±(99.9%) 3.876 ns/op [Average]
+  (min, avg, max) = (22.394, 22.998, 24.790), stdev = 1.006
+  CI (99.9%): [19.122, 26.873] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC --enable-preview
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapShorts
+# Parameters: (bufferSize = 256)
+
+# Run progress: 88.89% complete, ETA 00:01:08
+# Fork: 1 of 1
+# Warmup Iteration   1: 169.209 ns/op
+# Warmup Iteration   2: 178.355 ns/op
+# Warmup Iteration   3: 181.022 ns/op
+Iteration   1: 195.302 ns/op
+Iteration   2: 178.566 ns/op
+Iteration   3: 177.747 ns/op
+Iteration   4: 177.723 ns/op
+Iteration   5: 177.909 ns/op
+
+
+Result "lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapShorts":
+  181.449 ±(99.9%) 29.847 ns/op [Average]
+  (min, avg, max) = (177.723, 181.449, 195.302), stdev = 7.751
+  CI (99.9%): [151.603, 211.296] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# VM invoker: C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin\java.exe
+# VM options: -Dfile.encoding=UTF-8 -Djava.io.tmpdir=W:\Workspace\Java\Minecraft-Library\nbt-factory\build\tmp\jmh -Duser.country=US -Duser.language=en -Duser.variant -XX:MaxInlineLevel=20 -XX:FreqInlineSize=500 -XX:+UseG1GC --enable-preview
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapShorts
+# Parameters: (bufferSize = 2048)
+
+# Run progress: 94.44% complete, ETA 00:00:34
+# Fork: 1 of 1
+# Warmup Iteration   1: 1328.325 ns/op
+# Warmup Iteration   2: 1396.108 ns/op
+# Warmup Iteration   3: 1411.976 ns/op
+Iteration   1: 1538.118 ns/op
+Iteration   2: 1420.066 ns/op
+Iteration   3: 1420.572 ns/op
+Iteration   4: 1413.273 ns/op
+Iteration   5: 1422.116 ns/op
+
+
+Result "lib.minecraft.nbt.benchmark.MemorySegmentReadProbeBenchmarks.segmentHeapShorts":
+  1442.829 ±(99.9%) 205.533 ns/op [Average]
+  (min, avg, max) = (1413.273, 1442.829, 1538.118), stdev = 53.376
+  CI (99.9%): [1237.296, 1648.362] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:10:17
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                           (bufferSize)  Mode  Cnt     Score     Error  Units
+MemorySegmentReadProbeBenchmarks.byteArrayInts                32  avgt    5    11.913 ±   3.557  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayInts               256  avgt    5    90.204 ±  27.798  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayInts              2048  avgt    5   686.317 ±  28.820  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayLongs               32  avgt    5     5.654 ±   0.541  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayLongs              256  avgt    5    42.886 ±   0.180  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayLongs             2048  avgt    5   341.719 ±   8.176  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayShorts              32  avgt    5    21.728 ±   0.541  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayShorts             256  avgt    5   172.236 ±   5.225  ns/op
+MemorySegmentReadProbeBenchmarks.byteArrayShorts            2048  avgt    5  1372.057 ±  35.540  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapInts              32  avgt    5    11.081 ±   0.826  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapInts             256  avgt    5    86.393 ±   3.240  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapInts            2048  avgt    5   691.646 ±  27.214  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapLongs             32  avgt    5     6.409 ±   1.483  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapLongs            256  avgt    5    45.818 ±   7.305  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapLongs           2048  avgt    5   365.388 ±  58.101  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapShorts            32  avgt    5    22.998 ±   3.876  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapShorts           256  avgt    5   181.449 ±  29.847  ns/op
+MemorySegmentReadProbeBenchmarks.segmentHeapShorts          2048  avgt    5  1442.829 ± 205.533  ns/op
+
+Benchmark result is saved to W:\Workspace\Java\Minecraft-Library\nbt-factory\build\results\jmh\results.json
+
+[Incubating] Problems report is available at: file:///W:/Workspace/Java/Minecraft-Library/nbt-factory/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 10m 22s
+13 actionable tasks: 3 executed, 10 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html
