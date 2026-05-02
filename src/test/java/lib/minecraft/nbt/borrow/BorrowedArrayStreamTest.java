@@ -9,13 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -24,57 +22,23 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Pins the Phase D4 stream and {@code forEach} accessors on the three borrowed array-tag types.
+ * Pins the Phase D4 stream and {@code forEach} accessors on the borrowed array-tag types.
  *
- * <p>Two axes are covered for the int and long variants:</p>
+ * <p>Two axes are covered for the long variant:</p>
  *
  * <ul>
- *   <li><b>Sum parity</b> - {@code intStream().sum()} matches {@code Arrays.stream(toIntArray()).sum()}
+ *   <li><b>Sum parity</b> - {@code longStream().sum()} matches {@code Arrays.stream(toLongArray()).sum()}
  *       for sizes {@code 0, 1, 10, 1023, 65537} (covers the 64 KiB chunk boundary).</li>
- *   <li><b>Parallel determinism</b> - {@code intStream().parallel().sum()} matches the serial sum
+ *   <li><b>Parallel determinism</b> - {@code longStream().parallel().sum()} matches the serial sum
  *       (validates {@link java.util.Spliterator#trySplit()} correctness, the highest-risk subitem
  *       per the ResearchPack risk register).</li>
  * </ul>
  *
  * <p>The byte variant is exercised via {@code forEachByte} - sequence parity against
- * {@code toByteArray()}.</p>
- *
- * <p>A buffer-retention case mirrors the contract documented elsewhere in the borrow API: extract
- * the stream, drop the {@link BorrowedCompoundTag} reference, force GC, then run the terminal
- * operation. The {@code byte[]} buffer is referenced through the spliterator so the stream
- * pipeline keeps it alive.</p>
+ * {@code toByteArray()}. The int variant is exercised via {@code forEachInt} - the per-element
+ * spliterator path was retired in Phase E1 because the bulk-byteswap materializing path beat it.</p>
  */
 class BorrowedArrayStreamTest {
-
-    @ParameterizedTest(name = "[{index}] size={0}")
-    @ValueSource(ints = {0, 1, 10, 1023, 65537})
-    @DisplayName("BorrowedIntArrayTag.intStream().sum() matches Arrays.stream(toIntArray()).sum()")
-    void intStreamSumMatchesMaterializedSum(int size) {
-        int[] payload = makeInts(size);
-
-        BorrowedIntArrayTag borrowed = borrowIntArray(payload);
-
-        long viaToArray = Arrays.stream(borrowed.toIntArray()).asLongStream().sum();
-        long viaStream = borrowed.intStream().asLongStream().sum();
-
-        assertEquals(viaToArray, viaStream,
-            "intStream sum mismatch at size " + size);
-    }
-
-    @ParameterizedTest(name = "[{index}] size={0}")
-    @ValueSource(ints = {0, 1, 10, 1023, 65537})
-    @DisplayName("BorrowedIntArrayTag.intStream().parallel().sum() matches serial sum")
-    void intStreamParallelSumMatchesSerial(int size) {
-        int[] payload = makeInts(size);
-
-        BorrowedIntArrayTag borrowed = borrowIntArray(payload);
-
-        long serial = borrowed.intStream().asLongStream().sum();
-        long parallel = borrowed.intStream().parallel().asLongStream().sum();
-
-        assertEquals(serial, parallel,
-            "Parallel intStream sum diverged from serial at size " + size);
-    }
 
     @ParameterizedTest(name = "[{index}] size={0}")
     @ValueSource(ints = {0, 1, 10, 1023, 65537})
@@ -104,19 +68,6 @@ class BorrowedArrayStreamTest {
 
         assertEquals(serial, parallel,
             "Parallel longStream sum diverged from serial at size " + size);
-    }
-
-    @Test
-    @DisplayName("BorrowedIntArrayTag.intStream().filter is consistent with the materialized path")
-    void intStreamFilterParity() {
-        int[] payload = makeInts(1023);
-
-        BorrowedIntArrayTag borrowed = borrowIntArray(payload);
-
-        long viaToArray = Arrays.stream(borrowed.toIntArray()).filter(v -> v > 500).count();
-        long viaStream = borrowed.intStream().filter(v -> v > 500).count();
-
-        assertEquals(viaToArray, viaStream);
     }
 
     @ParameterizedTest(name = "[{index}] size={0}")
@@ -172,15 +123,6 @@ class BorrowedArrayStreamTest {
     }
 
     @Test
-    @DisplayName("Empty IntArray.intStream() is empty - sum is 0, no terminal-op error")
-    void emptyIntStreamIsEmpty() {
-        BorrowedIntArrayTag borrowed = borrowIntArray(new int[0]);
-        IntStream stream = borrowed.intStream();
-        assertEquals(0, stream.count());
-        assertEquals(0L, borrowed.intStream().asLongStream().sum());
-    }
-
-    @Test
     @DisplayName("Empty LongArray.longStream() is empty - sum is 0, no terminal-op error")
     void emptyLongStreamIsEmpty() {
         BorrowedLongArrayTag borrowed = borrowLongArray(new long[0]);
@@ -199,47 +141,16 @@ class BorrowedArrayStreamTest {
     }
 
     @Test
-    @DisplayName("Stream survives the BorrowedCompoundTag being collected (buffer retention)")
-    void streamSurvivesBorrowReferenceDrop() {
-        int[] payload = makeInts(1023);
-
-        long expectedSum = Arrays.stream(payload).asLongStream().sum();
-
-        // Set up the borrow tree, extract the stream, drop the tree reference, force GC.
-        IntStream extracted;
-        WeakReference<BorrowedCompoundTag> rootRef;
-        {
-            CompoundTag root = new CompoundTag();
-            root.put("ints", new IntArrayTag(payload));
-            BorrowedCompoundTag borrowedRoot = Tape.encode(root).root();
-            BorrowedIntArrayTag borrowed = (BorrowedIntArrayTag) borrowedRoot.get("ints");
-            assertNotNull(borrowed);
-            extracted = borrowed.intStream();
-            rootRef = new WeakReference<>(borrowedRoot);
-            // borrowedRoot and borrowed go out of scope here.
-        }
-        // Hint the JVM to collect; not strictly load-bearing for correctness of the stream
-        // (the spliterator captured the byte[] directly, so the buffer stays reachable through
-        // the stream pipeline regardless), but exercises the documented retention contract.
-        for (int i = 0; i < 5 && rootRef.get() != null; i++)
-            System.gc();
-
-        long sum = extracted.asLongStream().sum();
-        assertEquals(expectedSum, sum,
-            "Stream terminal op diverged after the borrow root was dropped");
-    }
-
-    @Test
-    @DisplayName("forEachInt vs IntStream.sum produce identical aggregate results")
-    void forEachIntMatchesIntStreamSum() {
+    @DisplayName("forEachInt vs Arrays.stream(toIntArray()).sum produce identical aggregate results")
+    void forEachIntMatchesToIntArraySum() {
         int[] payload = makeInts(1023);
         BorrowedIntArrayTag borrowed = borrowIntArray(payload);
 
         AtomicLong tally = new AtomicLong();
         borrowed.forEachInt(v -> tally.addAndGet(v));
 
-        long viaStream = borrowed.intStream().asLongStream().sum();
-        assertEquals(viaStream, tally.get());
+        long viaArray = Arrays.stream(borrowed.toIntArray()).asLongStream().sum();
+        assertEquals(viaArray, tally.get());
     }
 
     @Test

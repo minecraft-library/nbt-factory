@@ -1,0 +1,33 @@
+Phase E1 - intStream() removed from BorrowedIntArrayTag / RawList.
+Targeted JMH: ./gradlew jmh -PjmhInclude='BorrowedArrayStream'
+
+# JMH version: 1.36
+# VM version: JDK 21.0.10, OpenJDK 64-Bit Server VM, 21.0.10+7-LTS
+# Warmup: 3 iterations, 3 s each
+# Measurement: 5 iterations, 5 s each
+# Threads: 1 thread, will synchronize iterations
+# Forks: 1
+
+Benchmark                                        (count)   Mode  Cnt   Score   Error   Units
+BorrowedArrayStreamBenchmarks.sumViaLongStream      1024  thrpt    5   9.657 ± 1.750  ops/us
+BorrowedArrayStreamBenchmarks.sumViaLongStream     65536  thrpt    5   0.182 ± 0.006  ops/us
+BorrowedArrayStreamBenchmarks.sumViaToIntArray      1024  thrpt    5   4.434 ± 0.804  ops/us
+BorrowedArrayStreamBenchmarks.sumViaToIntArray     65536  thrpt    5   0.062 ± 0.002  ops/us
+BorrowedArrayStreamBenchmarks.sumViaToLongArray     1024  thrpt    5   1.116 ± 0.116  ops/us
+BorrowedArrayStreamBenchmarks.sumViaToLongArray    65536  thrpt    5   0.019 ± 0.001  ops/us
+BorrowedArrayStreamBenchmarks.sumViaLongStream      1024   avgt    5   0.101 ± 0.008   us/op
+BorrowedArrayStreamBenchmarks.sumViaLongStream     65536   avgt    5   5.636 ± 0.483   us/op
+BorrowedArrayStreamBenchmarks.sumViaToIntArray      1024   avgt    5   0.230 ± 0.019   us/op
+BorrowedArrayStreamBenchmarks.sumViaToIntArray     65536   avgt    5  16.311 ± 0.477   us/op
+BorrowedArrayStreamBenchmarks.sumViaToLongArray     1024   avgt    5   0.931 ± 0.118   us/op
+BorrowedArrayStreamBenchmarks.sumViaToLongArray    65536   avgt    5  54.422 ± 6.879   us/op
+
+Headline:
+- longStream still wins ~10x over toLongArray:
+    * 1024:  0.931 / 0.101 = 9.22x
+    * 65536: 54.422 / 5.636 = 9.66x
+- No sumViaIntStream entry (retired in E1).
+- sumViaToIntArray at 65536: 16.311 us/op - the now-obvious-fastest int-side
+  reduction (D4 measured the dropped sumViaIntStream at ~22 us/op, ~27% slower).
+
+Tests: 321 (D5 baseline 334; -13 cases were int-stream-specific).

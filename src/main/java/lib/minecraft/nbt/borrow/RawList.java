@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Spliterator;
 import java.util.function.IntConsumer;
 import java.util.function.LongConsumer;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
@@ -208,27 +207,6 @@ public final class RawList {
     }
 
     /**
-     * Lazy {@link IntStream} that decodes each element on demand from the retained buffer via
-     * {@link NbtByteCodec#getInt(byte[], int)}. No {@code int[]} is allocated; downstream operations
-     * such as {@code intStream().sum()} or {@code intStream().filter(...).count()} run in
-     * {@code O(N)} without the materialization overhead that {@link #toIntArray()} pays.
-     *
-     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#INT_ARRAY_PTR}. The stream is
-     * bound to the lifetime of the underlying buffer; the spliterator captures the {@code byte[]}
-     * directly so the buffer stays reachable as long as the stream pipeline retains the
-     * spliterator.</p>
-     *
-     * @return a lazy {@link IntStream} over this list's elements
-     * @throws NbtException if the element kind is not {@link TapeKind#INT_ARRAY_PTR}
-     */
-    public @NotNull IntStream intStream() {
-        if (this.elementKind != TapeKind.INT_ARRAY_PTR)
-            throw new NbtException("RawList.intStream called on %s view", this.elementKind);
-
-        return StreamSupport.intStream(this.spliteratorOfInt(), false);
-    }
-
-    /**
      * Lazy {@link LongStream} that decodes each element on demand from the retained buffer via
      * {@link NbtByteCodec#getLong(byte[], int)}.
      *
@@ -242,23 +220,6 @@ public final class RawList {
             throw new NbtException("RawList.longStream called on %s view", this.elementKind);
 
         return StreamSupport.longStream(this.spliteratorOfLong(), false);
-    }
-
-    /**
-     * Returns a {@link Spliterator.OfInt} that walks this list's elements without allocating an
-     * intermediate {@code int[]}. The spliterator supports {@link Spliterator#trySplit()} on a
-     * 4-byte boundary so parallel streams can bisect the underlying byte range.
-     *
-     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#INT_ARRAY_PTR}.</p>
-     *
-     * @return an int-specialized spliterator over this list's elements
-     * @throws NbtException if the element kind is not {@link TapeKind#INT_ARRAY_PTR}
-     */
-    public Spliterator.@NotNull OfInt spliteratorOfInt() {
-        if (this.elementKind != TapeKind.INT_ARRAY_PTR)
-            throw new NbtException("RawList.spliteratorOfInt called on %s view", this.elementKind);
-
-        return new IntArraySpliterator(this.buffer, this.offset, this.offset + (this.count << 2));
     }
 
     /**
@@ -345,85 +306,13 @@ public final class RawList {
     }
 
     /**
-     * Spliterator over a contiguous big-endian {@code int} run inside a retained byte buffer.
-     *
-     * <p>Reads each element via {@link NbtByteCodec#getInt(byte[], int)} (a single
-     * {@link java.lang.invoke.VarHandle} access; the JIT typically intrinsifies this to
-     * {@code MOVBE}). {@link #trySplit()} bisects the remaining range on a 4-byte boundary;
-     * sub-spliterators access disjoint byte ranges so parallel reduction is safe without
-     * synchronization.</p>
-     */
-    private static final class IntArraySpliterator implements Spliterator.OfInt {
-
-        private static final int CHARACTERISTICS =
-            Spliterator.SIZED | Spliterator.SUBSIZED |
-            Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE;
-
-        private final byte @NotNull [] buffer;
-
-        private int position;
-
-        private final int end;
-
-        IntArraySpliterator(byte @NotNull [] buffer, int position, int end) {
-            this.buffer = buffer;
-            this.position = position;
-            this.end = end;
-        }
-
-        @Override
-        public boolean tryAdvance(@NotNull IntConsumer action) {
-            if (this.position >= this.end)
-                return false;
-
-            action.accept(NbtByteCodec.getInt(this.buffer, this.position));
-            this.position += 4;
-            return true;
-        }
-
-        @Override
-        public void forEachRemaining(@NotNull IntConsumer action) {
-            int p = this.position;
-            int e = this.end;
-            byte[] buf = this.buffer;
-            while (p < e) {
-                action.accept(NbtByteCodec.getInt(buf, p));
-                p += 4;
-            }
-            this.position = e;
-        }
-
-        @Override
-        public Spliterator.@NotNull OfInt trySplit() {
-            int remaining = this.end - this.position;
-            // 8 ints (32 bytes) is the smallest split worth taking.
-            if (remaining < 64)
-                return null;
-
-            int half = (remaining >>> 3) << 2; // half the element count, in bytes (4-byte aligned)
-            int splitEnd = this.position + half;
-            IntArraySpliterator prefix = new IntArraySpliterator(this.buffer, this.position, splitEnd);
-            this.position = splitEnd;
-            return prefix;
-        }
-
-        @Override
-        public long estimateSize() {
-            return (long) (this.end - this.position) >>> 2;
-        }
-
-        @Override
-        public int characteristics() {
-            return CHARACTERISTICS;
-        }
-
-    }
-
-    /**
      * Spliterator over a contiguous big-endian {@code long} run inside a retained byte buffer.
      *
-     * <p>Mirrors {@link IntArraySpliterator} - 8-byte stride, reads via
-     * {@link NbtByteCodec#getLong(byte[], int)}, splits on an 8-byte boundary.</p>
+     * <p>Reads each element via {@link NbtByteCodec#getLong(byte[], int)} (a single
+     * {@link java.lang.invoke.VarHandle} access; the JIT typically intrinsifies this to
+     * {@code MOVBE}). {@link #trySplit()} bisects the remaining range on an 8-byte boundary;
+     * sub-spliterators access disjoint byte ranges so parallel reduction is safe without
+     * synchronization.</p>
      */
     private static final class LongArraySpliterator implements Spliterator.OfLong {
 

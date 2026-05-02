@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
 
 /**
  * Borrowed view over a {@link TapeKind#INT_ARRAY_PTR} tape entry. The tape element addresses a
@@ -59,24 +58,6 @@ public final class BorrowedIntArrayTag implements BorrowedTag<int[]> {
      */
     public int @NotNull [] toIntArray() {
         return this.rawList().toIntArray();
-    }
-
-    /**
-     * Returns a lazy {@link IntStream} over this array's elements that decodes each value on demand
-     * from the retained tape buffer via {@link NbtByteCodec#getInt(byte[], int)}.
-     *
-     * <p>Recommended over {@link #toIntArray()} for {@code sum} / {@code filter} / {@code reduce}
-     * pipelines that do not need the full array on heap - the {@code int[]} allocation and the
-     * second pass over the materialized array are both elided.</p>
-     *
-     * <p>The stream is bound to the lifetime of the underlying tape buffer; if the borrow's buffer
-     * is collected before the stream is consumed, behavior is undefined (the same retention
-     * contract applies as elsewhere in the borrow API).</p>
-     *
-     * @return a lazy {@link IntStream} over the array's elements
-     */
-    public @NotNull IntStream intStream() {
-        return this.rawList().intStream();
     }
 
     /**

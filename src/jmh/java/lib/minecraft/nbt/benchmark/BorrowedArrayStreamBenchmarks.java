@@ -24,14 +24,17 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Phase D4 paired-benchmark: {@code intStream()} / {@code longStream()} on borrowed array tags vs
- * the existing {@code toIntArray()} / {@code toLongArray()} accessors.
+ * Phase D4 paired-benchmark: {@code longStream()} on borrowed array tags vs the existing
+ * {@code toIntArray()} / {@code toLongArray()} accessors.
  *
- * <p>The hypothesis is that for a sum-style reduction, {@code intStream().sum()} avoids both the
- * {@code int[]} allocation and the second pass over the materialized array, beating the
- * materializing path by >= 30% at 65 536 elements (well past the 64 KiB chunk boundary where the
- * allocator hits the slow path) and by a smaller margin at 1024 elements (where the allocation
- * amortizes faster).</p>
+ * <p>The hypothesis was that for a sum-style reduction, a per-element spliterator stream avoids
+ * both the primitive-array allocation and the second pass over the materialized array. The
+ * hypothesis held for {@code longStream()} (~10x win over {@code toLongArray} + bulk sum) but
+ * failed for {@code intStream()}, which D4 measured 27% slower than
+ * {@code Arrays.stream(toIntArray()).sum()} because the latter benefits from C2 auto-vectorized
+ * bulk byteswap that the per-element spliterator could not match. Phase E1 retired
+ * {@code intStream()} and its benchmark accordingly. {@link #sumViaToIntArray()} is retained as
+ * the now-obvious-faster int-side control.</p>
  *
  * <p>Setup builds a synthetic compound with one large primitive array, encodes it once outside the
  * timed region, and parks the borrowed array tag on a benchmark-scoped field. Each benchmark
@@ -87,22 +90,14 @@ public class BorrowedArrayStreamBenchmarks {
     }
 
     /**
-     * Control - materialize the {@code int[]} once, then sum it via {@link Arrays#stream(int[])}.
-     * Pays the allocation plus a second pass over the heap-resident array.
+     * Materialize the {@code int[]} once, then sum it via {@link Arrays#stream(int[])}. After
+     * Phase E1 this is the obvious choice for int-array reductions: the bulk-byteswap path
+     * ({@link lib.minecraft.nbt.io.NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
+     * auto-vectorizes cleanly, beating any per-element spliterator we tried.
      */
     @Benchmark
     public long sumViaToIntArray() {
         return Arrays.stream(this.borrowedInts.toIntArray()).asLongStream().sum();
-    }
-
-    /**
-     * D4 fast path - {@code IntStream.sum()} on the spliterator-backed stream. No {@code int[]}
-     * allocation; each element is decoded from the retained buffer via
-     * {@link lib.minecraft.nbt.io.NbtByteCodec#getInt(byte[], int) NbtByteCodec.getInt}.
-     */
-    @Benchmark
-    public long sumViaIntStream() {
-        return this.borrowedInts.intStream().asLongStream().sum();
     }
 
     /**

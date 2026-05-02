@@ -1,0 +1,760 @@
+[
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaLongStream",
+        "mode" : "thrpt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "1024"
+        },
+        "primaryMetric" : {
+            "score" : 9.65692147249888,
+            "scoreError" : 1.749589717325874,
+            "scoreConfidence" : [
+                7.907331755173006,
+                11.406511189824753
+            ],
+            "scorePercentiles" : {
+                "0.0" : 8.85056646734575,
+                "50.0" : 9.832329276081133,
+                "90.0" : 9.92481609435015,
+                "95.0" : 9.92481609435015,
+                "99.0" : 9.92481609435015,
+                "99.9" : 9.92481609435015,
+                "99.99" : 9.92481609435015,
+                "99.999" : 9.92481609435015,
+                "99.9999" : 9.92481609435015,
+                "100.0" : 9.92481609435015
+            },
+            "scoreUnit" : "ops/us",
+            "rawData" : [
+                [
+                    8.85056646734575,
+                    9.832329276081133,
+                    9.898176934187841,
+                    9.778718590529524,
+                    9.92481609435015
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaLongStream",
+        "mode" : "thrpt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "65536"
+        },
+        "primaryMetric" : {
+            "score" : 0.18194322531267826,
+            "scoreError" : 0.006370479979514971,
+            "scoreConfidence" : [
+                0.17557274533316328,
+                0.18831370529219324
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.1794118452800995,
+                "50.0" : 0.18276577945316558,
+                "90.0" : 0.18336038139562258,
+                "95.0" : 0.18336038139562258,
+                "99.0" : 0.18336038139562258,
+                "99.9" : 0.18336038139562258,
+                "99.99" : 0.18336038139562258,
+                "99.999" : 0.18336038139562258,
+                "99.9999" : 0.18336038139562258,
+                "100.0" : 0.18336038139562258
+            },
+            "scoreUnit" : "ops/us",
+            "rawData" : [
+                [
+                    0.18113702997307365,
+                    0.18304109046143008,
+                    0.18336038139562258,
+                    0.18276577945316558,
+                    0.1794118452800995
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToIntArray",
+        "mode" : "thrpt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "1024"
+        },
+        "primaryMetric" : {
+            "score" : 4.434185343448332,
+            "scoreError" : 0.8036248934407051,
+            "scoreConfidence" : [
+                3.630560450007627,
+                5.237810236889038
+            ],
+            "scorePercentiles" : {
+                "0.0" : 4.067460821649304,
+                "50.0" : 4.501529334284315,
+                "90.0" : 4.563866303499561,
+                "95.0" : 4.563866303499561,
+                "99.0" : 4.563866303499561,
+                "99.9" : 4.563866303499561,
+                "99.99" : 4.563866303499561,
+                "99.999" : 4.563866303499561,
+                "99.9999" : 4.563866303499561,
+                "100.0" : 4.563866303499561
+            },
+            "scoreUnit" : "ops/us",
+            "rawData" : [
+                [
+                    4.563866303499561,
+                    4.563659111720844,
+                    4.501529334284315,
+                    4.47441114608764,
+                    4.067460821649304
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToIntArray",
+        "mode" : "thrpt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "65536"
+        },
+        "primaryMetric" : {
+            "score" : 0.06201180331286702,
+            "scoreError" : 0.00234648233154396,
+            "scoreConfidence" : [
+                0.05966532098132306,
+                0.06435828564441098
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.06135189955980823,
+                "50.0" : 0.06197075036704595,
+                "90.0" : 0.06297002397336242,
+                "95.0" : 0.06297002397336242,
+                "99.0" : 0.06297002397336242,
+                "99.9" : 0.06297002397336242,
+                "99.99" : 0.06297002397336242,
+                "99.999" : 0.06297002397336242,
+                "99.9999" : 0.06297002397336242,
+                "100.0" : 0.06297002397336242
+            },
+            "scoreUnit" : "ops/us",
+            "rawData" : [
+                [
+                    0.06135189955980823,
+                    0.061663047252199815,
+                    0.0621032954119187,
+                    0.06197075036704595,
+                    0.06297002397336242
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToLongArray",
+        "mode" : "thrpt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "1024"
+        },
+        "primaryMetric" : {
+            "score" : 1.1163531050372273,
+            "scoreError" : 0.11639173408742352,
+            "scoreConfidence" : [
+                0.9999613709498038,
+                1.2327448391246507
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.0639947849422697,
+                "50.0" : 1.1269556154527423,
+                "90.0" : 1.1412120627142799,
+                "95.0" : 1.1412120627142799,
+                "99.0" : 1.1412120627142799,
+                "99.9" : 1.1412120627142799,
+                "99.99" : 1.1412120627142799,
+                "99.999" : 1.1412120627142799,
+                "99.9999" : 1.1412120627142799,
+                "100.0" : 1.1412120627142799
+            },
+            "scoreUnit" : "ops/us",
+            "rawData" : [
+                [
+                    1.1269556154527423,
+                    1.129276691792771,
+                    1.0639947849422697,
+                    1.1412120627142799,
+                    1.1203263702840731
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToLongArray",
+        "mode" : "thrpt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "65536"
+        },
+        "primaryMetric" : {
+            "score" : 0.01859571144182933,
+            "scoreError" : 0.0011575887454079066,
+            "scoreConfidence" : [
+                0.017438122696421424,
+                0.019753300187237238
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.018166337131672983,
+                "50.0" : 0.018726510686428777,
+                "90.0" : 0.018916070382098756,
+                "95.0" : 0.018916070382098756,
+                "99.0" : 0.018916070382098756,
+                "99.9" : 0.018916070382098756,
+                "99.99" : 0.018916070382098756,
+                "99.999" : 0.018916070382098756,
+                "99.9999" : 0.018916070382098756,
+                "100.0" : 0.018916070382098756
+            },
+            "scoreUnit" : "ops/us",
+            "rawData" : [
+                [
+                    0.01841576806413056,
+                    0.018166337131672983,
+                    0.018726510686428777,
+                    0.018916070382098756,
+                    0.01875387094481558
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaLongStream",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "1024"
+        },
+        "primaryMetric" : {
+            "score" : 0.10097257644642857,
+            "scoreError" : 0.008144026880728652,
+            "scoreConfidence" : [
+                0.09282854956569991,
+                0.10911660332715722
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.09878988976801362,
+                "50.0" : 0.10053977186211947,
+                "90.0" : 0.10416425808297738,
+                "95.0" : 0.10416425808297738,
+                "99.0" : 0.10416425808297738,
+                "99.9" : 0.10416425808297738,
+                "99.99" : 0.10416425808297738,
+                "99.999" : 0.10416425808297738,
+                "99.9999" : 0.10416425808297738,
+                "100.0" : 0.10416425808297738
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    0.10182207874883964,
+                    0.09954688377019272,
+                    0.09878988976801362,
+                    0.10053977186211947,
+                    0.10416425808297738
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaLongStream",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "65536"
+        },
+        "primaryMetric" : {
+            "score" : 5.635821926471701,
+            "scoreError" : 0.48327775673450074,
+            "scoreConfidence" : [
+                5.1525441697372,
+                6.119099683206202
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.476916842784633,
+                "50.0" : 5.616658060389204,
+                "90.0" : 5.776930879549264,
+                "95.0" : 5.776930879549264,
+                "99.0" : 5.776930879549264,
+                "99.9" : 5.776930879549264,
+                "99.99" : 5.776930879549264,
+                "99.999" : 5.776930879549264,
+                "99.9999" : 5.776930879549264,
+                "100.0" : 5.776930879549264
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    5.776930879549264,
+                    5.562667092648922,
+                    5.476916842784633,
+                    5.616658060389204,
+                    5.745936756986481
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToIntArray",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "1024"
+        },
+        "primaryMetric" : {
+            "score" : 0.229778622543464,
+            "scoreError" : 0.01894257289876679,
+            "scoreConfidence" : [
+                0.2108360496446972,
+                0.2487211954422308
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.22518708515670557,
+                "50.0" : 0.22750002304551406,
+                "90.0" : 0.237416059408469,
+                "95.0" : 0.237416059408469,
+                "99.0" : 0.237416059408469,
+                "99.9" : 0.237416059408469,
+                "99.99" : 0.237416059408469,
+                "99.999" : 0.237416059408469,
+                "99.9999" : 0.237416059408469,
+                "100.0" : 0.237416059408469
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    0.23183423745287124,
+                    0.237416059408469,
+                    0.22518708515670557,
+                    0.22750002304551406,
+                    0.22695570765376008
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToIntArray",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "65536"
+        },
+        "primaryMetric" : {
+            "score" : 16.311196866657816,
+            "scoreError" : 0.4772097000353044,
+            "scoreConfidence" : [
+                15.833987166622512,
+                16.78840656669312
+            ],
+            "scorePercentiles" : {
+                "0.0" : 16.127783045031798,
+                "50.0" : 16.37135394376182,
+                "90.0" : 16.414945223126193,
+                "95.0" : 16.414945223126193,
+                "99.0" : 16.414945223126193,
+                "99.9" : 16.414945223126193,
+                "99.99" : 16.414945223126193,
+                "99.999" : 16.414945223126193,
+                "99.9999" : 16.414945223126193,
+                "100.0" : 16.414945223126193
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    16.40225576728875,
+                    16.127783045031798,
+                    16.239646354080516,
+                    16.37135394376182,
+                    16.414945223126193
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToLongArray",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "1024"
+        },
+        "primaryMetric" : {
+            "score" : 0.9305760137797533,
+            "scoreError" : 0.1177785982562751,
+            "scoreConfidence" : [
+                0.8127974155234782,
+                1.0483546120360283
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.907388816336652,
+                "50.0" : 0.9172459538257043,
+                "90.0" : 0.9838025939890114,
+                "95.0" : 0.9838025939890114,
+                "99.0" : 0.9838025939890114,
+                "99.9" : 0.9838025939890114,
+                "99.99" : 0.9838025939890114,
+                "99.999" : 0.9838025939890114,
+                "99.9999" : 0.9838025939890114,
+                "100.0" : 0.9838025939890114
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    0.9172459538257043,
+                    0.9170162824060818,
+                    0.9274264223413174,
+                    0.9838025939890114,
+                    0.907388816336652
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.36",
+        "benchmark" : "lib.minecraft.nbt.benchmark.BorrowedArrayStreamBenchmarks.sumViaToLongArray",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot\\bin\\java.exe",
+        "jvmArgs" : [
+            "-Dfile.encoding=UTF-8",
+            "-Djava.io.tmpdir=W:\\Workspace\\Java\\Minecraft-Library\\nbt-factory\\build\\tmp\\jmh",
+            "-Duser.country=US",
+            "-Duser.language=en",
+            "-Duser.variant",
+            "-XX:MaxInlineLevel=20",
+            "-XX:FreqInlineSize=500",
+            "-XX:+UseG1GC",
+            "--enable-preview"
+        ],
+        "jdkVersion" : "21.0.10",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.10+7-LTS",
+        "warmupIterations" : 3,
+        "warmupTime" : "3 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "5 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "65536"
+        },
+        "primaryMetric" : {
+            "score" : 54.422195511783926,
+            "scoreError" : 6.879216173726626,
+            "scoreConfidence" : [
+                47.5429793380573,
+                61.30141168551055
+            ],
+            "scorePercentiles" : {
+                "0.0" : 53.14225574218999,
+                "50.0" : 53.9578337287039,
+                "90.0" : 57.5507135798497,
+                "95.0" : 57.5507135798497,
+                "99.0" : 57.5507135798497,
+                "99.9" : 57.5507135798497,
+                "99.99" : 57.5507135798497,
+                "99.999" : 57.5507135798497,
+                "99.9999" : 57.5507135798497,
+                "100.0" : 57.5507135798497
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    53.44116706293781,
+                    54.019007445238174,
+                    57.5507135798497,
+                    53.9578337287039,
+                    53.14225574218999
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    }
+]
+
+
