@@ -5,7 +5,6 @@ import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.collection.ListTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -95,47 +94,6 @@ public final class BorrowedListTag implements BorrowedTag<List<Tag<?>>> {
         while (idx < endIdx) {
             if (cursor == i)
                 return BorrowedTag.fromTape(this.tape, idx);
-
-            idx = this.tape.nextSibling(idx);
-            cursor++;
-        }
-
-        throw new IndexOutOfBoundsException("index out of range: " + i);
-    }
-
-    /**
-     * Returns the {@code i}-th element as a zero-decode {@link MutfStringView} when the element
-     * is a {@link BorrowedStringTag}.
-     *
-     * <p>Returns {@code null} if the element exists but is not a string. Mirrors
-     * {@link BorrowedCompoundTag#getStringView(String)}: callers that only need to compare or
-     * hash the value avoid the {@link MutfStringView#toString()} allocation by going through
-     * {@link MutfStringView#equalsString(String)} or {@link MutfStringView#hashCode()}.</p>
-     *
-     * @param i element index, {@code 0..size()-1}
-     * @return a zero-decode view of the string value, or {@code null} if not a string
-     * @throws IndexOutOfBoundsException if {@code i} is out of range
-     * @see BorrowedCompoundTag#getStringView(String)
-     */
-    public @Nullable MutfStringView getStringView(int i) {
-        if (i < 0)
-            throw new IndexOutOfBoundsException("index must be non-negative: " + i);
-
-        long header = this.tape.elementAt(this.tapeIndex);
-        int endIdx = TapeElement.unpackEndOffset(header);
-        int idx = this.tapeIndex + 1;
-        int cursor = 0;
-
-        while (idx < endIdx) {
-            if (cursor == i) {
-                long element = this.tape.elementAt(idx);
-
-                if (TapeElement.unpackKind(element) != TapeKind.STRING_PTR)
-                    return null;
-
-                int tagOffset = (int) TapeElement.unpackValue(element);
-                return MutfStringView.fromTagOffset(this.tape.buffer(), tagOffset);
-            }
 
             idx = this.tape.nextSibling(idx);
             cursor++;

@@ -96,40 +96,6 @@ public final class BorrowedCompoundTag implements BorrowedTag<Map<String, Tag<?>
     }
 
     /**
-     * Looks up the entry whose key equals {@code name} and returns its string value as a
-     * zero-decode {@link MutfStringView} when the entry is a {@link BorrowedStringTag}.
-     *
-     * <p>Returns {@code null} if no entry matches or if the matched entry is not a string. Use
-     * this instead of {@link #get(String)} followed by a cast when the caller will only compare
-     * or hash the value - the view's {@link MutfStringView#equalsString(String)} and
-     * {@link MutfStringView#hashCode()} both take an ASCII fast path that costs no
-     * {@code new String(...)} allocation, so {@code compound.getStringView("id").equalsString("Hypixel")}
-     * is strictly faster than {@code ((BorrowedStringTag) compound.get("id")).getValue().equals("Hypixel")}.</p>
-     *
-     * <p>The view's lifetime is bound to the underlying tape buffer; same retention rules as the
-     * rest of the borrow API.</p>
-     *
-     * @param name the key to look up
-     * @return a zero-decode view of the string value, or {@code null} if absent or not a string
-     * @see BorrowedStringTag#view()
-     * @see MutfStringView#equalsString(String)
-     */
-    public @Nullable MutfStringView getStringView(@NotNull String name) {
-        int valueIdx = this.tape.findChildTapeIndex(this.tapeIndex, name);
-
-        if (valueIdx == Tape.NOT_FOUND)
-            return null;
-
-        long element = this.tape.elementAt(valueIdx);
-
-        if (TapeElement.unpackKind(element) != TapeKind.STRING_PTR)
-            return null;
-
-        int tagOffset = (int) TapeElement.unpackValue(element);
-        return MutfStringView.fromTagOffset(this.tape.buffer(), tagOffset);
-    }
-
-    /**
      * Returns a lazy iterable over the {@code (key, value)} entries in insertion order. Each
      * iteration step decodes the key string and constructs a fresh navigator for the value.
      *

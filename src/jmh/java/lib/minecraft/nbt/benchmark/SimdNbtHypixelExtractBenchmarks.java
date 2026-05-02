@@ -8,7 +8,6 @@ import lib.minecraft.nbt.borrow.BorrowedListTag;
 import lib.minecraft.nbt.borrow.BorrowedShortTag;
 import lib.minecraft.nbt.borrow.BorrowedStringTag;
 import lib.minecraft.nbt.borrow.BorrowedTag;
-import lib.minecraft.nbt.borrow.MutfStringView;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.collection.CompoundTag;
 import lib.minecraft.nbt.tags.collection.ListTag;
@@ -51,14 +50,6 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>The shape of the extracted records ({@link Item}, {@link ItemDisplay}) mirrors
  * {@code compare_hypixel.rs:74-99} byte-for-byte so the two benchmarks measure the same work.</p>
- *
- * <p>Phase D3 adds {@link #parseAndExtractBorrowView(BytesProcessed)}, a parallel benchmark to
- * {@link #parseAndExtractBorrow(BytesProcessed)} that uses {@link BorrowedCompoundTag#getStringView(String)}
- * and {@link MutfStringView#equalsString(String)} for navigation. The {@link Item} / {@link ItemDisplay}
- * records still carry {@link String} fields (Option A from the D3 design): the win is in skipping the
- * per-key probe's {@code String} allocation during the tape walk, not in keeping the values lazy.
- * Switching the records' fields to {@code MutfStringView} (Option B) was deferred - it overlaps with
- * what D5 might revisit and would change the benchmark's measured shape.</p>
  *
  * <p>Run with:</p>
  * <pre>
@@ -109,20 +100,6 @@ public class SimdNbtHypixelExtractBenchmarks {
         bytes.payloadBytes += this.payloadBytes;
         BorrowedCompoundTag root = NbtFactory.borrowFromByteArray(this.payload);
         return extractItemsBorrow(root);
-    }
-
-    /**
-     * Phase D3 head-to-head against {@link #parseAndExtractBorrow(BytesProcessed)}: navigates the
-     * same tape via {@link BorrowedCompoundTag#getStringView(String)} and decodes the value only
-     * when populating the {@link Item} record's {@link String} fields. The win comes from
-     * collapsing each {@code (cast to BorrowedStringTag) -> getValue()} pair into a single
-     * {@link MutfStringView} lookup that allocates no {@link String} during the tape walk.
-     */
-    @Benchmark
-    public List<Item> parseAndExtractBorrowView(BytesProcessed bytes) {
-        bytes.payloadBytes += this.payloadBytes;
-        BorrowedCompoundTag root = NbtFactory.borrowFromByteArray(this.payload);
-        return extractItemsBorrowView(root);
     }
 
     /**
@@ -366,96 +343,6 @@ public class SimdNbtHypixelExtractBenchmarks {
         if (c == null) return null;
         BorrowedTag<?> t = c.get(key);
         return (t instanceof BorrowedStringTag s) ? s.getValue() : null;
-    }
-
-    // ----------------------------------------------------------------------------------
-    // D3: View-based extraction. Mirrors extractItemsBorrow but uses getStringView for
-    // every string probe. The Item record still holds String, so the value is decoded
-    // exactly once (via view.toString()) at the point of insertion.
-    // ----------------------------------------------------------------------------------
-
-    private static List<Item> extractItemsBorrowView(BorrowedCompoundTag root) {
-        BorrowedTag<?> auctionItemsTag = root.get("i");
-        if (!(auctionItemsTag instanceof BorrowedListTag auctionItems))
-            return new ArrayList<>();
-
-        List<Item> items = new ArrayList<>(auctionItems.size());
-        Iterator<BorrowedTag<?>> entries = auctionItems.iterator();
-        while (entries.hasNext()) {
-            BorrowedTag<?> entry = entries.next();
-            if (!(entry instanceof BorrowedCompoundTag itemNbt) || !itemNbt.containsKey("id")) {
-                items.add(null);
-                continue;
-            }
-
-            BorrowedTag<?> tagTag = itemNbt.get("tag");
-            if (!(tagTag instanceof BorrowedCompoundTag tag)) {
-                items.add(null);
-                continue;
-            }
-
-            BorrowedCompoundTag extraAttrs = compoundOrNull(tag.get("ExtraAttributes"));
-            BorrowedCompoundTag display = compoundOrNull(tag.get("display"));
-
-            short id = shortValueBorrow(itemNbt, "id");
-            short damage = shortValueBorrow(itemNbt, "Damage");
-            byte count = byteValueBorrow(itemNbt, "Count");
-
-            String headTextureId = extractHeadTextureIdBorrowView(tag);
-            String skyblockId = stringValueBorrowView(extraAttrs, "id");
-            String reforge = stringValueBorrowView(extraAttrs, "modifier");
-            String timestamp = stringValueBorrowView(extraAttrs, "timestamp");
-
-            String displayName = stringValueBorrowView(display, "Name");
-            if (displayName == null) displayName = "";
-            List<String> lore = extractLoreBorrowView(display);
-            Integer color = intValueBoxedBorrow(display, "color");
-            boolean hasGlint = extraAttrs != null && extraAttrs.containsKey("ench");
-
-            Map<String, Integer> enchantments = extractEnchantmentsBorrow(extraAttrs);
-
-            items.add(new Item(id, damage, count,
-                headTextureId, skyblockId, reforge,
-                new ItemDisplay(displayName, lore, hasGlint, color),
-                enchantments, timestamp));
-        }
-        return items;
-    }
-
-    private static List<String> extractLoreBorrowView(BorrowedCompoundTag display) {
-        if (display == null)
-            return new ArrayList<>();
-        BorrowedTag<?> loreTag = display.get("Lore");
-        if (!(loreTag instanceof BorrowedListTag lore))
-            return new ArrayList<>();
-        int n = lore.size();
-        List<String> out = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) {
-            // The Lore element values must end up as String in the record - go through the view
-            // so the lookup itself does not construct a BorrowedStringTag wrapper.
-            MutfStringView view = lore.getStringView(i);
-            if (view != null)
-                out.add(view.toString());
-        }
-        return out;
-    }
-
-    private static String extractHeadTextureIdBorrowView(BorrowedCompoundTag tag) {
-        BorrowedCompoundTag skullOwner = compoundOrNull(tag.get("SkullOwner"));
-        if (skullOwner == null) return null;
-        BorrowedCompoundTag properties = compoundOrNull(skullOwner.get("Properties"));
-        if (properties == null) return null;
-        BorrowedTag<?> texturesTag = properties.get("textures");
-        if (!(texturesTag instanceof BorrowedListTag textures) || textures.isEmpty()) return null;
-        BorrowedTag<?> first = textures.get(0);
-        if (!(first instanceof BorrowedCompoundTag firstCompound)) return null;
-        return stringValueBorrowView(firstCompound, "Value");
-    }
-
-    private static String stringValueBorrowView(BorrowedCompoundTag c, String key) {
-        if (c == null) return null;
-        MutfStringView view = c.getStringView(key);
-        return view == null ? null : view.toString();
     }
 
     /** Hypixel auction-house item record, mirroring {@code compare_hypixel.rs:74-89}. */
