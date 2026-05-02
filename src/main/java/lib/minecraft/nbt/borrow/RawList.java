@@ -2,8 +2,16 @@ package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Spliterator;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.StreamSupport;
 
 /**
  * Zero-copy view over a length-prefixed primitive array embedded in a borrowed NBT buffer.
@@ -199,6 +207,134 @@ public final class RawList {
         return dst;
     }
 
+    /**
+     * Lazy {@link IntStream} that decodes each element on demand from the retained buffer via
+     * {@link NbtByteCodec#getInt(byte[], int)}. No {@code int[]} is allocated; downstream operations
+     * such as {@code intStream().sum()} or {@code intStream().filter(...).count()} run in
+     * {@code O(N)} without the materialization overhead that {@link #toIntArray()} pays.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#INT_ARRAY_PTR}. The stream is
+     * bound to the lifetime of the underlying buffer; the spliterator captures the {@code byte[]}
+     * directly so the buffer stays reachable as long as the stream pipeline retains the
+     * spliterator.</p>
+     *
+     * @return a lazy {@link IntStream} over this list's elements
+     * @throws NbtException if the element kind is not {@link TapeKind#INT_ARRAY_PTR}
+     */
+    public @NotNull IntStream intStream() {
+        if (this.elementKind != TapeKind.INT_ARRAY_PTR)
+            throw new NbtException("RawList.intStream called on %s view", this.elementKind);
+
+        return StreamSupport.intStream(this.spliteratorOfInt(), false);
+    }
+
+    /**
+     * Lazy {@link LongStream} that decodes each element on demand from the retained buffer via
+     * {@link NbtByteCodec#getLong(byte[], int)}.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#LONG_ARRAY_PTR}.</p>
+     *
+     * @return a lazy {@link LongStream} over this list's elements
+     * @throws NbtException if the element kind is not {@link TapeKind#LONG_ARRAY_PTR}
+     */
+    public @NotNull LongStream longStream() {
+        if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
+            throw new NbtException("RawList.longStream called on %s view", this.elementKind);
+
+        return StreamSupport.longStream(this.spliteratorOfLong(), false);
+    }
+
+    /**
+     * Returns a {@link Spliterator.OfInt} that walks this list's elements without allocating an
+     * intermediate {@code int[]}. The spliterator supports {@link Spliterator#trySplit()} on a
+     * 4-byte boundary so parallel streams can bisect the underlying byte range.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#INT_ARRAY_PTR}.</p>
+     *
+     * @return an int-specialized spliterator over this list's elements
+     * @throws NbtException if the element kind is not {@link TapeKind#INT_ARRAY_PTR}
+     */
+    public Spliterator.@NotNull OfInt spliteratorOfInt() {
+        if (this.elementKind != TapeKind.INT_ARRAY_PTR)
+            throw new NbtException("RawList.spliteratorOfInt called on %s view", this.elementKind);
+
+        return new IntArraySpliterator(this.buffer, this.offset, this.offset + (this.count << 2));
+    }
+
+    /**
+     * Returns a {@link Spliterator.OfLong} that walks this list's elements without allocating an
+     * intermediate {@code long[]}. The spliterator supports {@link Spliterator#trySplit()} on an
+     * 8-byte boundary so parallel streams can bisect the underlying byte range.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#LONG_ARRAY_PTR}.</p>
+     *
+     * @return a long-specialized spliterator over this list's elements
+     * @throws NbtException if the element kind is not {@link TapeKind#LONG_ARRAY_PTR}
+     */
+    public Spliterator.@NotNull OfLong spliteratorOfLong() {
+        if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
+            throw new NbtException("RawList.spliteratorOfLong called on %s view", this.elementKind);
+
+        return new LongArraySpliterator(this.buffer, this.offset, this.offset + (this.count << 3));
+    }
+
+    /**
+     * Iterates over every {@code int} in the array in order, invoking {@code consumer} for each
+     * element. Reads each element from the retained buffer via
+     * {@link NbtByteCodec#getInt(byte[], int)} - no {@code int[]} is allocated.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#INT_ARRAY_PTR}.</p>
+     *
+     * @param consumer the action to perform on each element
+     * @throws NbtException if the element kind is not {@link TapeKind#INT_ARRAY_PTR}
+     */
+    public void forEachInt(@NotNull IntConsumer consumer) {
+        if (this.elementKind != TapeKind.INT_ARRAY_PTR)
+            throw new NbtException("RawList.forEachInt called on %s view", this.elementKind);
+
+        int end = this.offset + (this.count << 2);
+        for (int p = this.offset; p < end; p += 4)
+            consumer.accept(NbtByteCodec.getInt(this.buffer, p));
+    }
+
+    /**
+     * Iterates over every {@code long} in the array in order, invoking {@code consumer} for each
+     * element. Reads each element from the retained buffer via
+     * {@link NbtByteCodec#getLong(byte[], int)} - no {@code long[]} is allocated.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#LONG_ARRAY_PTR}.</p>
+     *
+     * @param consumer the action to perform on each element
+     * @throws NbtException if the element kind is not {@link TapeKind#LONG_ARRAY_PTR}
+     */
+    public void forEachLong(@NotNull LongConsumer consumer) {
+        if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
+            throw new NbtException("RawList.forEachLong called on %s view", this.elementKind);
+
+        int end = this.offset + (this.count << 3);
+        for (int p = this.offset; p < end; p += 8)
+            consumer.accept(NbtByteCodec.getLong(this.buffer, p));
+    }
+
+    /**
+     * Iterates over every {@code byte} in the array in order, invoking {@code consumer} for each
+     * element. Reuses {@link ByteArrayTag.ByteConsumer} - the JDK does not ship a primitive
+     * {@code ByteConsumer} variant.
+     *
+     * <p>Valid only when {@link #elementKind()} is {@link TapeKind#BYTE_ARRAY_PTR}.</p>
+     *
+     * @param consumer the action to perform on each element
+     * @throws NbtException if the element kind is not {@link TapeKind#BYTE_ARRAY_PTR}
+     */
+    public void forEachByte(ByteArrayTag.@NotNull ByteConsumer consumer) {
+        if (this.elementKind != TapeKind.BYTE_ARRAY_PTR)
+            throw new NbtException("RawList.forEachByte called on %s view", this.elementKind);
+
+        int end = this.offset + this.count;
+        for (int p = this.offset; p < end; p++)
+            consumer.accept(this.buffer[p]);
+    }
+
     private static int elementSizeFor(@NotNull TapeKind kind) {
         return switch (kind) {
             case BYTE_ARRAY_PTR -> 1;
@@ -206,6 +342,153 @@ public final class RawList {
             case LONG_ARRAY_PTR -> 8;
             default -> throw new NbtException("RawList element kind must be a *_ARRAY_PTR, got %s", kind);
         };
+    }
+
+    /**
+     * Spliterator over a contiguous big-endian {@code int} run inside a retained byte buffer.
+     *
+     * <p>Reads each element via {@link NbtByteCodec#getInt(byte[], int)} (a single
+     * {@link java.lang.invoke.VarHandle} access; the JIT typically intrinsifies this to
+     * {@code MOVBE}). {@link #trySplit()} bisects the remaining range on a 4-byte boundary;
+     * sub-spliterators access disjoint byte ranges so parallel reduction is safe without
+     * synchronization.</p>
+     */
+    private static final class IntArraySpliterator implements Spliterator.OfInt {
+
+        private static final int CHARACTERISTICS =
+            Spliterator.SIZED | Spliterator.SUBSIZED |
+            Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE;
+
+        private final byte @NotNull [] buffer;
+
+        private int position;
+
+        private final int end;
+
+        IntArraySpliterator(byte @NotNull [] buffer, int position, int end) {
+            this.buffer = buffer;
+            this.position = position;
+            this.end = end;
+        }
+
+        @Override
+        public boolean tryAdvance(@NotNull IntConsumer action) {
+            if (this.position >= this.end)
+                return false;
+
+            action.accept(NbtByteCodec.getInt(this.buffer, this.position));
+            this.position += 4;
+            return true;
+        }
+
+        @Override
+        public void forEachRemaining(@NotNull IntConsumer action) {
+            int p = this.position;
+            int e = this.end;
+            byte[] buf = this.buffer;
+            while (p < e) {
+                action.accept(NbtByteCodec.getInt(buf, p));
+                p += 4;
+            }
+            this.position = e;
+        }
+
+        @Override
+        public Spliterator.@NotNull OfInt trySplit() {
+            int remaining = this.end - this.position;
+            // 8 ints (32 bytes) is the smallest split worth taking.
+            if (remaining < 64)
+                return null;
+
+            int half = (remaining >>> 3) << 2; // half the element count, in bytes (4-byte aligned)
+            int splitEnd = this.position + half;
+            IntArraySpliterator prefix = new IntArraySpliterator(this.buffer, this.position, splitEnd);
+            this.position = splitEnd;
+            return prefix;
+        }
+
+        @Override
+        public long estimateSize() {
+            return (long) (this.end - this.position) >>> 2;
+        }
+
+        @Override
+        public int characteristics() {
+            return CHARACTERISTICS;
+        }
+
+    }
+
+    /**
+     * Spliterator over a contiguous big-endian {@code long} run inside a retained byte buffer.
+     *
+     * <p>Mirrors {@link IntArraySpliterator} - 8-byte stride, reads via
+     * {@link NbtByteCodec#getLong(byte[], int)}, splits on an 8-byte boundary.</p>
+     */
+    private static final class LongArraySpliterator implements Spliterator.OfLong {
+
+        private static final int CHARACTERISTICS =
+            Spliterator.SIZED | Spliterator.SUBSIZED |
+            Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE;
+
+        private final byte @NotNull [] buffer;
+
+        private int position;
+
+        private final int end;
+
+        LongArraySpliterator(byte @NotNull [] buffer, int position, int end) {
+            this.buffer = buffer;
+            this.position = position;
+            this.end = end;
+        }
+
+        @Override
+        public boolean tryAdvance(@NotNull LongConsumer action) {
+            if (this.position >= this.end)
+                return false;
+
+            action.accept(NbtByteCodec.getLong(this.buffer, this.position));
+            this.position += 8;
+            return true;
+        }
+
+        @Override
+        public void forEachRemaining(@NotNull LongConsumer action) {
+            int p = this.position;
+            int e = this.end;
+            byte[] buf = this.buffer;
+            while (p < e) {
+                action.accept(NbtByteCodec.getLong(buf, p));
+                p += 8;
+            }
+            this.position = e;
+        }
+
+        @Override
+        public Spliterator.@NotNull OfLong trySplit() {
+            int remaining = this.end - this.position;
+            // 8 longs (64 bytes) is the smallest split worth taking.
+            if (remaining < 128)
+                return null;
+
+            int half = (remaining >>> 4) << 3; // half the element count, in bytes (8-byte aligned)
+            int splitEnd = this.position + half;
+            LongArraySpliterator prefix = new LongArraySpliterator(this.buffer, this.position, splitEnd);
+            this.position = splitEnd;
+            return prefix;
+        }
+
+        @Override
+        public long estimateSize() {
+            return (long) (this.end - this.position) >>> 3;
+        }
+
+        @Override
+        public int characteristics() {
+            return CHARACTERISTICS;
+        }
+
     }
 
 }

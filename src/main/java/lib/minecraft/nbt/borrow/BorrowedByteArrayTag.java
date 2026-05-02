@@ -57,6 +57,20 @@ public final class BorrowedByteArrayTag implements BorrowedTag<byte[]> {
         return this.rawList().toByteArray();
     }
 
+    /**
+     * Iterates over every {@code byte} in the array in order, invoking {@code consumer} for each
+     * element. Reads each value directly from the retained tape buffer - no {@code byte[]} is
+     * allocated.
+     *
+     * <p>Reuses {@link ByteArrayTag.ByteConsumer} - the JDK does not ship a primitive
+     * {@code ByteConsumer} variant.</p>
+     *
+     * @param consumer the action to perform on each element
+     */
+    public void forEachByte(ByteArrayTag.@NotNull ByteConsumer consumer) {
+        this.rawList().forEachByte(consumer);
+    }
+
     @Override
     public byte getId() {
         return TagType.BYTE_ARRAY.getId();
