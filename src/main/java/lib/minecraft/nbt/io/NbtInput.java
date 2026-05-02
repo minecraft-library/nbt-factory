@@ -19,7 +19,6 @@ import lib.minecraft.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Reader-side contract shared by every NBT backend in this module - the binary byte-array
@@ -120,13 +119,20 @@ public interface NbtInput {
      *
      * <p>Binary NBT backends ({@code NbtInputBuffer}, {@code NbtInputStream}) share this
      * implementation. SNBT and any other text-based backend overrides with format-specific parsing.</p>
-     *
-     * <p>Implemented iteratively via {@link #readContainerIterative(byte, int)} so adversarially
-     * deep input throws {@link NbtMaxDepthException} instead of crashing the JVM with a
-     * {@code StackOverflowError} on the parsing thread.</p>
      */
     default @NotNull ListTag<?> readListTag(int depth) throws IOException {
-        return (ListTag<?>) this.readContainerIterative((byte) 9, depth);
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
+
+        byte listType = this.readByte();
+        int length = Math.max(0, this.readInt());
+        // Pre-seed elementId so ListTag.add skips the "first element" probe on every entry.
+        ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
+
+        for (int i = 0; i < length; i++)
+            listTag.add(this.readTag(listType, depth));
+
+        return listTag;
     }
 
     default @NotNull CompoundTag readCompoundTag() throws IOException {
@@ -139,194 +145,23 @@ public interface NbtInput {
      *
      * <p>Binary NBT backends share this implementation. SNBT and other text-based backends override
      * with format-specific parsing.</p>
-     *
-     * <p>Implemented iteratively via {@link #readContainerIterative(byte, int)} so adversarially
-     * deep input throws {@link NbtMaxDepthException} instead of crashing the JVM with a
-     * {@code StackOverflowError} on the parsing thread.</p>
      */
     default @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
-        return (CompoundTag) this.readContainerIterative((byte) 10, depth);
-    }
-
-    /**
-     * Iterative container parser shared by {@link #readCompoundTag(int)} and
-     * {@link #readListTag(int)}. Walks the tree with an explicit work-stack of container frames -
-     * {@link CompoundTag} entries and {@link ListTag} entries push a new frame when the wire format
-     * opens a nested container, leaf tags are read inline via {@link #readTag(byte, int)}. Mirrors
-     * simdnbt's parsing-stack design (see {@code borrow/compound.rs}) so deeply nested adversarial
-     * input trips {@link NbtMaxDepthException} instead of recursing through the JVM call stack.
-     *
-     * <p>The stack is allocated at 16 frames and grown by doubling up to a 512-frame ceiling that
-     * matches the legacy recursive depth gate - a {@code depth} parameter of zero plus 511 levels
-     * of nesting parses cleanly, the 512th nested container throws. Real-world payloads never
-     * outgrow the initial 16 slots so a typical decode pays for one small allocation total.
-     * Output is byte-identical to the prior recursive implementation for every input the recursive
-     * path handled.</p>
-     *
-     * @param rootKind starting container type id - {@code 10} for {@code TAG_Compound},
-     *                 {@code 9} for {@code TAG_List}
-     * @param depth    starting depth (matches the legacy {@code depth} parameter)
-     * @return the populated root container
-     * @throws IOException           on backend read failure
-     * @throws NbtMaxDepthException  if nesting would exceed 512 levels
-     */
-    private @NotNull Tag<?> readContainerIterative(byte rootKind, int depth) throws IOException {
-        // Parallel-array work-stack, allocated small (16) and doubled on overflow up to the legacy
-        // 512 depth cap. Real-world payloads (auctions.bin ~depth 8, level.dat ~depth 7,
-        // simple_player.dat ~depth 5) all fit in the initial 16-slot stack so a typical decode pays
-        // for one ~256-byte allocation across the four arrays - much cheaper than a fixed 512-slot
-        // upfront alloc on the hot path. Indexing is "sp points at the topmost live frame", with
-        // sp == -1 meaning the stack is empty (we have just popped the root).
-        Object[] containers = new Object[16];
-        byte[] kinds = new byte[16];          // 9 = LIST, 10 = COMPOUND
-        byte[] listElementIds = new byte[16]; // valid only for LIST frames
-        int[] listRemaining = new int[16];    // valid only for LIST frames
-
-        // Push the root frame. Mirrors the legacy `if (++depth >= 512) throw` semantic: a starting
-        // depth of 511 already disallows the root push.
-        int newDepth = depth + 1;
-        if (newDepth >= 512)
+        if (++depth >= 512)
             throw new NbtMaxDepthException();
 
-        int sp = 0;
-        kinds[0] = rootKind;
-        Tag<?> rootTag;
+        CompoundTag compoundTag = new CompoundTag();
 
-        if (rootKind == 10) {
-            CompoundTag compound = new CompoundTag();
-            containers[0] = compound;
-            rootTag = compound;
-        } else {
-            byte listType = this.readByte();
-            int length = Math.max(0, this.readInt());
-            // Pre-seed elementId so ListTag.add skips the "first element" probe on every entry.
-            ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
-            containers[0] = listTag;
-            listElementIds[0] = listType;
-            listRemaining[0] = length;
-            rootTag = listTag;
+        // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte abstract
+        // on this interface, which would force SnbtDeserializer (whose readByte parses text) to
+        // provide a meaningless implementation.
+        for (int id = this.readByte() & 0xFF; id != 0; id = this.readByte() & 0xFF) {
+            String key = this.readUTF();
+            Tag<?> tag = this.readTag((byte) id, depth);
+            compoundTag.put(key, tag);
         }
 
-        // Walk until the work-stack drains. Each iteration consumes one entry from the top frame's
-        // wire stream - either a leaf (read inline + attach) or a nested container (push + loop).
-        while (sp >= 0) {
-            byte kind = kinds[sp];
-
-            if (kind == 10) { // COMPOUND
-                CompoundTag compound = (CompoundTag) containers[sp];
-
-                // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte
-                // abstract on this interface, which would force SnbtDeserializer (whose readByte
-                // parses text) to provide a meaningless implementation.
-                int id = this.readByte() & 0xFF;
-
-                if (id == 0) { // TAG_End
-                    sp--;
-                    continue;
-                }
-
-                String key = this.readUTF();
-
-                if (id == 10 || id == 9) {
-                    // Need to grow before write-through. Capacity check mirrors the recursive
-                    // depth cap: parent frame at sp has effective depth sp + depth + 1, so the
-                    // child push's effective depth is sp + depth + 2, rejected at >= 512.
-                    int childDepth = sp + depth + 2;
-
-                    if (childDepth >= 512)
-                        throw new NbtMaxDepthException();
-
-                    int newSp = sp + 1;
-
-                    if (newSp >= containers.length) {
-                        int grown = Math.min(containers.length << 1, 512);
-                        containers = Arrays.copyOf(containers, grown);
-                        kinds = Arrays.copyOf(kinds, grown);
-                        listElementIds = Arrays.copyOf(listElementIds, grown);
-                        listRemaining = Arrays.copyOf(listRemaining, grown);
-                    }
-
-                    Tag<?> child;
-                    kinds[newSp] = (byte) id;
-
-                    if (id == 10) {
-                        CompoundTag c = new CompoundTag();
-                        containers[newSp] = c;
-                        child = c;
-                    } else {
-                        byte listType = this.readByte();
-                        int length = Math.max(0, this.readInt());
-                        ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
-                        containers[newSp] = listTag;
-                        listElementIds[newSp] = listType;
-                        listRemaining[newSp] = length;
-                        child = listTag;
-                    }
-
-                    compound.put(key, child);
-                    sp = newSp;
-                    continue;
-                }
-
-                compound.put(key, this.readTag((byte) id, sp + depth + 1));
-                continue;
-            }
-
-            // LIST
-            int remaining = listRemaining[sp];
-
-            if (remaining == 0) {
-                sp--;
-                continue;
-            }
-
-            byte elementId = listElementIds[sp];
-            @SuppressWarnings("unchecked")
-            ListTag<Tag<?>> list = (ListTag<Tag<?>>) containers[sp];
-            listRemaining[sp] = remaining - 1;
-
-            if (elementId == 10 || elementId == 9) {
-                int childDepth = sp + depth + 2;
-
-                if (childDepth >= 512)
-                    throw new NbtMaxDepthException();
-
-                int newSp = sp + 1;
-
-                if (newSp >= containers.length) {
-                    int grown = Math.min(containers.length << 1, 512);
-                    containers = Arrays.copyOf(containers, grown);
-                    kinds = Arrays.copyOf(kinds, grown);
-                    listElementIds = Arrays.copyOf(listElementIds, grown);
-                    listRemaining = Arrays.copyOf(listRemaining, grown);
-                }
-
-                Tag<?> child;
-                kinds[newSp] = elementId;
-
-                if (elementId == 10) {
-                    CompoundTag c = new CompoundTag();
-                    containers[newSp] = c;
-                    child = c;
-                } else {
-                    byte listType = this.readByte();
-                    int length = Math.max(0, this.readInt());
-                    ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
-                    containers[newSp] = listTag;
-                    listElementIds[newSp] = listType;
-                    listRemaining[newSp] = length;
-                    child = listTag;
-                }
-
-                list.add(child);
-                sp = newSp;
-                continue;
-            }
-
-            list.add(this.readTag(elementId, sp + depth + 1));
-        }
-
-        return rootTag;
+        return compoundTag;
     }
 
 }
