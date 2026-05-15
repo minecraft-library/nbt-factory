@@ -1,5 +1,8 @@
 package lib.minecraft.nbt.io.stream;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+
 /**
  * Strategy for decoding {@code int[]} and {@code long[]} payloads inside {@link NbtInputStream}.
  *
@@ -8,9 +11,9 @@ package lib.minecraft.nbt.io.stream;
  * {@code ArrayStrategyTest} pins this contract.</p>
  *
  * <ul>
- *   <li><b>STREAMWISE</b> - reads each element directly through {@link java.io.DataInputStream#readInt}
- *       / {@link java.io.DataInputStream#readLong}. No scratch allocation. Relies on the underlying
- *       {@link java.io.BufferedInputStream} to amortize the per-byte cost and on the JIT to
+ *   <li><b>STREAMWISE</b> - reads each element directly through {@link DataInputStream#readInt}
+ *       / {@link DataInputStream#readLong}. No scratch allocation. Relies on the underlying
+ *       {@link BufferedInputStream} to amortize the per-byte cost and on the JIT to
  *       intrinsify the big-endian conversion. Best when the JIT successfully inlines the call
  *       chain - typical for the auction workload's many small arrays.</li>
  *   <li><b>CHUNKED_THREADLOCAL</b> - bulk-reads into a 64 KiB thread-local scratch buffer and
@@ -32,8 +35,8 @@ package lib.minecraft.nbt.io.stream;
 public enum ArrayReadStrategy {
 
     /**
-     * Element-by-element read through {@link java.io.DataInputStream#readInt} /
-     * {@link java.io.DataInputStream#readLong}. No scratch allocation per call.
+     * Element-by-element read through {@link DataInputStream#readInt} /
+     * {@link DataInputStream#readLong}. No scratch allocation per call.
      */
     STREAMWISE,
 

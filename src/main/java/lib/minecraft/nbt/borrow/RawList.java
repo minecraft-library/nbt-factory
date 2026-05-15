@@ -25,7 +25,7 @@ import java.util.stream.StreamSupport;
  * {@link #getInt(int)} / {@link #getLong(int)} reads directly from the retained buffer. Bulk
  * conversion via {@link #toByteArray()} / {@link #toIntArray()} / {@link #toLongArray()} allocates
  * the destination array and byteswaps via {@link NbtByteCodec}'s
- * {@link java.lang.invoke.VarHandle}-driven big-endian primitives, matching the existing
+ * {@link VarHandle}-driven big-endian primitives, matching the existing
  * materializing path's behavior.</p>
  *
  * <p>Used by C3's {@code BorrowedByteArrayTag} / {@code BorrowedIntArrayTag} /
@@ -309,7 +309,7 @@ public final class RawList {
      * Spliterator over a contiguous big-endian {@code long} run inside a retained byte buffer.
      *
      * <p>Reads each element via {@link NbtByteCodec#getLong(byte[], int)} (a single
-     * {@link java.lang.invoke.VarHandle} access; the JIT typically intrinsifies this to
+     * {@link VarHandle} access; the JIT typically intrinsifies this to
      * {@code MOVBE}). {@link #trySplit()} bisects the remaining range on an 8-byte boundary;
      * sub-spliterators access disjoint byte ranges so parallel reduction is safe without
      * synchronization.</p>

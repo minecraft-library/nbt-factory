@@ -7,6 +7,7 @@ import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
@@ -20,8 +21,8 @@ import java.io.IOException;
  * containers (compound and list) are tracked on a fixed-capacity 512-frame stack so deeply nested
  * adversarial input throws {@link NbtMaxDepthException} rather than {@link StackOverflowError}.</p>
  *
- * <p>Reads use {@link NbtByteCodec}'s {@link java.lang.invoke.VarHandle}-driven big-endian
- * primitives - no {@link java.io.DataInputStream} layer, no per-byte syscalls, no
+ * <p>Reads use {@link NbtByteCodec}'s {@link VarHandle}-driven big-endian
+ * primitives - no {@link DataInputStream} layer, no per-byte syscalls, no
  * {@code MemorySegment}. Pointer-kind tape elements record buffer offsets pointing at the wire
  * length prefix (2 bytes for strings/keys, 4 bytes for arrays); 8-byte primitives that do not fit
  * in the 56-bit inline payload also become {@code *_PTR} entries.</p>

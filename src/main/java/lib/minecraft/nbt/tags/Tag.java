@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * {@link NbtMaxDepthException} will be thrown. An
  * {@code IllegalArgumentException} is thrown for a negative nesting depth.</p>
  *
- * @param <T> The type of the contained value.
+ * @param <T> The type of the contained value
  * */
 @Getter
 @Setter

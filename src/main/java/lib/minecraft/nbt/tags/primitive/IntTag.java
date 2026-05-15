@@ -91,7 +91,7 @@ public class IntTag extends NumericalTag<Integer> {
     /**
      * Constructs an int tag with a given value.
      *
-     * @param value the tag's value, to be converted to {@code int}.
+     * @param value the tag's value, to be converted to {@code int}
      */
     public IntTag(@NotNull Number value) {
         this(value.intValue());

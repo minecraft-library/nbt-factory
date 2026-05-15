@@ -64,7 +64,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Constructs a compound tag with a given name and {@code Map<>} value.
      *
-     * @param value the tag's {@code Map<>} value.
+     * @param value the tag's {@code Map<>} value
      */
     public CompoundTag(@NotNull Map<String, Tag<?>> value) {
         super(value);
@@ -108,9 +108,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Returns true if this compound contains an entry with a given name (key) and if that entry is of a given tag type, false otherwise.
      *
-     * @param key    the name (key) to check for.
-     * @param typeId the tag type ID to test for.
-     * @return true if this compound contains an entry with a given name (key) and if that entry is of a given tag type, false otherwise.
+     * @param key the name (key) to check for
+     * @param typeId the tag type ID to test for
+     * @return true if this compound contains an entry with a given name (key) and if that entry is of a given tag type, false otherwise
      */
     public boolean containsType(@NotNull String key, byte typeId) {
         // Single get-and-null-check replaces the prior containsKey + get pair (two hash probes).
@@ -124,8 +124,8 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * Every element of the path (except the end) are assumed to be compounds. The
      * retrieval operation will return false if any of them are missing.
      *
-     * @param path The path to the entry.
-     * @return True if found.
+     * @param path The path to the entry
+     * @return True if found
      */
     public boolean containsPath(@NotNull String path) {
         CompoundTag current = this;
@@ -212,8 +212,8 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * Every element of the path (except the end) are assumed to be compounds. The
      * retrieval operation will be cancelled if any of them are missing.
      *
-     * @param path The path to the entry.
-     * @return The value, or NULL if not found.
+     * @param path The path to the entry
+     * @return The value, or NULL if not found
      */
     public <T extends Tag<?>> @Nullable T getPath(@NotNull String path) {
         return this.getPathOrDefault(path, null);
@@ -225,8 +225,8 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * Every element of the path (except the end) are assumed to be compounds. The
      * retrieval operation will be cancelled if any of them are missing.
      *
-     * @param path The path to the entry.
-     * @return The value, or default value if not found.
+     * @param path The path to the entry
+     * @return The value, or default value if not found
      */
     public <T extends Tag<?>> T getPathOrDefault(@NotNull String path, @Nullable T defaultValue) {
         if (!this.containsPath(path))
@@ -254,8 +254,8 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Retrieve the map by the given name.
      *
-     * @param key The name of the map.
-     * @return An existing or new map.
+     * @param key The name of the map
+     * @return An existing or new map
      */
     @SuppressWarnings("all")
     public @NotNull CompoundTag getMap(@NotNull String key) {
@@ -265,9 +265,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Retrieve the map by the given name.
      *
-     * @param key       The name of the map.
-     * @param createNew Whether or not to create a new map if its missing.
-     * @return An existing map, a new map or null.
+     * @param key The name of the map
+     * @param createNew Whether or not to create a new map if its missing
+     * @return An existing map, a new map or null
      */
     public @Nullable CompoundTag getMap(@NotNull String key, boolean createNew) {
         return this.getMap(Collections.singletonList(key), createNew);
@@ -276,9 +276,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Retrieve a map from a given path.
      *
-     * @param path      The path of compounds to look up.
-     * @param createNew Whether or not to create new compounds on the way.
-     * @return The map at this location.
+     * @param path The path of compounds to look up
+     * @param createNew Whether or not to create new compounds on the way
+     * @return The map at this location
      */
     private CompoundTag getMap(List<String> path, boolean createNew) {
         CompoundTag current = this;
@@ -303,9 +303,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Retrieves a tag from this compound with a given name (key).
      *
-     * @param key the name whose mapping is to be retrieved from this compound.
-     * @param <T> the tag type you believe you are retrieving.
-     * @return the value associated with {@code key} as type T.
+     * @param key the name whose mapping is to be retrieved from this compound
+     * @param <T> the tag type you believe you are retrieving
+     * @return the value associated with {@code key} as type T
      */
     public <T extends Tag<?>> @Nullable T getTag(@NotNull String key) {
         return (T) this.get(key);
@@ -314,9 +314,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     /**
      * Retrieves a tag from this compound with a given name (key).
      *
-     * @param key the name whose mapping is to be retrieved from this compound.
-     * @param <T> the tag type you believe you are retrieving.
-     * @return the value associated with {@code key} as type T.
+     * @param key the name whose mapping is to be retrieved from this compound
+     * @param <T> the tag type you believe you are retrieving
+     * @return the value associated with {@code key} as type T
      */
     public <T extends Tag<?>> @NotNull T getTagOrDefault(@NotNull String key, @NotNull T defaultValue) {
         return this.getOrDefault(key, defaultValue);
@@ -421,9 +421,9 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * Every element of the path (except the end) are assumed to be compounds, and will
      * be created if they are missing.
      *
-     * @param path  The path to the entry.
-     * @param value The new value of this entry.
-     * @return This compound, for chaining.
+     * @param path The path to the entry
+     * @param value The new value of this entry
+     * @return This compound, for chaining
      */
     public @NotNull CompoundTag putPath(@NotNull String path, @NotNull Tag<?> value) {
         this.requireModifiable();
@@ -468,8 +468,8 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * Every element of the path (except the end) are assumed to be compounds. The
      * retrieval operation will return the last most compound.
      *
-     * @param path The path to the entry.
-     * @return The last most compound, or this compound if not found.
+     * @param path The path to the entry
+     * @return The last most compound, or this compound if not found
      */
     public @NotNull CompoundTag removePath(@NotNull String path) {
         this.requireModifiable();
@@ -559,7 +559,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      * Appends a depth- and width-truncated rendering of this compound to the given builder.
      *
      * @param builder the destination
-     * @param depth   current nesting depth (0 at the root)
+     * @param depth current nesting depth (0 at the root)
      */
     void appendTo(@NotNull StringBuilder builder, int depth) {
         if (depth >= TO_STRING_MAX_DEPTH) {

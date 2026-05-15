@@ -40,7 +40,7 @@ public class DoubleTag extends NumericalTag<Double> {
     /**
      * Constructs a double tag with a given value.
      *
-     * @param value the tag's value, to be converted to {@code double}.
+     * @param value the tag's value, to be converted to {@code double}
      */
     public DoubleTag(@NotNull Number value) {
         this(value.doubleValue());

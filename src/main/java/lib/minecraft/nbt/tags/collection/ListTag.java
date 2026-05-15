@@ -47,7 +47,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      * probe on every subsequent element - one fewer method call per list entry during bulk
      * deserialization.</p>
      *
-     * @param elementId       the NBT tag id all future entries must carry
+     * @param elementId the NBT tag id all future entries must carry
      * @param initialCapacity initial capacity for the backing list
      */
     public ListTag(byte elementId, int initialCapacity) {
@@ -58,7 +58,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Constructs a list tag with a given name and {@code List<>} value.
      *
-     * @param value the tag's {@code List<>} value.
+     * @param value the tag's {@code List<>} value
      */
     public ListTag(@NotNull List<E> value) {
         super(value);
@@ -78,8 +78,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Appends the specified element to the end of the list. Returns true if added successfully.
      *
-     * @param element the element to be added.
-     * @return true if added successfully.
+     * @param element the element to be added
+     * @return true if added successfully
      */
     @Override
     public boolean add(@NotNull E element) {
@@ -100,8 +100,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      * Inserts the specified tag at the specified position in this list.
      * Shifts the tag currently at that position and any subsequent tags to the right.
      *
-     * @param index   index at which the tag is to be inserted.
-     * @param element element to be inserted.
+     * @param index index at which the tag is to be inserted
+     * @param element element to be inserted
      */
     @Override
     public void add(int index, E element) {
@@ -153,8 +153,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Returns true if this list contains the tag, false otherwise.
      *
-     * @param obj the tag to check for.
-     * @return true if this list contains the tag, false otherwise.
+     * @param obj the tag to check for
+     * @return true if this list contains the tag, false otherwise
      */
     @Override
     public boolean contains(Object obj) {
@@ -171,8 +171,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Returns true if this list contains all tags in the collection, false otherwise.
      *
-     * @param collection the values to be checked for.
-     * @return true if this list contains all tags in the collection, false otherwise.
+     * @param collection the values to be checked for
+     * @return true if this list contains all tags in the collection, false otherwise
      */
     @Override
     public boolean containsAll(@NotNull Collection<?> collection) {
@@ -214,8 +214,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Retrieves a tag value from its index in the list.
      *
-     * @param index the index of the tag value to be retrieved.
-     * @return the tag value at the specified index.
+     * @param index the index of the tag value to be retrieved
+     * @return the tag value at the specified index
      */
     @Override
     public @NotNull E get(int index) {
@@ -291,8 +291,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Removes a tag from the list based on the tag's index. Returns the removed tag.
      *
-     * @param index the index of the tag to be removed.
-     * @return the removed tag.
+     * @param index the index of the tag to be removed
+     * @return the removed tag
      */
     @Override
     public @NotNull E remove(int index) {
@@ -307,8 +307,8 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Removes a given tag from the list. Returns true if removed successfully, false otherwise.
      *
-     * @param obj the tag to be removed.
-     * @return true if the tag was removed successfully, false otherwise.
+     * @param obj the tag to be removed
+     * @return true if the tag was removed successfully, false otherwise
      */
     @Override
     public boolean remove(Object obj) {
@@ -383,7 +383,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      * Appends a depth- and width-truncated rendering of this list to the given builder.
      *
      * @param builder the destination
-     * @param depth   current nesting depth (0 at the root)
+     * @param depth current nesting depth (0 at the root)
      */
     void appendTo(@NotNull StringBuilder builder, int depth) {
         if (depth >= CompoundTag.TO_STRING_MAX_DEPTH) {

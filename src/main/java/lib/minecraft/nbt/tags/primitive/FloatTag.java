@@ -40,7 +40,7 @@ public class FloatTag extends NumericalTag<Float> {
     /**
      * Constructs a float tag with a given value.
      *
-     * @param value the tag's value, to be converted to {@code float}.
+     * @param value the tag's value, to be converted to {@code float}
      */
     public FloatTag(@NotNull Number value) {
         this(value.floatValue());

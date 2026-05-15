@@ -345,13 +345,17 @@ public class SimdNbtHypixelExtractBenchmarks {
         return (t instanceof BorrowedStringTag s) ? s.getValue() : null;
     }
 
-    /** Hypixel auction-house item record, mirroring {@code compare_hypixel.rs:74-89}. */
+    /**
+     * Hypixel auction-house item record, mirroring {@code compare_hypixel.rs:74-89}.
+     */
     public record Item(short id, short damage, byte count,
                        String headTextureId, String skyblockId, String reforge,
                        ItemDisplay display,
                        Map<String, Integer> enchantments, String timestamp) {}
 
-    /** Cosmetic display fields, mirroring {@code compare_hypixel.rs:91-99}. */
+    /**
+     * Cosmetic display fields, mirroring {@code compare_hypixel.rs:91-99}.
+     */
     public record ItemDisplay(String name, List<String> lore,
                               boolean hasGlint, Integer color) {}
 

@@ -10,6 +10,8 @@ import java.util.NoSuchElementException;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
 
 /**
  * {@link TagType#BYTE_ARRAY} (ID 7) is used for storing an ordered sequence of 8-bit signed integers.
@@ -124,7 +126,7 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
     /**
      * Primitive {@code byte} consumer functional interface.
      *
-     * <p>Mirrors {@link java.util.function.IntConsumer} / {@link java.util.function.LongConsumer}
+     * <p>Mirrors {@link IntConsumer} / {@link LongConsumer}
      * which the JDK ships, filling the gap left by the absence of a primitive {@code byte}
      * variant.</p>
      */

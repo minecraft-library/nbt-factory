@@ -48,8 +48,8 @@ public class NbtFactory {
     /**
      * Deserializes an NBT Base64 encoded {@link String} into a {@link CompoundTag}.
      *
-     * @param encoded the NBT Base64 encoded string to decode.
-     * @throws NbtException if any I/O error occurs.
+     * @param encoded the NBT Base64 encoded string to decode
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromBase64(@NotNull String encoded) throws NbtException {
         return fromByteArray(StringUtil.decodeBase64(encoded));
@@ -58,8 +58,8 @@ public class NbtFactory {
     /**
      * Deserializes an NBT {@code byte[]} array into a {@link CompoundTag}.
      *
-     * @param bytes the {@code byte[]} array to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param bytes the {@code byte[]} array to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromByteArray(byte[] bytes) throws NbtException {
         try {
@@ -143,8 +143,8 @@ public class NbtFactory {
      * <p>Streams directly via {@link NbtInputStream} rather than loading the whole file into a
      * transient {@code byte[]} first - saves one full-file allocation per read.</p>
      *
-     * @param file the NBT file to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param file the NBT file to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromFile(@NotNull File file) throws NbtException {
         try {
@@ -163,8 +163,8 @@ public class NbtFactory {
      * documented on {@link NbtJsonDeserializer}. This conversion is lossy in the general case -
      * see that class for the type-inference contract and round-trip caveats.</p>
      *
-     * @param file the JSON file to read from.
-     * @throws NbtException if any I/O or parse error occurs.
+     * @param file the JSON file to read from
+     * @throws NbtException if any I/O or parse error occurs
      */
     public @NotNull CompoundTag fromJson(@NotNull File file) throws NbtException {
         try {
@@ -184,8 +184,8 @@ public class NbtFactory {
      * documented on {@link NbtJsonDeserializer}. This conversion is lossy in the general case -
      * see that class for the type-inference contract and round-trip caveats.</p>
      *
-     * @param json the JSON string to read from.
-     * @throws NbtException if any I/O or parse error occurs.
+     * @param json the JSON string to read from
+     * @throws NbtException if any I/O or parse error occurs
      */
     public @NotNull CompoundTag fromJson(@NotNull String json) throws NbtException {
         try {
@@ -199,8 +199,8 @@ public class NbtFactory {
     /**
      * Deserializes an SNBT {@link File} into a {@link CompoundTag}.
      *
-     * @param file the SNBT file to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param file the SNBT file to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromSnbt(@NotNull File file) throws NbtException {
         try {
@@ -214,8 +214,8 @@ public class NbtFactory {
     /**
      * Deserializes an SNBT {@link String} into a {@link CompoundTag}.
      *
-     * @param snbt the SNBT string to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param snbt the SNBT string to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromSnbt(@NotNull String snbt) throws NbtException {
         try {
@@ -229,8 +229,8 @@ public class NbtFactory {
     /**
      * Deserializes an NBT {@code Resource} into a {@link CompoundTag}.
      *
-     * @param path the NBT resource path to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param path the NBT resource path to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromResource(@NotNull String path) {
         try {
@@ -249,8 +249,8 @@ public class NbtFactory {
      * {@code byte[]} that {@code inputStream.readAllBytes()} would allocate - safe for arbitrarily
      * large inputs (e.g. worldgen chunk files, player .dat files, socket streams).</p>
      *
-     * @param inputStream the NBT input stream to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param inputStream the NBT input stream to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromStream(@NotNull InputStream inputStream) throws NbtException {
         // Close-shield the caller's stream so the cascading close() from NbtInputStream ->
@@ -278,8 +278,8 @@ public class NbtFactory {
     /**
      * Deserializes an NBT {@link URL} into a {@link CompoundTag}.
      *
-     * @param url the NBT url to read from.
-     * @throws NbtException if any I/O error occurs.
+     * @param url the NBT url to read from
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull CompoundTag fromUrl(@NotNull URL url) {
         try {
@@ -293,7 +293,7 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an NBT Base64 encoded {@link String} with {@link Compression#GZIP} compression.
      *
-     * @param compound the NBT compound to write.
+     * @param compound the NBT compound to write
      * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toBase64(@NotNull CompoundTag compound) throws NbtException {
@@ -303,8 +303,8 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an NBT Base64 encoded {@link String} with the given compression.
      *
-     * @param compound the NBT compound to write.
-     * @param compression compression to use on the file.
+     * @param compound the NBT compound to write
+     * @param compression compression to use on the file
      * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toBase64(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
@@ -314,8 +314,8 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array with {@link Compression#NONE NO} compression.
      *
-     * @param compound the NBT compound to write.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @throws NbtException if any I/O error occurs
      */
     public byte[] toByteArray(@NotNull CompoundTag compound) throws NbtException {
         return toByteArray(compound, Compression.NONE);
@@ -324,8 +324,8 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an NBT {@code byte[]} array with the given compression.
      *
-     * @param compound the NBT compound to write.
-     * @param compression compression to use on the file.
+     * @param compound the NBT compound to write
+     * @param compression compression to use on the file
      * @throws NbtException if any I/O error occurs
      */
     public byte[] toByteArray(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
@@ -348,9 +348,9 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an NBT {@link File} with {@link Compression#GZIP} compression.
      *
-     * @param compound the NBT compound to write.
-     * @param file the file to write to.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @param file the file to write to
+     * @throws NbtException if any I/O error occurs
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
         toFile(compound, file, Compression.GZIP);
@@ -362,10 +362,10 @@ public class NbtFactory {
      * <p>Streams directly through {@link NbtOutputStream} and the compressing wrapper - no
      * transient full-payload {@code byte[]} is allocated.</p>
      *
-     * @param compound the NBT compound to write.
-     * @param file the file to write to.
-     * @param compression compression to use on the file.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @param file the file to write to
+     * @param compression compression to use on the file
+     * @throws NbtException if any I/O error occurs
      */
     public void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
         try {
@@ -384,8 +384,8 @@ public class NbtFactory {
      * to read the result back; the round-trip is lossy in the general case because JSON does not
      * preserve NBT tag type information.</p>
      *
-     * @param compound the NBT compound to write.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toJson(@NotNull CompoundTag compound) throws NbtException {
         try {
@@ -406,9 +406,9 @@ public class NbtFactory {
      * to read the result back; the round-trip is lossy in the general case because JSON does not
      * preserve NBT tag type information.</p>
      *
-     * @param compound the NBT compound to write.
-     * @param file the file to write to.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @param file the file to write to
+     * @throws NbtException if any I/O error occurs
      */
     public void toJson(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
         try {
@@ -423,8 +423,8 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into a SNBT {@link String}.
      *
-     * @param compound the NBT compound to write.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @throws NbtException if any I/O error occurs
      */
     public @NotNull String toSnbt(@NotNull CompoundTag compound) {
         try {
@@ -440,9 +440,9 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into a SNBT {@link String}.
      *
-     * @param compound the NBT compound to write.
-     * @param file the file to write to.
-     * @throws NbtException if any I/O error occurs.
+     * @param compound the NBT compound to write
+     * @param file the file to write to
+     * @throws NbtException if any I/O error occurs
      */
     public void toSnbt(@NotNull CompoundTag compound, @NotNull File file) {
         try {
@@ -457,8 +457,8 @@ public class NbtFactory {
     /**
      * Serializes a {@link CompoundTag} into an {@link OutputStream} with {@link Compression#GZIP} compression.
      *
-     * @param compound the NBT compound to write.
-     * @param outputStream the stream to write to.
+     * @param compound the NBT compound to write
+     * @param outputStream the stream to write to
      * @throws NbtException if any I/O error occurs
      */
     public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream) throws NbtException {
@@ -481,9 +481,9 @@ public class NbtFactory {
      * compressing wrapper are all flushed and closed on return; the underlying {@code outputStream}
      * itself is not closed, consistent with the prior behaviour.</p>
      *
-     * @param compound the NBT compound to write.
-     * @param outputStream the stream to write to.
-     * @param compression compression to use on the stream.
+     * @param compound the NBT compound to write
+     * @param outputStream the stream to write to
+     * @param compression compression to use on the stream
      * @throws NbtException if any I/O error occurs
      */
     public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream, @NotNull Compression compression) throws NbtException {

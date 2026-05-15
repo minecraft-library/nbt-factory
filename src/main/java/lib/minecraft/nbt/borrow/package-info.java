@@ -77,10 +77,10 @@
  * <h2>Stability</h2>
  *
  * <p>Every type in this package is annotated
- * {@link org.jetbrains.annotations.ApiStatus.Experimental &#64;ApiStatus.Experimental} - the
+ * {@link Experimental &#64;ApiStatus.Experimental} - the
  * on-tape bit layout, the kind enum constants, and the public navigator surface may change across
  * minor releases until the borrow API graduates. {@link lib.minecraft.nbt.borrow.TapeParser
- * TapeParser} is annotated {@link org.jetbrains.annotations.ApiStatus.Internal &#64;ApiStatus.Internal}
+ * TapeParser} is annotated {@link Internal &#64;ApiStatus.Internal}
  * - callers should reach the parser through
  * {@link lib.minecraft.nbt.NbtFactory#borrowFromByteArray(byte[]) NbtFactory.borrowFromByteArray}
  * rather than touching it directly.</p>
@@ -92,3 +92,5 @@
 package lib.minecraft.nbt.borrow;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;

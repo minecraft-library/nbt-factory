@@ -1,5 +1,9 @@
 package lib.minecraft.nbt.io.stream;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.OutputStream;
+
 /**
  * Strategy for encoding {@code int[]} and {@code long[]} payloads inside {@link NbtOutputStream}.
  *
@@ -9,13 +13,13 @@ package lib.minecraft.nbt.io.stream;
  * read back unchanged through either {@link ArrayReadStrategy} or the in-memory buffer path.</p>
  *
  * <ul>
- *   <li><b>STREAMWISE</b> - writes each element directly through {@link java.io.DataOutputStream#writeInt}
- *       / {@link java.io.DataOutputStream#writeLong}. No scratch allocation. Relies on the
- *       downstream buffering (typically a {@link java.io.BufferedOutputStream}) to amortize the
+ *   <li><b>STREAMWISE</b> - writes each element directly through {@link DataOutputStream#writeInt}
+ *       / {@link DataOutputStream#writeLong}. No scratch allocation. Relies on the
+ *       downstream buffering (typically a {@link BufferedOutputStream}) to amortize the
  *       per-byte cost and on the JIT to intrinsify the big-endian conversion.</li>
  *   <li><b>CHUNKED_THREADLOCAL</b> - encodes into a 64 KiB thread-local scratch buffer through
  *       the {@link lib.minecraft.nbt.io.NbtByteCodec} {@code VarHandle} path, then flushes each
- *       chunk with a single {@link java.io.OutputStream#write(byte[], int, int)} call. Arrays
+ *       chunk with a single {@link OutputStream#write(byte[], int, int)} call. Arrays
  *       larger than the cap are written in 64 KiB chunks; the {@link ThreadLocal} never retains
  *       a buffer larger than that, so virtual threads and fork-join carriers pay a fixed
  *       per-thread footprint.</li>
@@ -32,15 +36,15 @@ package lib.minecraft.nbt.io.stream;
 public enum ArrayWriteStrategy {
 
     /**
-     * Element-by-element write through {@link java.io.DataOutputStream#writeInt} /
-     * {@link java.io.DataOutputStream#writeLong}. No scratch allocation per call.
+     * Element-by-element write through {@link DataOutputStream#writeInt} /
+     * {@link DataOutputStream#writeLong}. No scratch allocation per call.
      */
     STREAMWISE,
 
     /**
      * Encode into a 64 KiB {@link ThreadLocal} scratch buffer via
      * {@link lib.minecraft.nbt.io.NbtByteCodec}, flush each chunk with a single
-     * {@link java.io.OutputStream#write(byte[], int, int)} call. Arrays larger than the cap are
+     * {@link OutputStream#write(byte[], int, int)} call. Arrays larger than the cap are
      * processed in fixed-size chunks; the thread-local never grows past the cap.
      */
     CHUNKED_THREADLOCAL

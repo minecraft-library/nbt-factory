@@ -82,7 +82,7 @@ public class ByteTag extends NumericalTag<Byte> {
     /**
      * Constructs a byte tag with a given value.
      *
-     * @param value the tag's value, to be converted to {@code byte}.
+     * @param value the tag's value, to be converted to {@code byte}
      */
     public ByteTag(@NotNull Number value) {
         this(value.byteValue());

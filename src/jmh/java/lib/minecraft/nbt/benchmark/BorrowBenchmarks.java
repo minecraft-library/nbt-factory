@@ -75,10 +75,14 @@ public class BorrowBenchmarks {
             "bigtest.nbt", "simple_player.dat", "inttest1023.nbt"})
     public String filename;
 
-    /** Gzip-decoded NBT payload, decoded once per trial. */
+    /**
+     * Gzip-decoded NBT payload, decoded once per trial.
+     */
     private byte[] payload;
 
-    /** Cached size for the {@link BytesProcessed} aux counter. */
+    /**
+     * Cached size for the {@link BytesProcessed} aux counter.
+     */
     private int payloadBytes;
 
     @Setup(Level.Trial)

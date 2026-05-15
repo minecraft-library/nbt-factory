@@ -12,14 +12,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Assertions.assertArrayEquals;
+import org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pins the Phase D4 stream and {@code forEach} accessors on the borrowed array-tag types.
@@ -30,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li><b>Sum parity</b> - {@code longStream().sum()} matches {@code Arrays.stream(toLongArray()).sum()}
  *       for sizes {@code 0, 1, 10, 1023, 65537} (covers the 64 KiB chunk boundary).</li>
  *   <li><b>Parallel determinism</b> - {@code longStream().parallel().sum()} matches the serial sum
- *       (validates {@link java.util.Spliterator#trySplit()} correctness, the highest-risk subitem
+ *       (validates {@link Spliterator#trySplit()} correctness, the highest-risk subitem
  *       per the ResearchPack risk register).</li>
  * </ul>
  *

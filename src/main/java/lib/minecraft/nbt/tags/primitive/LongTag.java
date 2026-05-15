@@ -85,7 +85,7 @@ public class LongTag extends NumericalTag<Long> {
     /**
      * Constructs a long tag with a given value.
      *
-     * @param value the tag's value, to be converted to {@code long}.
+     * @param value the tag's value, to be converted to {@code long}
      */
     public LongTag(@NotNull Number value) {
         this(value.longValue());

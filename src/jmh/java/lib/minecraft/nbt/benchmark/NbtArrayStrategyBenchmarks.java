@@ -40,10 +40,14 @@ import java.util.concurrent.TimeUnit;
 @Fork(1)
 public class NbtArrayStrategyBenchmarks {
 
-    /** Element count for the int payload (1 MiB / 4 bytes). */
+    /**
+     * Element count for the int payload (1 MiB / 4 bytes).
+     */
     private static final int INT_ELEMENTS = 1 << 18;
 
-    /** Element count for the long payload (1 MiB / 8 bytes). */
+    /**
+     * Element count for the long payload (1 MiB / 8 bytes).
+     */
     private static final int LONG_ELEMENTS = 1 << 17;
 
     @Param({"STREAMWISE", "CHUNKED_THREADLOCAL"})

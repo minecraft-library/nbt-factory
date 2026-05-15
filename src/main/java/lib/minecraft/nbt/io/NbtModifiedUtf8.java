@@ -3,12 +3,15 @@ package lib.minecraft.nbt.io;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
 import java.io.UTFDataFormatException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Modified UTF-8 codec matching {@link java.io.DataInput#readUTF()} and
- * {@link java.io.DataOutput#writeUTF(String)} - the wire format Mojang uses for every string in
+ * Modified UTF-8 codec matching {@link DataInput#readUTF()} and
+ * {@link DataOutput#writeUTF(String)} - the wire format Mojang uses for every string in
  * Minecraft's binary NBT payload.
  *
  * <p>Every NBT string (both compound keys and {@code TAG_String} values) is framed on the wire
@@ -29,7 +32,7 @@ import java.nio.charset.StandardCharsets;
  * </ul>
  *
  * <p>This class is used by the byte-array NBT backends to match the
- * {@link java.io.DataInputStream}-derived stream backends byte-for-byte. The prior
+ * {@link DataInputStream}-derived stream backends byte-for-byte. The prior
  * standard-UTF-8 implementation diverged on {@code U+0000} and supplementary characters, which
  * would corrupt a round trip through a real Mojang-written {@code .dat} file containing those
  * code points.</p>

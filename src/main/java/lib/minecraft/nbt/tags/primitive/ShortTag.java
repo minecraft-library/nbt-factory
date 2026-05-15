@@ -86,7 +86,7 @@ public class ShortTag extends NumericalTag<Short> {
     /**
      * Constructs a short tag with a given value.
      *
-     * @param value the tag's value, to be converted to {@code short}.
+     * @param value the tag's value, to be converted to {@code short}
      */
     public ShortTag(@NotNull Number value) {
         this(value.shortValue());
