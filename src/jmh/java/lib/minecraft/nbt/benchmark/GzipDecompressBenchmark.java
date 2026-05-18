@@ -1,7 +1,6 @@
 package lib.minecraft.nbt.benchmark;
 
 import dev.simplified.util.compression.Compression;
-import lib.minecraft.nbt.NbtFactory;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -25,31 +24,25 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Gzip-inflate regression scaffold. Compares the kept implementation against the prior
- * {@code Compression.decompress} baseline so the gzip path's allocation profile can be
- * re-verified after any future {@code NbtFactory} change.
- *
- * <ul>
- *   <li><b>baseline</b> - {@code Compression.decompress(bytes)} from the external
- *       {@code simplified-dev/utils} library; allocates a transient read buffer plus a growable
- *       accumulator per call.</li>
- *   <li><b>pooled</b> - {@code NbtFactory.decompressGzipPooled} reads the gzip ISIZE trailer to
- *       pre-size the output buffer at exact length, single allocation per call. This is the
- *       implementation called from {@code NbtFactory.fromByteArray} on gzip-prefixed input.</li>
- * </ul>
+ * Gzip-inflate regression scaffold for {@code Compression.decompress} on the Hypixel auction
+ * corpus. Exercises the upstream {@code utils} library's GZIP fast path (ISIZE-presized inflate,
+ * which lives in {@code GzipCompression} as of utils SHA a932b44) under realistic batch load so
+ * future utils tuning can be checked for regressions against this fixture's wall-clock and
+ * allocation profile.
  *
  * <p>Input corpus is the Hypixel auction fixture
  * {@code src/test/resources/nbt-bench-fixture/auctions.bin} (~42 MB containing many independent
- * gzipped NBT payloads). Each {@code @Benchmark} iteration inflates every payload in the configured
- * slice; the {@code @AuxCounters payloadBytes} aggregator lets {@code tools/jmh-report.py} compute
- * throughput in MiB/s of compressed input.</p>
+ * gzipped NBT payloads). Each {@code @Benchmark} iteration inflates every payload in the
+ * configured slice; the {@code @AuxCounters payloadBytes} aggregator lets
+ * {@code tools/jmh-report.py} compute throughput in MiB/s of compressed input.</p>
  *
  * <p>Run with:</p>
  * <pre>
  *   ./gradlew jmh -PjmhInclude=GzipDecompress
  * </pre>
  *
- * <p>For GC-pressure measurement (the real win mechanism), add the JMH gc profiler:</p>
+ * <p>For GC-pressure measurement (the actual win mechanism for the upstream pre-sizing), add the
+ * JMH gc profiler:</p>
  * <pre>
  *   ./gradlew jmh -PjmhInclude=GzipDecompress -PjmhProfilers=gc
  * </pre>
@@ -102,32 +95,13 @@ public class GzipDecompressBenchmark {
         this.payloads = new byte[slice][];
         System.arraycopy(all, 0, this.payloads, 0, slice);
         System.err.println("corpus-size: " + this.corpus + "=" + slice + " payloads");
-
-        // Parity check: every pooled output must equal the baseline inflate. A divergent
-        // implementation would silently produce wrong timing numbers, so we fail the trial early.
-        for (int i = 0; i < this.payloads.length; i++) {
-            byte[] ref = Compression.decompress(this.payloads[i]);
-            byte[] pooled = NbtFactory.decompressGzipPooled(this.payloads[i]);
-
-            if (!java.util.Arrays.equals(ref, pooled))
-                throw new IllegalStateException("pooled diverges from baseline at payload " + i
-                    + " (ref=" + ref.length + "B, pooled=" + pooled.length + "B)");
-        }
     }
 
     @Benchmark
-    public void baseline(BytesProcessed counter, Blackhole bh) {
+    public void decompress(BytesProcessed counter, Blackhole bh) {
         for (byte[] p : this.payloads) {
             counter.payloadBytes += p.length;
             bh.consume(Compression.decompress(p));
-        }
-    }
-
-    @Benchmark
-    public void pooled(BytesProcessed counter, Blackhole bh) throws IOException {
-        for (byte[] p : this.payloads) {
-            counter.payloadBytes += p.length;
-            bh.consume(NbtFactory.decompressGzipPooled(p));
         }
     }
 
