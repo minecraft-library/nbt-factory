@@ -19,7 +19,7 @@ import lib.minecraft.nbt.tags.primitive.IntTag;
 import lib.minecraft.nbt.tags.primitive.LongTag;
 import lib.minecraft.nbt.tags.primitive.ShortTag;
 import lib.minecraft.nbt.tags.primitive.StringTag;
-import dev.simplified.stream.Compression;
+import dev.simplified.util.compression.Compression;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

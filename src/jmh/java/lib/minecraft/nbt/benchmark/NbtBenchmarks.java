@@ -11,7 +11,7 @@ import lib.minecraft.nbt.tags.collection.CompoundTag;
 import lib.minecraft.nbt.tags.collection.ListTag;
 import lib.minecraft.nbt.tags.primitive.IntTag;
 import lib.minecraft.nbt.tags.primitive.StringTag;
-import dev.simplified.stream.Compression;
+import dev.simplified.util.compression.Compression;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 

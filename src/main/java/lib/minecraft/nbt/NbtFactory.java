@@ -14,7 +14,7 @@ import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.collection.CompoundTag;
-import dev.simplified.stream.Compression;
+import dev.simplified.util.compression.Compression;
 import dev.simplified.util.StringUtil;
 import dev.simplified.util.SystemUtil;
 import lombok.Cleanup;

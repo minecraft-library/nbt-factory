@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.benchmark;
 
-import dev.simplified.stream.Compression;
+import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.NbtFactory;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;

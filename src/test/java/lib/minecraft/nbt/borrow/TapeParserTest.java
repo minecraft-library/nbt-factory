@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.borrow;
 
-import dev.simplified.stream.Compression;
+import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
