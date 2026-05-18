@@ -106,6 +106,13 @@ jmh {
     (project.findProperty("jmhInclude") as String?)?.let {
         includes.set(listOf(it))
     }
+
+    // Opt-in JMH profilers: -PjmhProfilers="gc,stack" attaches the JMH built-in profilers to
+    // the run. Most useful is `gc` which adds gc.alloc.rate.norm (B/op) to the result JSON -
+    // the actual win mechanism for allocation-reduction changes is allocations, not always ns/op.
+    (project.findProperty("jmhProfilers") as String?)?.let {
+        profilers.set(it.split(",").map { p -> p.trim() }.filter { p -> p.isNotEmpty() })
+    }
 }
 
 // JMH generator runs `java -cp ... JmhBytecodeGenerator`, which loads each compiled benchmark
