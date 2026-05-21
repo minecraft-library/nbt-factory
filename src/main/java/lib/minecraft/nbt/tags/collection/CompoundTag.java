@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * {@link TagType#COMPOUND} (ID 10) is used for storing an ordered list of key-{@link Tag value} pairs.
@@ -68,6 +69,17 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
      */
     public CompoundTag(@NotNull Map<String, Tag<?>> value) {
         super(value);
+    }
+
+    /**
+     * Constructs a compound tag whose backing map is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedCompoundTag BorrowedCompoundTag} to defer the
+     * map-view allocation until the first read forces it.
+     *
+     * @param supplier supplier invoked on first {@code getValue()}
+     */
+    public CompoundTag(@NotNull Supplier<Map<String, Tag<?>>> supplier) {
+        super(supplier);
     }
 
     /**
@@ -534,13 +546,11 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
 
     @Override
     public boolean equals(Object o) {
-        // Strict class match preserves the Tag.equals contract: two compounds of different runtime
-        // classes (e.g. the EMPTY anonymous subclass vs a plain CompoundTag) never compare equal.
-        // Size short-circuit then beats the Map.equals subtree walk on every mismatched pair without
-        // the per-entry recursion.
+        // Loosened to instanceof CompoundTag so a materialized compound and a BorrowedCompoundTag
+        // holding the same key-value pairs compare equal across backends. Size short-circuit
+        // beats the Map.equals subtree walk on every mismatched pair without the per-entry recursion.
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CompoundTag other = (CompoundTag) o;
+        if (!(o instanceof CompoundTag other)) return false;
         if (this.size() != other.size()) return false;
         return this.getValue().equals(other.getValue());
     }

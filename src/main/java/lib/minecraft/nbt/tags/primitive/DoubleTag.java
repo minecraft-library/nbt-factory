@@ -3,6 +3,8 @@ package lib.minecraft.nbt.tags.primitive;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#DOUBLE} (ID 6) is used for storing a 64-bit, double-precision floating-point, ranging from {@link Double#MIN_VALUE} to {@link Double#MAX_VALUE}.
  * @see <a href="https://en.wikipedia.org/wiki/IEEE_floating_point">IEEE_floating_point</a>
@@ -44,6 +46,14 @@ public class DoubleTag extends NumericalTag<Double> {
      */
     public DoubleTag(@NotNull Number value) {
         this(value.doubleValue());
+    }
+
+    /**
+     * Constructs a double tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedDoubleTag BorrowedDoubleTag}.
+     */
+    public DoubleTag(@NotNull Supplier<Double> supplier) {
+        super(supplier);
     }
 
     @Override

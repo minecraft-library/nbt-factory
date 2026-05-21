@@ -4,6 +4,8 @@ import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#LONG} (ID 4) is used for storing a signed 64-bit integer, ranging from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} (inclusive).
  */
@@ -89,6 +91,14 @@ public class LongTag extends NumericalTag<Long> {
      */
     public LongTag(@NotNull Number value) {
         this(value.longValue());
+    }
+
+    /**
+     * Constructs a long tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedLongTag BorrowedLongTag}.
+     */
+    public LongTag(@NotNull Supplier<Long> supplier) {
+        super(supplier);
     }
 
     @Override

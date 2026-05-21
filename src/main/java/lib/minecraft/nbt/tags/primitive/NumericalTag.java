@@ -3,6 +3,8 @@ package lib.minecraft.nbt.tags.primitive;
 import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * An abstract superclass of all {@link Tag Tags} representing numeric values that can be converted to the primitive types.
  *
@@ -12,6 +14,10 @@ public abstract class NumericalTag<T extends Number & Comparable<T>> extends Tag
 
     protected NumericalTag(@NotNull T value) {
         super(value);
+    }
+
+    protected NumericalTag(@NotNull Supplier<T> supplier) {
+        super(supplier);
     }
 
     /**

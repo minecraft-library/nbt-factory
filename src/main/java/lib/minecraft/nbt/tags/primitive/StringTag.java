@@ -6,6 +6,8 @@ import dev.simplified.util.StringUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#STRING} (ID 8) is used for storing a UTF-8 encoded {@code String}.
  */
@@ -31,6 +33,14 @@ public class StringTag extends Tag<String> {
      */
     public StringTag(@NotNull String value) {
         super(value);
+    }
+
+    /**
+     * Constructs a string tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedStringTag BorrowedStringTag}.
+     */
+    public StringTag(@NotNull Supplier<String> supplier) {
+        super(supplier);
     }
 
     @Override

@@ -4,6 +4,8 @@ import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#INT} (ID 3) is used for storing a signed 32-bit integer, ranging from {@link Integer#MIN_VALUE} and {@link Integer#MAX_VALUE} (inclusive).
  */
@@ -95,6 +97,14 @@ public class IntTag extends NumericalTag<Integer> {
      */
     public IntTag(@NotNull Number value) {
         this(value.intValue());
+    }
+
+    /**
+     * Constructs an int tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedIntTag BorrowedIntTag}.
+     */
+    public IntTag(@NotNull Supplier<Integer> supplier) {
+        super(supplier);
     }
 
     @Override

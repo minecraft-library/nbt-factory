@@ -1,9 +1,10 @@
 package lib.minecraft.nbt.borrow;
 
-import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.primitive.ShortTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 /**
  * Borrowed view over a {@link TapeKind#SHORT_INLINE} tape entry. The short value is sign-extended
@@ -12,34 +13,14 @@ import org.jetbrains.annotations.NotNull;
  * @see ShortTag
  */
 @ApiStatus.Experimental
-public final class BorrowedShortTag implements BorrowedTag<Short> {
-
-    private final @NotNull Tape tape;
-
-    private final int tapeIndex;
+public final class BorrowedShortTag extends ShortTag {
 
     BorrowedShortTag(@NotNull Tape tape, int tapeIndex) {
-        this.tape = tape;
-        this.tapeIndex = tapeIndex;
+        super(decoder(tape, tapeIndex));
     }
 
-    /**
-     * Decodes the {@code short} value from the inline tape element.
-     *
-     * @return the short value
-     */
-    public short getShortValue() {
-        return (short) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
-    }
-
-    @Override
-    public byte getId() {
-        return TagType.SHORT.getId();
-    }
-
-    @Override
-    public @NotNull ShortTag materialize() {
-        return ShortTag.of(this.getShortValue());
+    private static @NotNull Supplier<Short> decoder(@NotNull Tape tape, int tapeIndex) {
+        return () -> (short) TapeElement.unpackValue(tape.elementAt(tapeIndex));
     }
 
 }

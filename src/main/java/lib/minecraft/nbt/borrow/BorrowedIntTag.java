@@ -1,9 +1,10 @@
 package lib.minecraft.nbt.borrow;
 
-import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.primitive.IntTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 /**
  * Borrowed view over a {@link TapeKind#INT_INLINE} tape entry. The int value is sign-extended
@@ -12,34 +13,14 @@ import org.jetbrains.annotations.NotNull;
  * @see IntTag
  */
 @ApiStatus.Experimental
-public final class BorrowedIntTag implements BorrowedTag<Integer> {
-
-    private final @NotNull Tape tape;
-
-    private final int tapeIndex;
+public final class BorrowedIntTag extends IntTag {
 
     BorrowedIntTag(@NotNull Tape tape, int tapeIndex) {
-        this.tape = tape;
-        this.tapeIndex = tapeIndex;
+        super(decoder(tape, tapeIndex));
     }
 
-    /**
-     * Decodes the {@code int} value from the inline tape element.
-     *
-     * @return the int value
-     */
-    public int getIntValue() {
-        return (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
-    }
-
-    @Override
-    public byte getId() {
-        return TagType.INT.getId();
-    }
-
-    @Override
-    public @NotNull IntTag materialize() {
-        return IntTag.of(this.getIntValue());
+    private static @NotNull Supplier<Integer> decoder(@NotNull Tape tape, int tapeIndex) {
+        return () -> (int) TapeElement.unpackValue(tape.elementAt(tapeIndex));
     }
 
 }

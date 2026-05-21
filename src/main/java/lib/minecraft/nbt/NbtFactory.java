@@ -127,7 +127,7 @@ public class NbtFactory {
      *     corruption, malformed binary NBT, or nesting deeper than the parser's 512-frame cap
      */
     @ApiStatus.Experimental
-    public @NotNull BorrowedCompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
+    public @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
         try {
             // Mirror fromByteArray's auto-detect: Compression.decompress is a no-op for raw payloads
             // and inflates gzipped ones. Route the decompressed bytes - which the returned tape

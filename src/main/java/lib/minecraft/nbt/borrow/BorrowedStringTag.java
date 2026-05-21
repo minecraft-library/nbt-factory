@@ -1,6 +1,5 @@
 package lib.minecraft.nbt.borrow;
 
-import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.primitive.StringTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,30 +9,25 @@ import org.jetbrains.annotations.NotNull;
  * 2-byte big-endian length prefix followed by {@code length} bytes of modified UTF-8.
  *
  * <p>Backed by a {@link MutfStringView} that defers modified-UTF-8 decode until first access.
- * {@link #getValue()} and {@link #materialize()} both route through {@link MutfStringView#toString()}
- * so the decoded {@link String} is shared across calls.</p>
+ * {@link #getValue()} routes through {@link MutfStringView#toString()} so the decoded
+ * {@link String} is shared across calls.</p>
  *
  * @see StringTag
  * @see MutfStringView
  */
 @ApiStatus.Experimental
-public final class BorrowedStringTag implements BorrowedTag<String> {
+public final class BorrowedStringTag extends StringTag {
 
     private final @NotNull MutfStringView view;
 
     BorrowedStringTag(@NotNull Tape tape, int tapeIndex) {
-        int tagOffset = (int) TapeElement.unpackValue(tape.elementAt(tapeIndex));
-        this.view = MutfStringView.fromTagOffset(tape.buffer(), tagOffset);
+        this(MutfStringView.fromTagOffset(tape.buffer(),
+            (int) TapeElement.unpackValue(tape.elementAt(tapeIndex))));
     }
 
-    /**
-     * Returns the decoded {@link String} value. The first call decodes via the backing
-     * {@link MutfStringView} and caches the result; subsequent calls return the same reference.
-     *
-     * @return the decoded string
-     */
-    public @NotNull String getValue() {
-        return this.view.toString();
+    private BorrowedStringTag(@NotNull MutfStringView view) {
+        super(view::toString);
+        this.view = view;
     }
 
     /**
@@ -44,16 +38,6 @@ public final class BorrowedStringTag implements BorrowedTag<String> {
      */
     public @NotNull MutfStringView view() {
         return this.view;
-    }
-
-    @Override
-    public byte getId() {
-        return TagType.STRING.getId();
-    }
-
-    @Override
-    public @NotNull StringTag materialize() {
-        return new StringTag(this.view.toString());
     }
 
 }

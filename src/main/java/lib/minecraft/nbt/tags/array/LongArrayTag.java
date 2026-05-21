@@ -11,6 +11,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
+import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
 /**
@@ -43,6 +44,14 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
      */
     public LongArrayTag(long @NotNull ... value) {
         super(value);
+    }
+
+    /**
+     * Constructs a long array tag whose backing array is supplied lazily on first access. Used
+     * by {@link lib.minecraft.nbt.borrow.BorrowedLongArrayTag BorrowedLongArrayTag}.
+     */
+    public LongArrayTag(@NotNull Supplier<long[]> supplier) {
+        super(supplier);
     }
 
     @Override
@@ -91,8 +100,8 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return Arrays.equals(this.getValue(), ((LongArrayTag) o).getValue());
+        if (!(o instanceof LongArrayTag that)) return false;
+        return Arrays.equals(this.getValue(), that.getValue());
     }
 
     @Override

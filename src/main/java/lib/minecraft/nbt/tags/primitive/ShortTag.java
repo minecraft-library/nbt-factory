@@ -4,6 +4,8 @@ import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#SHORT} (ID 2) is used for storing a signed 16-bit integer, ranging from {@link Short#MIN_VALUE} to {@link Short#MAX_VALUE} (inclusive).
  */
@@ -90,6 +92,14 @@ public class ShortTag extends NumericalTag<Short> {
      */
     public ShortTag(@NotNull Number value) {
         this(value.shortValue());
+    }
+
+    /**
+     * Constructs a short tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedShortTag BorrowedShortTag}.
+     */
+    public ShortTag(@NotNull Supplier<Short> supplier) {
+        super(supplier);
     }
 
     @Override

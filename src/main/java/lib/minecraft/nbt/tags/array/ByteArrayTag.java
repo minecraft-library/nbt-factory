@@ -12,6 +12,7 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.LongConsumer;
+import java.util.function.Supplier;
 
 /**
  * {@link TagType#BYTE_ARRAY} (ID 7) is used for storing an ordered sequence of 8-bit signed integers.
@@ -43,6 +44,14 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
      */
     public ByteArrayTag(byte @NotNull ... value) {
         super(value);
+    }
+
+    /**
+     * Constructs a byte array tag whose backing array is supplied lazily on first access. Used
+     * by {@link lib.minecraft.nbt.borrow.BorrowedByteArrayTag BorrowedByteArrayTag}.
+     */
+    public ByteArrayTag(@NotNull Supplier<byte[]> supplier) {
+        super(supplier);
     }
 
     @Override
@@ -84,8 +93,8 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return Arrays.equals(this.getValue(), ((ByteArrayTag) o).getValue());
+        if (!(o instanceof ByteArrayTag that)) return false;
+        return Arrays.equals(this.getValue(), that.getValue());
     }
 
     @Override

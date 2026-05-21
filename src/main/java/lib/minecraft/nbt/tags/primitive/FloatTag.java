@@ -3,6 +3,8 @@ package lib.minecraft.nbt.tags.primitive;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#FLOAT} (ID 5) is used for storing a 32-bit, 32-bit, single-precision floating-point number, ranging from {@link Float#MIN_VALUE} to {@link Float#MAX_VALUE}.
  * @see <a href="https://en.wikipedia.org/wiki/IEEE_floating_point">IEEE_floating_point</a>
@@ -44,6 +46,14 @@ public class FloatTag extends NumericalTag<Float> {
      */
     public FloatTag(@NotNull Number value) {
         this(value.floatValue());
+    }
+
+    /**
+     * Constructs a float tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedFloatTag BorrowedFloatTag}.
+     */
+    public FloatTag(@NotNull Supplier<Float> supplier) {
+        super(supplier);
     }
 
     @Override

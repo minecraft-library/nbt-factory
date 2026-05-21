@@ -49,7 +49,7 @@ class BorrowedArrayStreamTest {
 
         BorrowedLongArrayTag borrowed = borrowLongArray(payload);
 
-        long viaToArray = Arrays.stream(borrowed.toLongArray()).sum();
+        long viaToArray = Arrays.stream(borrowed.getValue()).sum();
         long viaStream = borrowed.longStream().sum();
 
         assertEquals(viaToArray, viaStream,
@@ -82,7 +82,7 @@ class BorrowedArrayStreamTest {
         List<Integer> collected = new ArrayList<>(size);
         borrowed.forEachInt(collected::add);
 
-        int[] expected = borrowed.toIntArray();
+        int[] expected = borrowed.getValue();
         assertEquals(expected.length, collected.size());
         for (int i = 0; i < expected.length; i++)
             assertEquals(expected[i], collected.get(i),
@@ -100,7 +100,7 @@ class BorrowedArrayStreamTest {
         List<Long> collected = new ArrayList<>(size);
         borrowed.forEachLong(collected::add);
 
-        long[] expected = borrowed.toLongArray();
+        long[] expected = borrowed.getValue();
         assertEquals(expected.length, collected.size());
         for (int i = 0; i < expected.length; i++)
             assertEquals(expected[i], collected.get(i),
@@ -120,7 +120,7 @@ class BorrowedArrayStreamTest {
         borrowed.forEachByte(b -> collected[index.getAndIncrement()] = b);
 
         assertEquals(size, index.get(), "forEachByte invocation count");
-        assertArrayEquals(borrowed.toByteArray(), collected);
+        assertArrayEquals(borrowed.getValue(), collected);
     }
 
     @Test
@@ -150,7 +150,7 @@ class BorrowedArrayStreamTest {
         AtomicLong tally = new AtomicLong();
         borrowed.forEachInt(v -> tally.addAndGet(v));
 
-        long viaArray = Arrays.stream(borrowed.toIntArray()).asLongStream().sum();
+        long viaArray = Arrays.stream(borrowed.getValue()).asLongStream().sum();
         assertEquals(viaArray, tally.get());
     }
 

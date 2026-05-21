@@ -98,7 +98,7 @@ public class SimdNbtHypixelExtractBenchmarks {
     @Benchmark
     public List<Item> parseAndExtractBorrow(BytesProcessed bytes) {
         bytes.payloadBytes += this.payloadBytes;
-        BorrowedCompoundTag root = NbtFactory.borrowFromByteArray(this.payload);
+        BorrowedCompoundTag root = (BorrowedCompoundTag) NbtFactory.borrowFromByteArray(this.payload);
         return extractItemsBorrow(root);
     }
 
@@ -227,20 +227,20 @@ public class SimdNbtHypixelExtractBenchmarks {
      * payloads.
      */
     private static List<Item> extractItemsBorrow(BorrowedCompoundTag root) {
-        BorrowedTag<?> auctionItemsTag = root.get("i");
+        Tag<?> auctionItemsTag = root.get("i");
         if (!(auctionItemsTag instanceof BorrowedListTag auctionItems))
             return new ArrayList<>();
 
         List<Item> items = new ArrayList<>(auctionItems.size());
-        Iterator<BorrowedTag<?>> entries = auctionItems.iterator();
+        Iterator<Tag<?>> entries = auctionItems.iterator();
         while (entries.hasNext()) {
-            BorrowedTag<?> entry = entries.next();
+            Tag<?> entry = entries.next();
             if (!(entry instanceof BorrowedCompoundTag itemNbt) || !itemNbt.containsKey("id")) {
                 items.add(null);
                 continue;
             }
 
-            BorrowedTag<?> tagTag = itemNbt.get("tag");
+            Tag<?> tagTag = itemNbt.get("tag");
             if (!(tagTag instanceof BorrowedCompoundTag tag)) {
                 items.add(null);
                 continue;
@@ -277,13 +277,13 @@ public class SimdNbtHypixelExtractBenchmarks {
     private static List<String> extractLoreBorrow(BorrowedCompoundTag display) {
         if (display == null)
             return new ArrayList<>();
-        BorrowedTag<?> loreTag = display.get("Lore");
+        Tag<?> loreTag = display.get("Lore");
         if (!(loreTag instanceof BorrowedListTag lore))
             return new ArrayList<>();
         List<String> out = new ArrayList<>(lore.size());
-        Iterator<BorrowedTag<?>> it = lore.iterator();
+        Iterator<Tag<?>> it = lore.iterator();
         while (it.hasNext()) {
-            BorrowedTag<?> s = it.next();
+            Tag<?> s = it.next();
             // Each Lore entry is a string; only here do we pay the modified-UTF-8 decode.
             if (s instanceof BorrowedStringTag bs)
                 out.add(bs.getValue());
@@ -294,12 +294,12 @@ public class SimdNbtHypixelExtractBenchmarks {
     private static Map<String, Integer> extractEnchantmentsBorrow(BorrowedCompoundTag extraAttrs) {
         if (extraAttrs == null)
             return new HashMap<>();
-        BorrowedTag<?> enchantsTag = extraAttrs.get("enchantments");
+        Tag<?> enchantsTag = extraAttrs.get("enchantments");
         if (!(enchantsTag instanceof BorrowedCompoundTag enchants))
             return new HashMap<>();
         Map<String, Integer> out = new HashMap<>(enchants.size());
-        for (Map.Entry<String, BorrowedTag<?>> e : enchants.entries()) {
-            int value = (e.getValue() instanceof BorrowedIntTag bi) ? bi.getIntValue() : 0;
+        for (Map.Entry<String, Tag<?>> e : enchants.entrySet()) {
+            int value = (e.getValue() instanceof BorrowedIntTag bi) ? bi.intValue() : 0;
             out.put(e.getKey(), value);
         }
         return out;
@@ -310,38 +310,38 @@ public class SimdNbtHypixelExtractBenchmarks {
         if (skullOwner == null) return null;
         BorrowedCompoundTag properties = compoundOrNull(skullOwner.get("Properties"));
         if (properties == null) return null;
-        BorrowedTag<?> texturesTag = properties.get("textures");
+        Tag<?> texturesTag = properties.get("textures");
         if (!(texturesTag instanceof BorrowedListTag textures) || textures.isEmpty()) return null;
-        BorrowedTag<?> first = textures.get(0);
+        Tag<?> first = textures.get(0);
         if (!(first instanceof BorrowedCompoundTag firstCompound)) return null;
         return stringValueBorrow(firstCompound, "Value");
     }
 
-    private static BorrowedCompoundTag compoundOrNull(BorrowedTag<?> tag) {
+    private static BorrowedCompoundTag compoundOrNull(Tag<?> tag) {
         return (tag instanceof BorrowedCompoundTag c) ? c : null;
     }
 
     private static short shortValueBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return 0;
-        BorrowedTag<?> t = c.get(key);
-        return (t instanceof BorrowedShortTag s) ? s.getShortValue() : 0;
+        Tag<?> t = c.get(key);
+        return (t instanceof BorrowedShortTag s) ? s.shortValue() : 0;
     }
 
     private static byte byteValueBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return 0;
-        BorrowedTag<?> t = c.get(key);
-        return (t instanceof BorrowedByteTag b) ? b.getByteValue() : 0;
+        Tag<?> t = c.get(key);
+        return (t instanceof BorrowedByteTag b) ? b.byteValue() : 0;
     }
 
     private static Integer intValueBoxedBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return null;
-        BorrowedTag<?> t = c.get(key);
-        return (t instanceof BorrowedIntTag i) ? i.getIntValue() : null;
+        Tag<?> t = c.get(key);
+        return (t instanceof BorrowedIntTag i) ? i.intValue() : null;
     }
 
     private static String stringValueBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return null;
-        BorrowedTag<?> t = c.get(key);
+        Tag<?> t = c.get(key);
         return (t instanceof BorrowedStringTag s) ? s.getValue() : null;
     }
 

@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * {@link TagType#LIST} (ID 9) is used for storing an ordered list of {@link Tag Tags}.
@@ -62,6 +63,19 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      */
     public ListTag(@NotNull List<E> value) {
         super(value);
+    }
+
+    /**
+     * Constructs a list tag whose backing list is supplied lazily on first access, with the
+     * element type pre-seeded so callers can read {@link #getListType()} before the supplier
+     * fires. Used by {@link lib.minecraft.nbt.borrow.BorrowedListTag BorrowedListTag}.
+     *
+     * @param elementId the NBT tag id every element of this list must carry
+     * @param supplier supplier invoked on first {@code getValue()}
+     */
+    public ListTag(byte elementId, @NotNull Supplier<List<E>> supplier) {
+        super(supplier);
+        this.elementId = elementId;
     }
 
     @Override
@@ -191,14 +205,11 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public boolean equals(Object o) {
-        // Size short-circuit before the per-element List.equals walk: a single int compare wins on
-        // every length-mismatched list with no element recursion. The element-id pre-check stays in
-        // place so two lists holding e.g. an empty content set still compare unequal when their
-        // declared element types differ.
+        // Loosened to instanceof ListTag so a materialized list and a BorrowedListTag holding the
+        // same elements compare equal across backends. Size + element-id short-circuit beats the
+        // per-element List.equals walk on every mismatched pair.
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ListTag<?> listTag = (ListTag<?>) o;
+        if (!(o instanceof ListTag<?> listTag)) return false;
 
         if (this.getListType() != listTag.getListType()) return false;
         if (this.size() != listTag.size()) return false;

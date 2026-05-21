@@ -73,29 +73,29 @@ class BorrowedNavigatorTest {
 
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
 
-        BorrowedTag<?> byteTag = borrowed.get("byte");
+        Tag<?> byteTag = borrowed.get("byte");
         assertInstanceOf(BorrowedByteTag.class, byteTag);
-        assertEquals((byte) -42, ((BorrowedByteTag) byteTag).getByteValue());
+        assertEquals((byte) -42, ((BorrowedByteTag) byteTag).byteValue());
 
-        BorrowedTag<?> shortTag = borrowed.get("short");
+        Tag<?> shortTag = borrowed.get("short");
         assertInstanceOf(BorrowedShortTag.class, shortTag);
-        assertEquals((short) -32000, ((BorrowedShortTag) shortTag).getShortValue());
+        assertEquals((short) -32000, ((BorrowedShortTag) shortTag).shortValue());
 
-        BorrowedTag<?> intTag = borrowed.get("int");
+        Tag<?> intTag = borrowed.get("int");
         assertInstanceOf(BorrowedIntTag.class, intTag);
-        assertEquals(Integer.MIN_VALUE, ((BorrowedIntTag) intTag).getIntValue());
+        assertEquals(Integer.MIN_VALUE, ((BorrowedIntTag) intTag).intValue());
 
-        BorrowedTag<?> longTag = borrowed.get("long");
+        Tag<?> longTag = borrowed.get("long");
         assertInstanceOf(BorrowedLongTag.class, longTag);
-        assertEquals(Long.MIN_VALUE, ((BorrowedLongTag) longTag).getLongValue());
+        assertEquals(Long.MIN_VALUE, ((BorrowedLongTag) longTag).longValue());
 
-        BorrowedTag<?> floatTag = borrowed.get("float");
+        Tag<?> floatTag = borrowed.get("float");
         assertInstanceOf(BorrowedFloatTag.class, floatTag);
-        assertEquals(1.5f, ((BorrowedFloatTag) floatTag).getFloatValue());
+        assertEquals(1.5f, ((BorrowedFloatTag) floatTag).floatValue());
 
-        BorrowedTag<?> doubleTag = borrowed.get("double");
+        Tag<?> doubleTag = borrowed.get("double");
         assertInstanceOf(BorrowedDoubleTag.class, doubleTag);
-        assertEquals(Math.PI, ((BorrowedDoubleTag) doubleTag).getDoubleValue());
+        assertEquals(Math.PI, ((BorrowedDoubleTag) doubleTag).doubleValue());
     }
 
     @Test
@@ -105,7 +105,7 @@ class BorrowedNavigatorTest {
         root.put("k", new StringTag("hello world"));
 
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
-        BorrowedTag<?> tag = borrowed.get("k");
+        Tag<?> tag = borrowed.get("k");
         assertInstanceOf(BorrowedStringTag.class, tag);
 
         BorrowedStringTag stringTag = (BorrowedStringTag) tag;
@@ -134,7 +134,7 @@ class BorrowedNavigatorTest {
         BorrowedByteArrayTag byteArrayTag = (BorrowedByteArrayTag) borrowed.get("bytes");
         assertNotNull(byteArrayTag);
         assertEquals(bytes.length, byteArrayTag.size());
-        assertArrayEquals(bytes, byteArrayTag.toByteArray());
+        assertArrayEquals(bytes, byteArrayTag.getValue());
         RawList byteList = byteArrayTag.rawList();
         assertEquals(TapeKind.BYTE_ARRAY_PTR, byteList.elementKind());
         for (int i = 0; i < bytes.length; i++)
@@ -143,7 +143,7 @@ class BorrowedNavigatorTest {
         BorrowedIntArrayTag intArrayTag = (BorrowedIntArrayTag) borrowed.get("ints");
         assertNotNull(intArrayTag);
         assertEquals(ints.length, intArrayTag.size());
-        assertArrayEquals(ints, intArrayTag.toIntArray());
+        assertArrayEquals(ints, intArrayTag.getValue());
         RawList intList = intArrayTag.rawList();
         for (int i = 0; i < ints.length; i++)
             assertEquals(ints[i], intList.getInt(i));
@@ -151,7 +151,7 @@ class BorrowedNavigatorTest {
         BorrowedLongArrayTag longArrayTag = (BorrowedLongArrayTag) borrowed.get("longs");
         assertNotNull(longArrayTag);
         assertEquals(longs.length, longArrayTag.size());
-        assertArrayEquals(longs, longArrayTag.toLongArray());
+        assertArrayEquals(longs, longArrayTag.getValue());
         RawList longList = longArrayTag.rawList();
         for (int i = 0; i < longs.length; i++)
             assertEquals(longs[i], longList.getLong(i));
@@ -173,21 +173,21 @@ class BorrowedNavigatorTest {
         assertNotNull(borrowedList);
 
         // Wire elementId for IntTag is TagType.INT.id == 3.
-        assertEquals((byte) 3, borrowedList.getElementId());
+        assertEquals((byte) 3, borrowedList.getListType());
         assertEquals(3, borrowedList.size());
         assertFalse(borrowedList.isEmpty());
 
-        assertEquals(10, ((BorrowedIntTag) borrowedList.get(0)).getIntValue());
-        assertEquals(20, ((BorrowedIntTag) borrowedList.get(1)).getIntValue());
-        assertEquals(30, ((BorrowedIntTag) borrowedList.get(2)).getIntValue());
+        assertEquals(10, ((BorrowedIntTag) borrowedList.get(0)).intValue());
+        assertEquals(20, ((BorrowedIntTag) borrowedList.get(1)).intValue());
+        assertEquals(30, ((BorrowedIntTag) borrowedList.get(2)).intValue());
         assertThrows(IndexOutOfBoundsException.class, () -> borrowedList.get(3));
         assertThrows(IndexOutOfBoundsException.class, () -> borrowedList.get(-1));
 
         // Iterator walks in insertion order.
-        Iterator<BorrowedTag<?>> it = borrowedList.iterator();
-        assertEquals(10, ((BorrowedIntTag) it.next()).getIntValue());
-        assertEquals(20, ((BorrowedIntTag) it.next()).getIntValue());
-        assertEquals(30, ((BorrowedIntTag) it.next()).getIntValue());
+        Iterator<Tag<?>> it = borrowedList.iterator();
+        assertEquals(10, ((BorrowedIntTag) it.next()).intValue());
+        assertEquals(20, ((BorrowedIntTag) it.next()).intValue());
+        assertEquals(30, ((BorrowedIntTag) it.next()).intValue());
         assertFalse(it.hasNext());
     }
 
@@ -201,7 +201,7 @@ class BorrowedNavigatorTest {
 
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
         List<String> keys = new ArrayList<>();
-        for (Map.Entry<String, BorrowedTag<?>> entry : borrowed.entries()) {
+        for (Map.Entry<String, Tag<?>> entry : borrowed.entrySet()) {
             keys.add(entry.getKey());
             // Exercise the value navigator while iterating.
             assertInstanceOf(BorrowedIntTag.class, entry.getValue());
@@ -232,7 +232,7 @@ class BorrowedNavigatorTest {
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
         BorrowedListTag borrowedList = (BorrowedListTag) borrowed.get("empty");
         assertNotNull(borrowedList);
-        assertEquals((byte) 1, borrowedList.getElementId());
+        assertEquals((byte) 1, borrowedList.getListType());
         assertEquals(0, borrowedList.size());
         assertTrue(borrowedList.isEmpty());
 
@@ -256,8 +256,8 @@ class BorrowedNavigatorTest {
         assertNotNull(a);
         BorrowedCompoundTag b = (BorrowedCompoundTag) a.get("b");
         assertNotNull(b);
-        BorrowedTag<?> c = b.get("c");
-        assertEquals(42, ((BorrowedIntTag) c).getIntValue());
+        Tag<?> c = b.get("c");
+        assertEquals(42, ((BorrowedIntTag) c).intValue());
     }
 
     @Test
@@ -279,7 +279,7 @@ class BorrowedNavigatorTest {
 
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
         for (Map.Entry<String, Tag<?>> entry : root.entrySet()) {
-            BorrowedTag<?> view = borrowed.get(entry.getKey());
+            Tag<?> view = borrowed.get(entry.getKey());
             assertNotNull(view, "missing key " + entry.getKey());
             assertEquals(entry.getValue().getId(), view.getId(),
                 "id mismatch for key " + entry.getKey());

@@ -11,6 +11,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 /**
@@ -43,6 +44,14 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
      */
     public IntArrayTag(int @NotNull ... value) {
         super(value);
+    }
+
+    /**
+     * Constructs an int array tag whose backing array is supplied lazily on first access. Used
+     * by {@link lib.minecraft.nbt.borrow.BorrowedIntArrayTag BorrowedIntArrayTag}.
+     */
+    public IntArrayTag(@NotNull Supplier<int[]> supplier) {
+        super(supplier);
     }
 
     @Override
@@ -91,8 +100,8 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return Arrays.equals(this.getValue(), ((IntArrayTag) o).getValue());
+        if (!(o instanceof IntArrayTag that)) return false;
+        return Arrays.equals(this.getValue(), that.getValue());
     }
 
     @Override

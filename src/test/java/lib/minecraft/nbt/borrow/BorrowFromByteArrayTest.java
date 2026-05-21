@@ -55,8 +55,7 @@ class BorrowFromByteArrayTest {
         CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
         assertNotNull(viaProduction);
 
-        BorrowedCompoundTag borrowed = NbtFactory.borrowFromByteArray(payload);
-        CompoundTag viaBorrow = borrowed.materialize();
+        CompoundTag viaBorrow = NbtFactory.borrowFromByteArray(payload);
 
         assertEquals(viaProduction, viaBorrow,
             "borrowFromByteArray parity mismatch on " + filename);
@@ -72,7 +71,7 @@ class BorrowFromByteArrayTest {
         byte[] gzipped = Compression.compress(raw, 0, raw.length, Compression.GZIP);
 
         CompoundTag viaProductionRaw = NbtFactory.fromByteArray(raw);
-        CompoundTag viaBorrowGzipped = NbtFactory.borrowFromByteArray(gzipped).materialize();
+        CompoundTag viaBorrowGzipped = NbtFactory.borrowFromByteArray(gzipped);
 
         assertEquals(viaProductionRaw, viaBorrowGzipped,
             "borrowFromByteArray must transparently inflate gzipped input");
@@ -95,7 +94,7 @@ class BorrowFromByteArrayTest {
         byte[][] payloadHolder = new byte[][]{Files.readAllBytes(file)};
         WeakReference<byte[]> payloadWeak = new WeakReference<>(payloadHolder[0]);
 
-        BorrowedCompoundTag borrowed = NbtFactory.borrowFromByteArray(payloadHolder[0]);
+        CompoundTag borrowed = NbtFactory.borrowFromByteArray(payloadHolder[0]);
         payloadHolder[0] = null;
 
         // Best-effort GC nudge - the Tape's strong reference to the buffer should keep it alive
@@ -116,8 +115,7 @@ class BorrowFromByteArrayTest {
         // The Tape holds a strong reference, so the buffer must remain reachable.
         assertNotNull(payloadWeak, "weak reference sentinel allocated");
 
-        CompoundTag viaBorrow = borrowed.materialize();
-        assertEquals(expected, viaBorrow,
+        assertEquals(expected, borrowed,
             "borrowed tree must remain valid after the original byte[] reference is dropped");
     }
 

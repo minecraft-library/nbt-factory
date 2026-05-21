@@ -84,7 +84,7 @@ public class BorrowedArrayStreamBenchmarks {
         root.put("longs", new LongArrayTag(longs));
 
         byte[] encoded = NbtFactory.toByteArray(root);
-        BorrowedCompoundTag borrowedRoot = NbtFactory.borrowFromByteArray(encoded);
+        CompoundTag borrowedRoot = NbtFactory.borrowFromByteArray(encoded);
         this.borrowedInts = (BorrowedIntArrayTag) borrowedRoot.get("ints");
         this.borrowedLongs = (BorrowedLongArrayTag) borrowedRoot.get("longs");
     }
@@ -97,7 +97,7 @@ public class BorrowedArrayStreamBenchmarks {
      */
     @Benchmark
     public long sumViaToIntArray() {
-        return Arrays.stream(this.borrowedInts.toIntArray()).asLongStream().sum();
+        return Arrays.stream(this.borrowedInts.getValue()).asLongStream().sum();
     }
 
     /**
@@ -105,7 +105,7 @@ public class BorrowedArrayStreamBenchmarks {
      */
     @Benchmark
     public long sumViaToLongArray() {
-        return Arrays.stream(this.borrowedLongs.toLongArray()).sum();
+        return Arrays.stream(this.borrowedLongs.getValue()).sum();
     }
 
     /**

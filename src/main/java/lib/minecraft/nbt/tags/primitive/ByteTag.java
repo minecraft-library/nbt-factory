@@ -4,6 +4,8 @@ import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * {@link TagType#BYTE} (ID 1) is used for storing a signed 8-bit integer, ranging from {@link Byte#MIN_VALUE} to {@link Byte#MAX_VALUE} (inclusive).
  */
@@ -86,6 +88,16 @@ public class ByteTag extends NumericalTag<Byte> {
      */
     public ByteTag(@NotNull Number value) {
         this(value.byteValue());
+    }
+
+    /**
+     * Constructs a byte tag whose value is supplied lazily on first access. Used by
+     * {@link lib.minecraft.nbt.borrow.BorrowedByteTag BorrowedByteTag}.
+     *
+     * @param supplier supplier invoked on first {@code getValue()}
+     */
+    public ByteTag(@NotNull Supplier<Byte> supplier) {
+        super(supplier);
     }
 
     @Override
