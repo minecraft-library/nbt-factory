@@ -45,14 +45,14 @@ public enum TapeKind {
      * Pointer to an 8-byte big-endian {@code TAG_Long} payload in the retained buffer. The 64-bit
      * value does not fit in the 56 low bits of a tape element, so the tape stores the buffer
      * offset and the consumer reads the value via
-     * {@link lib.minecraft.nbt.io.NbtByteCodec#getLong(byte[], int) NbtByteCodec.getLong}.
+     * {@link lib.minecraft.nbt.io.util.NbtByteCodec#getLong(byte[], int) NbtByteCodec.getLong}.
      */
     LONG_PTR,
 
     /**
      * Pointer to an 8-byte big-endian {@code TAG_Double} payload in the retained buffer. Same
      * rationale as {@link #LONG_PTR}; consumer reads via
-     * {@link lib.minecraft.nbt.io.NbtByteCodec#getDouble(byte[], int) NbtByteCodec.getDouble}.
+     * {@link lib.minecraft.nbt.io.util.NbtByteCodec#getDouble(byte[], int) NbtByteCodec.getDouble}.
      */
     DOUBLE_PTR,
 

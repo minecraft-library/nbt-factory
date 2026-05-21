@@ -1,4 +1,4 @@
-package lib.minecraft.nbt.io;
+package lib.minecraft.nbt.io.util;
 
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;

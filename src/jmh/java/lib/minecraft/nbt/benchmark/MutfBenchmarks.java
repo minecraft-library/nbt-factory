@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.benchmark;
 
-import lib.minecraft.nbt.io.NbtModifiedUtf8;
+import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

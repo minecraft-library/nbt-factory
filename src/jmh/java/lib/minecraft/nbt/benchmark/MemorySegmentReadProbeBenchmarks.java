@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.benchmark;
 
-import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;

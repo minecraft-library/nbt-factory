@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p>Every concrete subtype is backed by a {@code (Tape tape, int tapeIndex)} pair. Reads are
  * lazy: primitive accessors decode on demand from {@link Tape#buffer()} via
- * {@link lib.minecraft.nbt.io.NbtByteCodec}, strings decode through
- * {@link lib.minecraft.nbt.io.NbtModifiedUtf8} (Phase C4 will replace that with the
+ * {@link lib.minecraft.nbt.io.util.NbtByteCodec}, strings decode through
+ * {@link lib.minecraft.nbt.io.util.NbtModifiedUtf8} (Phase C4 will replace that with the
  * zero-copy {@code MutfStringView}), and arrays expose either a {@link RawList} view or a
  * materialized primitive array on demand.</p>
  *

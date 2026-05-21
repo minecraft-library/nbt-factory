@@ -92,7 +92,7 @@ public class BorrowedArrayStreamBenchmarks {
     /**
      * Materialize the {@code int[]} once, then sum it via {@link Arrays#stream(int[])}. After
      * Phase E1 this is the obvious choice for int-array reductions: the bulk-byteswap path
-     * ({@link lib.minecraft.nbt.io.NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
+     * ({@link lib.minecraft.nbt.io.util.NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
      * auto-vectorizes cleanly, beating any per-element spliterator we tried.
      */
     @Benchmark

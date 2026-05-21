@@ -1,7 +1,7 @@
 package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
-import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

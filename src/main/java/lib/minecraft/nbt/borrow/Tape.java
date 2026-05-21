@@ -2,8 +2,8 @@ package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
-import lib.minecraft.nbt.io.NbtByteCodec;
-import lib.minecraft.nbt.io.NbtModifiedUtf8;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import lib.minecraft.nbt.tags.array.IntArrayTag;
 import lib.minecraft.nbt.tags.array.LongArrayTag;

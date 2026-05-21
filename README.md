@@ -221,15 +221,14 @@ nbt-factory/
     │   ├── NbtFactory.java              # public entry point
     │   ├── exception/                   # NbtException, NbtMaxDepthException
     │   ├── io/
-    │   │   ├── NbtByteCodec.java        # tag-type codec contract
     │   │   ├── NbtInput.java            # read dispatch
     │   │   ├── NbtOutput.java           # write dispatch
-    │   │   ├── NbtKnownKeys.java
-    │   │   ├── NbtModifiedUtf8.java     # Mojang's modified UTF-8
+    │   │   ├── util/                    # NbtByteCodec, NbtModifiedUtf8, ByteList/IntList/LongList
     │   │   ├── buffer/                  # heap-backed codec
     │   │   ├── stream/                  # DataInputStream/DataOutputStream wrappers
     │   │   ├── snbt/                    # SnbtSerializer / SnbtDeserializer
     │   │   └── json/                    # NbtJsonSerializer / NbtJsonDeserializer
+    │   ├── util/                        # NbtKnownKeys - canonical key lookup
     │   └── tags/
     │       ├── Tag.java                 # base contract
     │       ├── TagType.java             # enum dispatch

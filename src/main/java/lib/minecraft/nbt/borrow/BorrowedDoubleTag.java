@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.borrow;
 
-import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.primitive.DoubleTag;
 import org.jetbrains.annotations.ApiStatus;

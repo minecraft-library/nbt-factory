@@ -2,7 +2,7 @@ package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
-import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
