@@ -17,7 +17,7 @@ public final class EndTag extends Tag<Void> {
     public static final @NotNull EndTag INSTANCE = new EndTag();
 
     private EndTag() {
-        super(null);
+        super((Void) null);
     }
 
     @Override
