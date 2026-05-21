@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
+import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.collection.CompoundTag;
@@ -126,7 +127,7 @@ public final class BorrowedCompoundTag implements BorrowedTag<Map<String, Tag<?>
             long keyElement = this.tape.elementAt(idx);
 
             if (TapeElement.unpackKind(keyElement) != TapeKind.KEY_PTR)
-                throw new NbtException(
+                throw new NbtFormatException(
                     "Expected KEY_PTR inside compound at tape index %d, found %s",
                     idx, TapeElement.unpackKind(keyElement));
 
@@ -167,7 +168,7 @@ public final class BorrowedCompoundTag implements BorrowedTag<Map<String, Tag<?>
             long keyElement = tape.elementAt(this.cursor);
 
             if (TapeElement.unpackKind(keyElement) != TapeKind.KEY_PTR)
-                throw new NbtException(
+                throw new NbtFormatException(
                     "Expected KEY_PTR inside compound at tape index %d, found %s",
                     this.cursor, TapeElement.unpackKind(keyElement));
 

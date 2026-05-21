@@ -2,6 +2,8 @@ package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
+import lib.minecraft.nbt.exception.NbtFormatException;
+import lib.minecraft.nbt.exception.NbtTypeException;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
@@ -146,7 +148,7 @@ public final class Tape {
             byte[] buffer = NbtFactory.toByteArray(root);
             return TapeParser.parse(buffer);
         } catch (IOException exception) {
-            throw new NbtException(exception, "Failed to encode CompoundTag into a tape");
+            throw new NbtFormatException(exception, "Failed to encode CompoundTag into a tape");
         }
     }
 
@@ -168,12 +170,12 @@ public final class Tape {
      */
     public @NotNull CompoundTag materialize() {
         if (this.size < 2)
-            throw new NbtException("Tape too short to materialize: size=%d", this.size);
+            throw new NbtFormatException("Tape too short to materialize: size=%d", this.size);
 
         long header = this.elements[0];
 
         if (TapeElement.unpackKind(header) != TapeKind.COMPOUND_HEADER)
-            throw new NbtException("Tape root is not a COMPOUND_HEADER: %s", TapeElement.unpackKind(header));
+            throw new NbtFormatException("Tape root is not a COMPOUND_HEADER: %s", TapeElement.unpackKind(header));
 
         MaterializeContext ctx = new MaterializeContext(this.elements, this.buffer);
         ctx.tapeIndex = 1;
@@ -193,7 +195,7 @@ public final class Tape {
             }
 
             if (kind != TapeKind.KEY_PTR)
-                throw new NbtException("Expected KEY_PTR or COMPOUND_END inside compound, found %s", kind);
+                throw new NbtFormatException("Expected KEY_PTR or COMPOUND_END inside compound, found %s", kind);
 
             int keyOffset = (int) TapeElement.unpackValue(element);
             String key = decodeUtf8(ctx.buffer, keyOffset);
@@ -274,7 +276,7 @@ public final class Tape {
                 ctx.tapeIndex++;
                 yield readList(ctx, listElementId, approxLen);
             }
-            default -> throw new NbtException("Unexpected kind in value position: %s", kind);
+            default -> throw new NbtFormatException("Unexpected kind in value position: %s", kind);
         };
     }
 
@@ -327,12 +329,12 @@ public final class Tape {
      */
     public @NotNull BorrowedCompoundTag root() {
         if (this.size < 1)
-            throw new NbtException("Empty tape has no root");
+            throw new NbtFormatException("Empty tape has no root");
 
         long header = this.elements[0];
 
         if (TapeElement.unpackKind(header) != TapeKind.COMPOUND_HEADER)
-            throw new NbtException(
+            throw new NbtFormatException(
                 "Tape root is not a COMPOUND_HEADER: %s", TapeElement.unpackKind(header));
 
         return new BorrowedCompoundTag(this, 0);
@@ -367,7 +369,7 @@ public final class Tape {
         long header = this.elements[compoundHeaderIndex];
 
         if (TapeElement.unpackKind(header) != TapeKind.COMPOUND_HEADER)
-            throw new NbtException("Index %d is not a COMPOUND_HEADER", compoundHeaderIndex);
+            throw new NbtTypeException("Index %d is not a COMPOUND_HEADER", compoundHeaderIndex);
 
         int endIdx = TapeElement.unpackEndOffset(header);
         int idx = compoundHeaderIndex + 1;
@@ -377,7 +379,7 @@ public final class Tape {
             TapeKind kind = TapeElement.unpackKind(element);
 
             if (kind != TapeKind.KEY_PTR)
-                throw new NbtException("Expected KEY_PTR inside compound at tape index %d, found %s", idx, kind);
+                throw new NbtFormatException("Expected KEY_PTR inside compound at tape index %d, found %s", idx, kind);
 
             int keyOffset = (int) TapeElement.unpackValue(element);
             MutfStringView view = MutfStringView.fromTagOffset(this.buffer, keyOffset);
@@ -425,7 +427,7 @@ public final class Tape {
         try {
             return NbtModifiedUtf8.decode(buffer, offset + 2, len);
         } catch (UTFDataFormatException exception) {
-            throw new NbtException(exception, "Malformed modified UTF-8 in tape buffer at offset %d", offset);
+            throw new NbtFormatException(exception, "Malformed modified UTF-8 in tape buffer at offset %d", offset);
         }
     }
 

@@ -1,6 +1,8 @@
 package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
+import lib.minecraft.nbt.exception.NbtFormatException;
+import lib.minecraft.nbt.exception.NbtTypeException;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tags.array.ByteArrayTag;
 import org.jetbrains.annotations.ApiStatus;
@@ -61,15 +63,15 @@ public final class RawList {
         int elementSize = elementSizeFor(elementKind);
 
         if (offset < 0)
-            throw new NbtException("RawList offset must be non-negative: %d", offset);
+            throw new NbtFormatException("RawList offset must be non-negative: %d", offset);
 
         if (count < 0)
-            throw new NbtException("RawList count must be non-negative: %d", count);
+            throw new NbtFormatException("RawList count must be non-negative: %d", count);
 
         long requiredEnd = (long) offset + (long) count * elementSize;
 
         if (requiredEnd > buffer.length)
-            throw new NbtException(
+            throw new NbtFormatException(
                 "RawList range [%d, %d) overflows buffer length %d",
                 offset, requiredEnd, buffer.length
             );
@@ -110,7 +112,7 @@ public final class RawList {
      */
     public byte getByte(int i) {
         if (this.elementKind != TapeKind.BYTE_ARRAY_PTR)
-            throw new NbtException("RawList.getByte called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.getByte called on %s view", this.elementKind);
 
         if (i < 0 || i >= this.count)
             throw new IndexOutOfBoundsException("index out of range: " + i);
@@ -129,7 +131,7 @@ public final class RawList {
      */
     public int getInt(int i) {
         if (this.elementKind != TapeKind.INT_ARRAY_PTR)
-            throw new NbtException("RawList.getInt called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.getInt called on %s view", this.elementKind);
 
         if (i < 0 || i >= this.count)
             throw new IndexOutOfBoundsException("index out of range: " + i);
@@ -148,7 +150,7 @@ public final class RawList {
      */
     public long getLong(int i) {
         if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
-            throw new NbtException("RawList.getLong called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.getLong called on %s view", this.elementKind);
 
         if (i < 0 || i >= this.count)
             throw new IndexOutOfBoundsException("index out of range: " + i);
@@ -165,7 +167,7 @@ public final class RawList {
      */
     public byte @NotNull [] toByteArray() {
         if (this.elementKind != TapeKind.BYTE_ARRAY_PTR)
-            throw new NbtException("RawList.toByteArray called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.toByteArray called on %s view", this.elementKind);
 
         byte[] dst = new byte[this.count];
         System.arraycopy(this.buffer, this.offset, dst, 0, this.count);
@@ -182,7 +184,7 @@ public final class RawList {
      */
     public int @NotNull [] toIntArray() {
         if (this.elementKind != TapeKind.INT_ARRAY_PTR)
-            throw new NbtException("RawList.toIntArray called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.toIntArray called on %s view", this.elementKind);
 
         int[] dst = new int[this.count];
         NbtByteCodec.getIntArrayBE(this.buffer, this.offset, dst, 0, this.count);
@@ -199,7 +201,7 @@ public final class RawList {
      */
     public long @NotNull [] toLongArray() {
         if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
-            throw new NbtException("RawList.toLongArray called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.toLongArray called on %s view", this.elementKind);
 
         long[] dst = new long[this.count];
         NbtByteCodec.getLongArrayBE(this.buffer, this.offset, dst, 0, this.count);
@@ -217,7 +219,7 @@ public final class RawList {
      */
     public @NotNull LongStream longStream() {
         if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
-            throw new NbtException("RawList.longStream called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.longStream called on %s view", this.elementKind);
 
         return StreamSupport.longStream(this.spliteratorOfLong(), false);
     }
@@ -234,7 +236,7 @@ public final class RawList {
      */
     public Spliterator.@NotNull OfLong spliteratorOfLong() {
         if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
-            throw new NbtException("RawList.spliteratorOfLong called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.spliteratorOfLong called on %s view", this.elementKind);
 
         return new LongArraySpliterator(this.buffer, this.offset, this.offset + (this.count << 3));
     }
@@ -251,7 +253,7 @@ public final class RawList {
      */
     public void forEachInt(@NotNull IntConsumer consumer) {
         if (this.elementKind != TapeKind.INT_ARRAY_PTR)
-            throw new NbtException("RawList.forEachInt called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.forEachInt called on %s view", this.elementKind);
 
         int end = this.offset + (this.count << 2);
         for (int p = this.offset; p < end; p += 4)
@@ -270,7 +272,7 @@ public final class RawList {
      */
     public void forEachLong(@NotNull LongConsumer consumer) {
         if (this.elementKind != TapeKind.LONG_ARRAY_PTR)
-            throw new NbtException("RawList.forEachLong called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.forEachLong called on %s view", this.elementKind);
 
         int end = this.offset + (this.count << 3);
         for (int p = this.offset; p < end; p += 8)
@@ -289,7 +291,7 @@ public final class RawList {
      */
     public void forEachByte(ByteArrayTag.@NotNull ByteConsumer consumer) {
         if (this.elementKind != TapeKind.BYTE_ARRAY_PTR)
-            throw new NbtException("RawList.forEachByte called on %s view", this.elementKind);
+            throw new NbtTypeException("RawList.forEachByte called on %s view", this.elementKind);
 
         int end = this.offset + this.count;
         for (int p = this.offset; p < end; p++)
@@ -301,7 +303,7 @@ public final class RawList {
             case BYTE_ARRAY_PTR -> 1;
             case INT_ARRAY_PTR -> 4;
             case LONG_ARRAY_PTR -> 8;
-            default -> throw new NbtException("RawList element kind must be a *_ARRAY_PTR, got %s", kind);
+            default -> throw new NbtTypeException("RawList element kind must be a *_ARRAY_PTR, got %s", kind);
         };
     }
 

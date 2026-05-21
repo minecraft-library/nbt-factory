@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
+import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tags.TagType;
@@ -138,12 +139,12 @@ public final class TapeParser {
     private void parseRoot() throws IOException {
         // Wire layout: [0]=TAG_Compound, [1..2]=root-name length, [3..]=compound body.
         if (this.input.length < 3)
-            throw new NbtException("Buffer too short for an NBT root (need at least 3 bytes, got %d)", this.input.length);
+            throw new NbtFormatException("Buffer too short for an NBT root (need at least 3 bytes, got %d)", this.input.length);
 
         byte rootType = this.readByte();
 
         if (rootType != TagType.COMPOUND.getId())
-            throw new NbtException("Root tag must be TAG_Compound, found id %d", rootType & 0xFF);
+            throw new NbtFormatException("Root tag must be TAG_Compound, found id %d", rootType & 0xFF);
 
         // Root name (modified UTF-8): 2-byte length + bytes. Tape skips the root name (no semantic
         // value); pointer-addressing is unnecessary here since no consumer needs the root name.
@@ -158,7 +159,7 @@ public final class TapeParser {
         this.driveStack();
 
         if (this.sp != -1)
-            throw new NbtException("Parser ended with %d open frames remaining", this.sp + 1);
+            throw new NbtFormatException("Parser ended with %d open frames remaining", this.sp + 1);
     }
 
     /**
@@ -275,7 +276,7 @@ public final class TapeParser {
                 this.advance(Math.multiplyExact(len, 8));
                 this.appendTape(TapeElement.pack(TapeKind.LONG_ARRAY_PTR, offset));
             }
-            default -> throw new NbtException("Unknown tag id encountered while parsing buffer: %d", typeId & 0xFF);
+            default -> throw new NbtFormatException("Unknown tag id encountered while parsing buffer: %d", typeId & 0xFF);
         }
     }
 
@@ -347,7 +348,7 @@ public final class TapeParser {
         // specific message gives the user a clearer error than IllegalArgumentException from the
         // packer.
         if (endIdx > TapeElement.MAX_END_OFFSET)
-            throw new NbtException(
+            throw new NbtFormatException(
                 "Tape size %d exceeds 24-bit endOffset cap (%d) - input is too large to address",
                 endIdx, TapeElement.MAX_END_OFFSET
             );
@@ -403,7 +404,7 @@ public final class TapeParser {
 
     private void advance(int byteCount) throws IOException {
         if (byteCount < 0)
-            throw new NbtException("Negative advance %d at offset %d", byteCount, this.position);
+            throw new NbtFormatException("Negative advance %d at offset %d", byteCount, this.position);
 
         this.requireRemaining(byteCount);
         this.position += byteCount;
@@ -413,7 +414,7 @@ public final class TapeParser {
         // Manual bounds-check so a truncated buffer surfaces a helpful NbtException rather than
         // an ArrayIndexOutOfBoundsException from the underlying array access.
         if (this.position + byteCount > this.input.length)
-            throw new NbtException(
+            throw new NbtFormatException(
                 "Truncated NBT input - need %d bytes at offset %d, only %d available",
                 byteCount, this.position, this.input.length - this.position
             );

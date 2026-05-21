@@ -2,6 +2,7 @@ package lib.minecraft.nbt.io.json;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
+import lib.minecraft.nbt.exception.NbtJsonException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.util.ByteList;
@@ -186,7 +187,7 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
         // instances. Direct callers of readListTag are asserting the JSON array should map to
         // a list, so surface the mismatch rather than silently returning the wrong shape.
         if (!(result instanceof ListTag<?> list))
-            throw new IOException("Expected a JSON list but parsed a typed array tag (" + result.getClass().getSimpleName() + ").");
+            throw new NbtJsonException("Expected a JSON list but parsed a typed array tag (" + result.getClass().getSimpleName() + ").");
 
         return list;
     }
@@ -204,8 +205,8 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
             case NUMBER -> inferNumber(this.nextString());
             case BEGIN_OBJECT -> this.readCompoundTag(depth);
             case BEGIN_ARRAY -> this.readArrayOrTypedArray(depth);
-            case NULL -> throw new IOException("Cannot convert JSON null to NBT.");
-            default -> throw new IOException("Unexpected JSON token: " + token);
+            case NULL -> throw new NbtJsonException("Cannot convert JSON null to NBT.");
+            default -> throw new NbtJsonException("Unexpected JSON token: " + token);
         };
     }
 
@@ -241,7 +242,7 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
         try {
             bd = new BigDecimal(text);
         } catch (NumberFormatException exception) {
-            throw new IOException("Invalid JSON number literal: '" + text + "'.", exception);
+            throw new NbtJsonException(exception, "Invalid JSON number literal: '%s'", text);
         }
 
         // Integer cascade: byte -> short -> int -> long, on the numeric value.
@@ -317,7 +318,7 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
             while (this.hasNext()) {
                 Tag<?> element = this.readValue(depth);
                 if (element.getId() != commonId)
-                    throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                    throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
                 out.add(((NumericalTag<?>) element).byteValue());
             }
             this.endArray();
@@ -330,7 +331,7 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
             while (this.hasNext()) {
                 Tag<?> element = this.readValue(depth);
                 if (element.getId() != commonId)
-                    throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                    throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
                 out.add(((NumericalTag<?>) element).intValue());
             }
             this.endArray();
@@ -343,7 +344,7 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
             while (this.hasNext()) {
                 Tag<?> element = this.readValue(depth);
                 if (element.getId() != commonId)
-                    throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                    throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
                 out.add(((NumericalTag<?>) element).longValue());
             }
             this.endArray();
@@ -359,7 +360,7 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
         while (this.hasNext()) {
             Tag<?> element = this.readValue(depth);
             if (element.getId() != commonId)
-                throw new IOException("Heterogeneous JSON arrays cannot be converted to NBT.");
+                throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
             buffered.add(element);
         }
 

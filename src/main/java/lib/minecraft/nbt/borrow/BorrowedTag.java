@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.exception.NbtException;
+import lib.minecraft.nbt.exception.NbtTypeException;
 import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,7 @@ public sealed interface BorrowedTag<T> permits
             case LONG_ARRAY_PTR -> new BorrowedLongArrayTag(tape, valueIndex);
             case COMPOUND_HEADER -> new BorrowedCompoundTag(tape, valueIndex);
             case LIST_HEADER -> new BorrowedListTag(tape, valueIndex);
-            default -> throw new NbtException(
+            default -> throw new NbtTypeException(
                 "Cannot construct BorrowedTag from kind %s at tape index %d", kind, valueIndex);
         };
     }

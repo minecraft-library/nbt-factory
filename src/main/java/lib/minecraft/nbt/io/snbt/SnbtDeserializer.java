@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.io.snbt;
 
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.exception.NbtSnbtException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.util.ByteList;
 import lib.minecraft.nbt.io.util.IntList;
@@ -182,13 +183,13 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     private void readArrayHeader(char typeIndicator) throws IOException {
         if (this.read() != ARRAY_START)
-            throw new IOException("Invalid start of SNBT array.");
+            throw new NbtSnbtException("Invalid start of SNBT array.");
 
         if (this.read() != typeIndicator)
-            throw new IOException("Invalid array type indicator, expected '" + typeIndicator + "'.");
+            throw new NbtSnbtException("Invalid array type indicator, expected '" + typeIndicator + "'.");
 
         if (this.read() != ARRAY_TYPE_INDICATOR)
-            throw new IOException("Invalid array type separator.");
+            throw new NbtSnbtException("Invalid array type separator.");
     }
 
     @Override
@@ -199,7 +200,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         ListTag<Tag<?>> listTag = new ListTag<>();
 
         if (this.read() != ARRAY_START)
-            throw new IOException("Invalid start of SNBT ListTag.");
+            throw new NbtSnbtException("Invalid start of SNBT ListTag.");
 
         do {
             this.skipWhitespace();
@@ -224,7 +225,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         CompoundTag compoundTag = new CompoundTag();
 
         if (this.read() != COMPOUND_START)
-            throw new IOException("Invalid start of SNBT CompoundTag.");
+            throw new NbtSnbtException("Invalid start of SNBT CompoundTag.");
 
         do {
             this.skipWhitespace();
@@ -238,7 +239,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
             this.skipWhitespace();
             if (this.read() != ENTRY_VALUE_INDICATOR)
-                throw new IOException("Invalid value indicator in SNBT CompoundTag.");
+                throw new NbtSnbtException("Invalid value indicator in SNBT CompoundTag.");
             this.skipWhitespace();
 
             Tag<?> tag = this.readTag(this.peekTagId(), depth);
@@ -291,13 +292,13 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 lastChar = this.read();
 
                 if (lastChar == -1)
-                    throw new IOException("Unterminated SNBT string literal.");
+                    throw new NbtSnbtException("Unterminated SNBT string literal.");
 
                 if (lastChar == STRING_ESCAPE) {
                     int escaped = this.read();
 
                     if (escaped == -1)
-                        throw new IOException("Unterminated SNBT escape sequence.");
+                        throw new NbtSnbtException("Unterminated SNBT escape sequence.");
 
                     builder.append((char) escaped);
                     continue;
@@ -348,7 +349,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                         case ARRAY_PREFIX_BYTE -> TagType.BYTE_ARRAY.getId();
                         case ARRAY_PREFIX_INT -> TagType.INT_ARRAY.getId();
                         case ARRAY_PREFIX_LONG -> TagType.LONG_ARRAY.getId();
-                        default -> throw new IOException("Unknown NBT array type.");
+                        default -> throw new NbtSnbtException("Unknown NBT array type.");
                     };
                 } else
                     yield TagType.LIST.getId();
