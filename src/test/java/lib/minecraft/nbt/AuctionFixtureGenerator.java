@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;

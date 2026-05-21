@@ -4,7 +4,7 @@ import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.CompoundTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

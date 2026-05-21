@@ -1,65 +1,41 @@
 package lib.minecraft.nbt.tags;
 
-import lib.minecraft.nbt.exception.NbtMaxDepthException;
-import lib.minecraft.nbt.io.NbtInput;
-import lib.minecraft.nbt.io.NbtOutput;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>Interface for all NBT tags.</p>
+ * Sealed root of the NBT tag hierarchy.
  *
- * <p>All serializing and deserializing methods data track the nesting levels to prevent
- * circular references or malicious data which could, when deserialized, result in thousands
- * of instances causing a denial of service.</p>
+ * <p>Every concrete tag class implements one of the 14 leaf sub-interfaces below - the 13 wire
+ * types defined by the Minecraft NBT format plus the synthetic {@link BooleanTag}, which encodes
+ * as a {@code TAG_Byte} on the wire but carries the type at the API surface.</p>
  *
- * <p>These {@link NbtInput} and {@link NbtOutput} methods have a parameter for the
- * nesting depth they have currently traversed. A maximum value of
- * {@code 512} means that only the object itself, but no nested objects may be
- * processed. If an instance is nested deeper than {@code 512}, an
- * {@link NbtMaxDepthException} will be thrown. An
- * {@code IllegalArgumentException} is thrown for a negative nesting depth.</p>
+ * <p>Two backing strategies satisfy every leaf interface: the materializing implementations in
+ * {@code lib.minecraft.nbt.tags.materialize} hold their value in a primitive field, and the
+ * borrow implementations in {@code lib.minecraft.nbt.borrow} navigate a tape without allocating
+ * until a mutator forces materialization. Both share the same public contract, so consumer code
+ * works against the interface and never has to branch on backend.</p>
  *
- * @param <T> The type of the contained value
- * */
-@Getter
-@Setter
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class Tag<T> implements Cloneable {
-
-    private @NotNull T value;
+ * @see TagType
+ */
+public sealed interface Tag permits
+    NumericalTag, BooleanTag,
+    StringTag, EndTag,
+    ByteArrayTag, IntArrayTag, LongArrayTag,
+    CompoundTag, ListTag {
 
     /**
-     * Creates a clone of this Tag.
-     * */
-    public abstract @NotNull Tag<T> clone();
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Tag<?> tag = (Tag<?>) o;
-
-        return this.getValue().equals(tag.getValue());
-    }
-
-    /**
-     * Gets the unique ID for this NBT tag type.
-     * <br><br>
-     * 0 to 12 (inclusive) are reserved.
+     * The single-byte NBT wire id for this tag's type.
      */
-    public abstract byte getId();
+    byte getId();
 
-    @Override
-    public int hashCode() {
-        return this.getValue().hashCode();
-    }
+    /**
+     * The {@link TagType} enum constant matching this tag's wire id.
+     */
+    @NotNull TagType getType();
 
-    @Override
-    public abstract @NotNull String toString();
+    /**
+     * Deep copy of this tag.
+     */
+    @NotNull Tag deepClone();
 
 }

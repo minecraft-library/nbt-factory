@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
  * silently break round-tripping any tape produced by an older version of the library.</p>
  *
  * <p>Each constant documents what the low 56 bits of the tape element carry. The C1 encoder
- * ({@link Tape#encode(lib.minecraft.nbt.tags.collection.CompoundTag) Tape.encode}) and the
+ * ({@link Tape#encode(lib.minecraft.nbt.tags.CompoundTag) Tape.encode}) and the
  * not-yet-landed C2 streaming parser produce identical tape shapes for the same input.</p>
  */
 @ApiStatus.Experimental

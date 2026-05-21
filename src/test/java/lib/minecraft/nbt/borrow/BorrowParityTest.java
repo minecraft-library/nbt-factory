@@ -2,7 +2,7 @@ package lib.minecraft.nbt.borrow;
 
 import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.CompoundTag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
