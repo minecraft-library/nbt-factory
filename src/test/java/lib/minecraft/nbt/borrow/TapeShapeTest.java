@@ -1,8 +1,8 @@
 package lib.minecraft.nbt.borrow;
 
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.ListTag;
-import lib.minecraft.nbt.tags.IntTag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

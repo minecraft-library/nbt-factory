@@ -8,8 +8,8 @@ import lib.minecraft.nbt.io.util.IntList;
 import lib.minecraft.nbt.io.util.LongList;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.ListTag;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.collection.ListTag;
 import dev.simplified.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,35 +32,35 @@ import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
  * <p>Type reconstruction rules (case-insensitive suffixes):</p>
  * <ul>
  *   <li><b>Numeric literal with suffix</b> - resolves directly to the matching primitive tag:
- *       {@code 34b} to {@link lib.minecraft.nbt.tags.ByteTag ByteTag},
- *       {@code 31415s} to {@link lib.minecraft.nbt.tags.ShortTag ShortTag},
- *       {@code 31415926l} to {@link lib.minecraft.nbt.tags.LongTag LongTag},
- *       {@code 3.14f} to {@link lib.minecraft.nbt.tags.FloatTag FloatTag},
- *       {@code 3.14d} to {@link lib.minecraft.nbt.tags.DoubleTag DoubleTag}.</li>
- *   <li><b>Numeric literal without suffix</b> - {@link lib.minecraft.nbt.tags.IntTag IntTag}
+ *       {@code 34b} to {@link lib.minecraft.nbt.tags.primitive.ByteTag ByteTag},
+ *       {@code 31415s} to {@link lib.minecraft.nbt.tags.primitive.ShortTag ShortTag},
+ *       {@code 31415926l} to {@link lib.minecraft.nbt.tags.primitive.LongTag LongTag},
+ *       {@code 3.14f} to {@link lib.minecraft.nbt.tags.primitive.FloatTag FloatTag},
+ *       {@code 3.14d} to {@link lib.minecraft.nbt.tags.primitive.DoubleTag DoubleTag}.</li>
+ *   <li><b>Numeric literal without suffix</b> - {@link lib.minecraft.nbt.tags.primitive.IntTag IntTag}
  *       when the literal has no decimal point,
- *       {@link lib.minecraft.nbt.tags.DoubleTag DoubleTag} when it does.</li>
- *   <li><b>Quoted string</b> - {@link lib.minecraft.nbt.tags.StringTag StringTag}
+ *       {@link lib.minecraft.nbt.tags.primitive.DoubleTag DoubleTag} when it does.</li>
+ *   <li><b>Quoted string</b> - {@link lib.minecraft.nbt.tags.primitive.StringTag StringTag}
  *       always, even when the contents look numeric. Either {@code "text"} or {@code 'text'}
  *       delimiters are accepted; {@code \"}, {@code \\}, and {@code \'} escape sequences are
  *       unescaped character-for-character.</li>
  *   <li><b>Unquoted identifier</b> - classified by a single-pass scan that dispatches on the
  *       trailing suffix character ({@code b/B/s/S/l/L/f/F/d/D}) and validates the leading
  *       numeric body; falls back to
- *       {@link lib.minecraft.nbt.tags.StringTag StringTag} on no match. Valid
+ *       {@link lib.minecraft.nbt.tags.primitive.StringTag StringTag} on no match. Valid
  *       unquoted characters are {@code [A-Za-z0-9._+-]}.</li>
  *   <li><b>{@code [B;...]}</b> /
  *       <b>{@code [I;...]}</b> /
  *       <b>{@code [L;...]}</b> - typed arrays
- *       ({@link lib.minecraft.nbt.tags.ByteArrayTag ByteArrayTag} /
- *       {@link lib.minecraft.nbt.tags.IntArrayTag IntArrayTag} /
- *       {@link lib.minecraft.nbt.tags.LongArrayTag LongArrayTag}).</li>
+ *       ({@link lib.minecraft.nbt.tags.array.ByteArrayTag ByteArrayTag} /
+ *       {@link lib.minecraft.nbt.tags.array.IntArrayTag IntArrayTag} /
+ *       {@link lib.minecraft.nbt.tags.array.LongArrayTag LongArrayTag}).</li>
  *   <li><b>{@code [value,value,...]}</b> -
- *       {@link lib.minecraft.nbt.tags.ListTag ListTag} whose element type is
+ *       {@link lib.minecraft.nbt.tags.collection.ListTag ListTag} whose element type is
  *       decided from the first element and then enforced for the rest via
- *       {@link lib.minecraft.nbt.tags.ListTag#add(Tag) ListTag.add}.</li>
+ *       {@link lib.minecraft.nbt.tags.collection.ListTag#add(Tag) ListTag.add}.</li>
  *   <li><b>{@code {key:value,...}}</b> -
- *       {@link lib.minecraft.nbt.tags.CompoundTag CompoundTag}.</li>
+ *       {@link lib.minecraft.nbt.tags.collection.CompoundTag CompoundTag}.</li>
  * </ul>
  *
  * <p>Tag-type classification for list and compound children runs through {@code peekTagId()},

@@ -1,7 +1,7 @@
 package lib.minecraft.nbt.borrow;
 
 import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.IntTag;
+import lib.minecraft.nbt.tags.primitive.IntTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

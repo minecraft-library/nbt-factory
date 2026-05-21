@@ -13,7 +13,7 @@ import java.io.IOException;
 
 /**
  * Streaming binary parser that builds a {@link Tape} directly from an NBT {@code byte[]} without
- * materializing intermediate {@link lib.minecraft.nbt.tags.CompoundTag CompoundTag}
+ * materializing intermediate {@link lib.minecraft.nbt.tags.collection.CompoundTag CompoundTag}
  * instances.
  *
  * <p>Mirrors {@code simdnbt::borrow::compound::read_with_depth_check}
