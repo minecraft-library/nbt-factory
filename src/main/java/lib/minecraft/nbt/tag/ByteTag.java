@@ -46,7 +46,7 @@ public class ByteTag extends NumericalTag<Byte> {
      * Returns a shared {@code ByteTag} for {@code value}. The cache covers the full signed-byte
      * range, so this method never allocates after class initialization.
      *
-     * <p><b>Mutation hazard</b> - cached instances are mutable. Calling {@link #setValue(Byte)}
+     * <p><b>Mutation hazard</b> - cached instances are mutable. Calling {@link #setValue}
      * on a tag returned from {@code of(...)} mutates the shared cache entry, so every other holder
      * of the same value observes the change. Use {@code new ByteTag(value)} when the caller
      * intends to mutate.</p>

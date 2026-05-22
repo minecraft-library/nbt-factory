@@ -47,7 +47,7 @@ public class ShortTag extends NumericalTag<Short> {
      * Returns a possibly-shared {@code ShortTag} for {@code value}. Values in
      * {@code [-128, 127]} are interned; values outside that range allocate a fresh tag.
      *
-     * <p><b>Mutation hazard</b> - cached instances are mutable. Calling {@link #setValue(Short)}
+     * <p><b>Mutation hazard</b> - cached instances are mutable. Calling {@link #setValue}
      * on a tag returned from {@code of(...)} mutates the shared cache entry, so every other holder
      * of the same value observes the change. Use {@code new ShortTag(value)} when the caller
      * intends to mutate.</p>

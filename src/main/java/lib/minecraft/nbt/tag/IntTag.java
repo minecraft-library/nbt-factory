@@ -53,7 +53,7 @@ public class IntTag extends NumericalTag<Integer> {
      * allocation rate of the materializing decoder.</p>
      *
      * <p><b>Mutation hazard</b> - cached instances are mutable. Calling
-     * {@link #setValue(Integer)} on a tag returned from {@code of(...)} mutates the shared cache
+     * {@link #setValue} on a tag returned from {@code of(...)} mutates the shared cache
      * entry, so every other holder of the same value observes the change. Use
      * {@code new IntTag(value)} when the caller intends to mutate.</p>
      *

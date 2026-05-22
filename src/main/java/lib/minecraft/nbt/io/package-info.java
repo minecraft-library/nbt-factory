@@ -41,4 +41,9 @@
  */
 package lib.minecraft.nbt.io;
 
+import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.Tag;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;

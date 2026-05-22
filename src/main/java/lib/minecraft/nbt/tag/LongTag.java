@@ -46,7 +46,7 @@ public class LongTag extends NumericalTag<Long> {
      * Returns a possibly-shared {@code LongTag} for {@code value}. Values in
      * {@code [-128, 127]} are interned; values outside that range allocate a fresh tag.
      *
-     * <p><b>Mutation hazard</b> - cached instances are mutable. Calling {@link #setValue(Long)}
+     * <p><b>Mutation hazard</b> - cached instances are mutable. Calling {@link #setValue}
      * on a tag returned from {@code of(...)} mutates the shared cache entry, so every other holder
      * of the same value observes the change. Use {@code new LongTag(value)} when the caller
      * intends to mutate.</p>

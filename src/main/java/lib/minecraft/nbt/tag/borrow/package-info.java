@@ -79,4 +79,11 @@
 @ApiStatus.Experimental
 package lib.minecraft.nbt.tag.borrow;
 
+import lib.minecraft.nbt.NbtFactory;
+import lib.minecraft.nbt.io.NbtInput;
+import lib.minecraft.nbt.io.tape.NbtInputTape;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.Tag;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
