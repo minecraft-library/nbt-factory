@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.io.buffer;
 
+import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.util.NbtKnownKeys;
@@ -8,7 +9,6 @@ import lib.minecraft.nbt.io.stream.NbtInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
-import java.io.EOFException;
 import java.io.IOException;
 
 /**
@@ -63,18 +63,16 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     // ------------------------------------------------------------------
 
     @Override
-    public void readFully(byte[] b) throws IOException {
+    public void readFully(byte[] b) {
         this.readFully(b, 0, b.length);
     }
 
     @Override
-    public void readFully(byte[] b, int off, int len) throws IOException {
+    public void readFully(byte[] b, int off, int len) {
         if (len < 0)
             throw new IndexOutOfBoundsException();
 
-        if (this.position + len > this.buffer.length)
-            throw new EOFException();
-
+        this.requireRemaining(len);
         System.arraycopy(this.buffer, this.position, b, off, len);
         this.position += len;
     }
@@ -87,44 +85,34 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     }
 
     @Override
-    public boolean readBoolean() throws IOException {
-        if (this.position >= this.buffer.length)
-            throw new EOFException();
-
+    public boolean readBoolean() {
+        this.requireRemaining(1);
         return this.buffer[this.position++] != 0;
     }
 
     @Override
-    public byte readByte() throws IOException {
-        if (this.position >= this.buffer.length)
-            throw new EOFException();
-
+    public byte readByte() {
+        this.requireRemaining(1);
         return this.buffer[this.position++];
     }
 
     @Override
-    public int readUnsignedByte() throws IOException {
-        if (this.position >= this.buffer.length)
-            throw new EOFException();
-
+    public int readUnsignedByte() {
+        this.requireRemaining(1);
         return this.buffer[this.position++] & 0xFF;
     }
 
     @Override
-    public short readShort() throws IOException {
-        if (this.position + 2 > this.buffer.length)
-            throw new EOFException();
-
+    public short readShort() {
+        this.requireRemaining(2);
         short v = NbtByteCodec.getShort(this.buffer, this.position);
         this.position += 2;
         return v;
     }
 
     @Override
-    public int readUnsignedShort() throws IOException {
-        if (this.position + 2 > this.buffer.length)
-            throw new EOFException();
-
+    public int readUnsignedShort() {
+        this.requireRemaining(2);
         int v = NbtByteCodec.getUnsignedShort(this.buffer, this.position);
         this.position += 2;
         return v;
@@ -136,32 +124,28 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     }
 
     @Override
-    public int readInt() throws IOException {
-        if (this.position + 4 > this.buffer.length)
-            throw new EOFException();
-
+    public int readInt() {
+        this.requireRemaining(4);
         int v = NbtByteCodec.getInt(this.buffer, this.position);
         this.position += 4;
         return v;
     }
 
     @Override
-    public long readLong() throws IOException {
-        if (this.position + 8 > this.buffer.length)
-            throw new EOFException();
-
+    public long readLong() {
+        this.requireRemaining(8);
         long v = NbtByteCodec.getLong(this.buffer, this.position);
         this.position += 8;
         return v;
     }
 
     @Override
-    public float readFloat() throws IOException {
+    public float readFloat() {
         return Float.intBitsToFloat(this.readInt());
     }
 
     @Override
-    public double readDouble() throws IOException {
+    public double readDouble() {
         return Double.longBitsToDouble(this.readLong());
     }
 
@@ -173,9 +157,7 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     @Override
     public @NotNull String readUTF() throws IOException {
         int utfLen = this.readUnsignedShort();
-
-        if (this.position + utfLen > this.buffer.length)
-            throw new EOFException();
+        this.requireRemaining(utfLen);
 
         // Well-known key match: returns a shared canonical String for common NBT keys without
         // allocating a new one. High hit rate on repeated compound-key reads (SkyBlock auction).
@@ -196,7 +178,7 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     // ------------------------------------------------------------------
 
     @Override
-    public byte @NotNull [] readByteArray() throws IOException {
+    public byte @NotNull [] readByteArray() {
         int length = this.readInt();
         byte[] data = new byte[length];
         this.readFully(data);
@@ -204,12 +186,10 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     }
 
     @Override
-    public int @NotNull [] readIntArray() throws IOException {
+    public int @NotNull [] readIntArray() {
         int length = this.readInt();
-
-        // Single upfront bounds check using long arithmetic to avoid overflow on a pathological length.
-        if (this.position + ((long) length << 2) > this.buffer.length)
-            throw new EOFException();
+        // long arithmetic to avoid overflow on a pathological length.
+        this.requireRemainingBytes((long) length << 2);
 
         int[] data = new int[length];
         NbtByteCodec.getIntArrayBE(this.buffer, this.position, data, 0, length);
@@ -218,17 +198,32 @@ public class NbtInputBuffer implements NbtInput, DataInput {
     }
 
     @Override
-    public long @NotNull [] readLongArray() throws IOException {
+    public long @NotNull [] readLongArray() {
         int length = this.readInt();
-
-        // Single upfront bounds check using long arithmetic to avoid overflow on a pathological length.
-        if (this.position + ((long) length << 3) > this.buffer.length)
-            throw new EOFException();
+        this.requireRemainingBytes((long) length << 3);
 
         long[] data = new long[length];
         NbtByteCodec.getLongArrayBE(this.buffer, this.position, data, 0, length);
         this.position += length << 3;
         return data;
+    }
+
+    private void requireRemaining(int byteCount) {
+        if (this.position + byteCount > this.buffer.length)
+            throw new NbtFormatException(
+                "Truncated NBT input - need %d bytes at offset %d, only %d available",
+                byteCount, this.position, this.buffer.length - this.position);
+    }
+
+    /**
+     * {@code long}-arithmetic overload for the bulk-array readers - {@code length << 2/3} can
+     * overflow {@code int} on pathological array lengths.
+     */
+    private void requireRemainingBytes(long byteCount) {
+        if (this.position + byteCount > this.buffer.length)
+            throw new NbtFormatException(
+                "Truncated NBT input - need %d bytes at offset %d, only %d available",
+                byteCount, this.position, this.buffer.length - this.position);
     }
 
 }

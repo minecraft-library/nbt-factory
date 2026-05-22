@@ -1,21 +1,10 @@
 package lib.minecraft.nbt.io;
 
 import com.google.gson.stream.JsonToken;
+import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.ByteArrayTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.ListTag;
-import lib.minecraft.nbt.tags.ByteTag;
-import lib.minecraft.nbt.tags.DoubleTag;
-import lib.minecraft.nbt.tags.FloatTag;
-import lib.minecraft.nbt.tags.IntTag;
-import lib.minecraft.nbt.tags.LongTag;
-import lib.minecraft.nbt.tags.ShortTag;
-import lib.minecraft.nbt.tags.StringTag;
+import lib.minecraft.nbt.tags.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -83,7 +72,7 @@ public interface NbtInput {
             case 10 -> this.readCompoundTag(maxDepth);
             case 11 -> new IntArrayTag(this.readIntArray());
             case 12 -> new LongArrayTag(this.readLongArray());
-            default -> throw new UnsupportedOperationException("Tag with id " + id + " is not supported.");
+            default -> throw new NbtFormatException("Unknown tag id %d at wire dispatch", id & 0xFF);
         };
     }
 
