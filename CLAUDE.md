@@ -53,12 +53,11 @@ The script verifies SHA-256 hashes; CI never runs it.
 | `lib.minecraft.nbt.tags.array` | `ByteArrayTag`, `IntArrayTag`, `LongArrayTag` |
 | `lib.minecraft.nbt.tags.collection` | `CompoundTag` (map), `ListTag` (homogeneous list) |
 | `lib.minecraft.nbt.io` | `NbtInput`/`NbtOutput` dispatch |
-| `lib.minecraft.nbt.io.util` | `NbtByteCodec` contract, `NbtModifiedUtf8`, plus the small growable primitive `ByteList`/`IntList`/`LongList` buffers |
+| `lib.minecraft.nbt.io.util` | `NbtByteCodec` contract, `NbtModifiedUtf8`, `NbtKnownKeys` canonical-key lookup, plus the small growable primitive `ByteList`/`IntList`/`LongList` buffers |
 | `lib.minecraft.nbt.io.buffer` | heap-backed `NbtInputBuffer` / `NbtOutputBuffer` |
 | `lib.minecraft.nbt.io.stream` | `DataInputStream` / `DataOutputStream` wrappers |
 | `lib.minecraft.nbt.io.snbt` | stringified-NBT serializer + deserializer |
 | `lib.minecraft.nbt.io.json` | JSON serializer + deserializer |
-| `lib.minecraft.nbt.util` | `NbtKnownKeys` - zero-allocation canonical-key lookup table |
 | `lib.minecraft.nbt.borrow` | zero-allocation read-only navigator API (tape + retained buffer) |
 
 ## Borrow API

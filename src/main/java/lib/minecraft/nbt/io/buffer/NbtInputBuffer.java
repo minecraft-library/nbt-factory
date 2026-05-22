@@ -3,7 +3,7 @@ package lib.minecraft.nbt.io.buffer;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.NbtInput;
-import lib.minecraft.nbt.util.NbtKnownKeys;
+import lib.minecraft.nbt.io.util.NbtKnownKeys;
 import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import org.jetbrains.annotations.NotNull;

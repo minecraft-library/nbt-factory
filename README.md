@@ -223,12 +223,11 @@ nbt-factory/
     │   ├── io/
     │   │   ├── NbtInput.java            # read dispatch
     │   │   ├── NbtOutput.java           # write dispatch
-    │   │   ├── util/                    # NbtByteCodec, NbtModifiedUtf8, ByteList/IntList/LongList
+    │   │   ├── util/                    # NbtByteCodec, NbtModifiedUtf8, NbtKnownKeys, ByteList/IntList/LongList
     │   │   ├── buffer/                  # heap-backed codec
     │   │   ├── stream/                  # DataInputStream/DataOutputStream wrappers
     │   │   ├── snbt/                    # SnbtSerializer / SnbtDeserializer
     │   │   └── json/                    # NbtJsonSerializer / NbtJsonDeserializer
-    │   ├── util/                        # NbtKnownKeys - canonical key lookup
     │   └── tags/
     │       ├── Tag.java                 # base contract
     │       ├── TagType.java             # enum dispatch
