@@ -1,9 +1,7 @@
 package lib.minecraft.nbt.tags;
 
-import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.borrow.BorrowedLongArrayTag;
 import lib.minecraft.nbt.tags.borrow.RawList;
-import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

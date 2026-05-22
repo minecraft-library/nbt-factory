@@ -1,26 +1,13 @@
 package lib.minecraft.nbt.io.snbt;
 
+import dev.simplified.util.StringUtil;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.exception.NbtSnbtException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.util.ByteList;
 import lib.minecraft.nbt.io.util.IntList;
 import lib.minecraft.nbt.io.util.LongList;
-import lib.minecraft.nbt.tags.ByteArrayTag;
-import lib.minecraft.nbt.tags.ByteTag;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.DoubleTag;
-import lib.minecraft.nbt.tags.FloatTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.IntTag;
-import lib.minecraft.nbt.tags.ListTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.LongTag;
-import lib.minecraft.nbt.tags.ShortTag;
-import lib.minecraft.nbt.tags.StringTag;
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.TagType;
-import dev.simplified.util.StringUtil;
+import lib.minecraft.nbt.tags.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

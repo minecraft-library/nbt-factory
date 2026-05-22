@@ -1,18 +1,6 @@
 package lib.minecraft.nbt.tags;
 
-import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.ByteArrayTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.ByteTag;
-import lib.minecraft.nbt.tags.DoubleTag;
-import lib.minecraft.nbt.tags.FloatTag;
-import lib.minecraft.nbt.tags.IntTag;
-import lib.minecraft.nbt.tags.LongTag;
-import lib.minecraft.nbt.tags.ShortTag;
-import lib.minecraft.nbt.tags.StringTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

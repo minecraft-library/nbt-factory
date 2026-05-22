@@ -1,18 +1,5 @@
 package lib.minecraft.nbt.tags;
 
-import lib.minecraft.nbt.tags.ByteArrayTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.ListTag;
-import lib.minecraft.nbt.tags.ByteTag;
-import lib.minecraft.nbt.tags.DoubleTag;
-import lib.minecraft.nbt.tags.EndTag;
-import lib.minecraft.nbt.tags.FloatTag;
-import lib.minecraft.nbt.tags.IntTag;
-import lib.minecraft.nbt.tags.LongTag;
-import lib.minecraft.nbt.tags.ShortTag;
-import lib.minecraft.nbt.tags.StringTag;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

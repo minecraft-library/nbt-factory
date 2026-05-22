@@ -1,6 +1,5 @@
 package lib.minecraft.nbt.tags;
 
-import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;

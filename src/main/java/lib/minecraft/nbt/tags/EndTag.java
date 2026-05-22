@@ -1,8 +1,5 @@
 package lib.minecraft.nbt.tags;
 
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.CompoundTag;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
