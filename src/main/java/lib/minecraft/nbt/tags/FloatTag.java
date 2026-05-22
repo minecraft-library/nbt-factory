@@ -50,7 +50,7 @@ public class FloatTag extends NumericalTag<Float> {
 
     /**
      * Constructs a float tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedFloatTag BorrowedFloatTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedFloatTag BorrowedFloatTag}.
      */
     public FloatTag(@NotNull Supplier<Float> supplier) {
         super(supplier);

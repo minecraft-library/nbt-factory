@@ -95,7 +95,7 @@ public class LongTag extends NumericalTag<Long> {
 
     /**
      * Constructs a long tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedLongTag BorrowedLongTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedLongTag BorrowedLongTag}.
      */
     public LongTag(@NotNull Supplier<Long> supplier) {
         super(supplier);

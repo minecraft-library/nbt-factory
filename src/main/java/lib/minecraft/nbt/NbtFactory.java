@@ -1,8 +1,8 @@
 package lib.minecraft.nbt;
 
-import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.borrow.Tape;
-import lib.minecraft.nbt.borrow.TapeParser;
+import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.tags.borrow.Tape;
+import lib.minecraft.nbt.tags.borrow.TapeParser;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;

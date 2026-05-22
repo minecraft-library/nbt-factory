@@ -143,7 +143,7 @@ public final class NbtModifiedUtf8 {
      * symmetric across both byte orders, so we reuse {@link NbtByteCodec}'s big-endian VarHandle
      * directly.</p>
      *
-     * <p>Public so {@link lib.minecraft.nbt.borrow.MutfStringView MutfStringView} (Phase C4 lazy
+     * <p>Public so {@link lib.minecraft.nbt.tags.borrow.MutfStringView MutfStringView} (Phase C4 lazy
      * decode) can share the same probe across package boundaries.</p>
      *
      * @param src buffer to scan

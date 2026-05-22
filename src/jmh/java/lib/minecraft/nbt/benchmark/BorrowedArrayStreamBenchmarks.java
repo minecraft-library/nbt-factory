@@ -1,9 +1,9 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.borrow.BorrowedIntArrayTag;
-import lib.minecraft.nbt.borrow.BorrowedLongArrayTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedIntArrayTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedLongArrayTag;
 import lib.minecraft.nbt.tags.IntArrayTag;
 import lib.minecraft.nbt.tags.LongArrayTag;
 import lib.minecraft.nbt.tags.CompoundTag;

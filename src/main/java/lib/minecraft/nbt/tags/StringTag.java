@@ -37,7 +37,7 @@ public class StringTag extends Tag<String> {
 
     /**
      * Constructs a string tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedStringTag BorrowedStringTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedStringTag BorrowedStringTag}.
      */
     public StringTag(@NotNull Supplier<String> supplier) {
         super(supplier);

@@ -1,13 +1,13 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.borrow.BorrowedByteTag;
-import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.borrow.BorrowedIntTag;
-import lib.minecraft.nbt.borrow.BorrowedListTag;
-import lib.minecraft.nbt.borrow.BorrowedShortTag;
-import lib.minecraft.nbt.borrow.BorrowedStringTag;
-import lib.minecraft.nbt.borrow.BorrowedTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedByteTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedIntTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedListTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedShortTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedStringTag;
+import lib.minecraft.nbt.tags.borrow.BorrowedTag;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.CompoundTag;
 import lib.minecraft.nbt.tags.ListTag;

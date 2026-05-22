@@ -101,7 +101,7 @@ public class IntTag extends NumericalTag<Integer> {
 
     /**
      * Constructs an int tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedIntTag BorrowedIntTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedIntTag BorrowedIntTag}.
      */
     public IntTag(@NotNull Supplier<Integer> supplier) {
         super(supplier);

@@ -96,7 +96,7 @@ public class ShortTag extends NumericalTag<Short> {
 
     /**
      * Constructs a short tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedShortTag BorrowedShortTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedShortTag BorrowedShortTag}.
      */
     public ShortTag(@NotNull Supplier<Short> supplier) {
         super(supplier);

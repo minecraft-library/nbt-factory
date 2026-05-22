@@ -92,7 +92,7 @@ public class ByteTag extends NumericalTag<Byte> {
 
     /**
      * Constructs a byte tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedByteTag BorrowedByteTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedByteTag BorrowedByteTag}.
      *
      * @param supplier supplier invoked on first {@code getValue()}
      */

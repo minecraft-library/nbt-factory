@@ -50,7 +50,7 @@ public class DoubleTag extends NumericalTag<Double> {
 
     /**
      * Constructs a double tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.borrow.BorrowedDoubleTag BorrowedDoubleTag}.
+     * {@link lib.minecraft.nbt.tags.borrow.BorrowedDoubleTag BorrowedDoubleTag}.
      */
     public DoubleTag(@NotNull Supplier<Double> supplier) {
         super(supplier);
