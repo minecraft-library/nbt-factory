@@ -43,16 +43,4 @@ public final class BorrowedListTag extends ListTag<Tag<?>> {
         return () -> new TapeListView(tape, tapeIndex);
     }
 
-    /**
-     * Forces the lazy {@link TapeListView} to be allocated and returns this tag as a plain
-     * {@link ListTag}. Provided as an alias for callers migrating from the prior
-     * {@code BorrowedTag.materialize()} entry point.
-     *
-     * @return this tag, with the backing view forced
-     */
-    public @NotNull ListTag<Tag<?>> materialize() {
-        this.getValue();
-        return this;
-    }
-
 }

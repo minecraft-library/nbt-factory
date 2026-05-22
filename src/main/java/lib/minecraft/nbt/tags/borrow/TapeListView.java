@@ -75,7 +75,7 @@ final class TapeListView extends AbstractList<Tag<?>> {
 
         while (idx < this.endIdx) {
             if (cursor == i)
-                return BorrowedTag.fromTape(this.tape, idx);
+                return this.tape.tagAt(idx);
 
             idx = this.tape.nextSibling(idx);
             cursor++;
@@ -125,7 +125,7 @@ final class TapeListView extends AbstractList<Tag<?>> {
         int idx = this.tapeIndex + 1;
 
         while (idx < this.endIdx) {
-            list.add(BorrowedTag.fromTape(this.tape, idx));
+            list.add(this.tape.tagAt(idx));
             idx = this.tape.nextSibling(idx);
         }
 
@@ -147,7 +147,7 @@ final class TapeListView extends AbstractList<Tag<?>> {
             if (this.cursor >= TapeListView.this.endIdx)
                 throw new NoSuchElementException();
 
-            Tag<?> tag = BorrowedTag.fromTape(TapeListView.this.tape, this.cursor);
+            Tag<?> tag = TapeListView.this.tape.tagAt(this.cursor);
             this.cursor = TapeListView.this.tape.nextSibling(this.cursor);
             return tag;
         }

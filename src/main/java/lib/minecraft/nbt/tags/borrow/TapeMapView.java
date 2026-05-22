@@ -94,7 +94,7 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
         if (!(key instanceof String name)) return null;
         int idx = this.tape.findChildTapeIndex(this.tapeIndex, name);
         if (idx == Tape.NOT_FOUND) return null;
-        return BorrowedTag.fromTape(this.tape, idx);
+        return this.tape.tagAt(idx);
     }
 
     @Override
@@ -138,7 +138,7 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
             int keyOffset = (int) TapeElement.unpackValue(keyElement);
             String name = NbtModifiedUtf8.decode(this.tape.buffer(), keyOffset);
             int valueIdx = idx + 1;
-            Tag<?> value = BorrowedTag.fromTape(this.tape, valueIdx);
+            Tag<?> value = this.tape.tagAt(valueIdx);
             map.put(name, value);
             idx = this.tape.nextSibling(valueIdx);
         }
@@ -228,7 +228,7 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
             int keyOffset = (int) TapeElement.unpackValue(keyElement);
             String name = NbtModifiedUtf8.decode(tape.buffer(), keyOffset);
             int valueIdx = this.cursor + 1;
-            Tag<?> value = BorrowedTag.fromTape(tape, valueIdx);
+            Tag<?> value = tape.tagAt(valueIdx);
             this.cursor = tape.nextSibling(valueIdx);
             return Map.entry(name, value);
         }

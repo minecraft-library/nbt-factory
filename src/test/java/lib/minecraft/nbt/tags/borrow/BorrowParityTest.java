@@ -26,9 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Gold-standard parity check for the C3 borrow API.
  *
  * <p>For every fixture in the vendored corpus and the first 100 entries in {@code auctions.bin},
- * asserts {@code NbtInputTape.parse(payload).root().materialize().equals(NbtFactory.fromByteArray(payload))}.
- * Any divergence indicates a bug in one of the C3 navigator types' {@code materialize()}
- * implementations.</p>
+ * asserts {@code NbtInputTape.parse(payload).root().equals(NbtFactory.fromByteArray(payload))}.
+ * Equality forces each borrowed navigator's lazy supplier and recurses into every child, so any
+ * divergence indicates a decode bug in one of the borrowed-tag types.</p>
  *
  * <p>The vendored corpus alone covers compound, list, all six numeric primitive kinds, all three
  * array kinds, string, and various nesting depths; the auction sample adds the long tail of
@@ -62,8 +62,7 @@ class BorrowParityTest {
         assertNotNull(viaProduction);
 
         Tape parsed = NbtInputTape.parse(payload);
-        BorrowedCompoundTag root = parsed.root();
-        CompoundTag viaBorrow = root.materialize();
+        CompoundTag viaBorrow = parsed.root();
 
         assertEquals(viaProduction, viaBorrow,
             "Borrow parity mismatch on " + filename);
@@ -90,7 +89,7 @@ class BorrowParityTest {
                 // decompresses, but NbtInputTape.parse takes raw NBT bytes only.
                 byte[] raw = Compression.decompress(payload);
                 Tape parsed = NbtInputTape.parse(raw);
-                CompoundTag viaBorrow = parsed.root().materialize();
+                CompoundTag viaBorrow = parsed.root();
 
                 assertEquals(viaProduction, viaBorrow,
                     "Borrow parity mismatch on auction item " + i);

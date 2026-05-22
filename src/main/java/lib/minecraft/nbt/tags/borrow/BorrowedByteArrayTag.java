@@ -64,13 +64,6 @@ public final class BorrowedByteArrayTag extends ByteArrayTag {
     }
 
     /**
-     * Alias for {@link #length()} - retained from the pre-subclass borrow API.
-     */
-    public int size() {
-        return this.length();
-    }
-
-    /**
      * Returns a zero-allocation {@link RawList} view over the payload bytes. Use this when
      * iterating without going through the standard {@link #forEachByte(ByteConsumer)} entry point
      * (e.g. for the array-kind discriminator on {@link RawList#elementKind()}).

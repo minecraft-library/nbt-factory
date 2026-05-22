@@ -103,7 +103,7 @@ public class NbtFactory {
      * <p><b>Mutation hazard.</b> Callers must not mutate the input array after invoking this
      * method (and, for gzipped input, must not assume the inflated buffer surfaces anywhere - it
      * does not). Mutating the retained buffer corrupts every pointer-kind tape element addressing
-     * it, including subsequent {@link BorrowedCompoundTag#materialize() materialize} calls.</p>
+     * the modified bytes.</p>
      *
      * <p><b>Thread safety.</b> Decoding is single-threaded - the {@link NbtInputTape} runs on the
      * calling thread before this method returns. Once returned, the borrow tree is read-only and
@@ -114,11 +114,10 @@ public class NbtFactory {
      * idempotent (every observer sees the same {@link String} value), so this is a performance
      * concern, not a correctness one.</p>
      *
-     * <p><b>Escape hatch.</b> Call {@link BorrowedCompoundTag#materialize()} on the returned
-     * navigator (or on any descendant) to obtain a fully-allocated {@link CompoundTag} subtree
-     * detached from the retained buffer. The materialized tree retains no reference to the input
-     * array, so the buffer becomes eligible for collection as soon as every borrowed view is
-     * dropped.</p>
+     * <p><b>Detached copy.</b> When the caller wants a fully-allocated subtree that retains no
+     * reference to the input bytes, call {@link #fromByteArray(byte[])} on the same payload - the
+     * materializing path produces a tree with no tape backing, so the buffer is free for collection
+     * once that result is dropped.</p>
      *
      * @param bytes the {@code byte[]} array to read from; gzipped payloads are auto-detected and
      *     decompressed before parsing

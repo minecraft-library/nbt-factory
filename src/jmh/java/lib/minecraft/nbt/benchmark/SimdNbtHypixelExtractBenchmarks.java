@@ -7,7 +7,6 @@ import lib.minecraft.nbt.tags.borrow.BorrowedIntTag;
 import lib.minecraft.nbt.tags.borrow.BorrowedListTag;
 import lib.minecraft.nbt.tags.borrow.BorrowedShortTag;
 import lib.minecraft.nbt.tags.borrow.BorrowedStringTag;
-import lib.minecraft.nbt.tags.borrow.BorrowedTag;
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.CompoundTag;
 import lib.minecraft.nbt.tags.ListTag;

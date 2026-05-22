@@ -74,13 +74,6 @@ public final class BorrowedIntArrayTag extends IntArrayTag {
     }
 
     /**
-     * Alias for {@link #length()} - retained from the pre-subclass borrow API.
-     */
-    public int size() {
-        return this.length();
-    }
-
-    /**
      * Returns a zero-allocation {@link RawList} view over the payload bytes.
      */
     public @NotNull RawList rawList() {

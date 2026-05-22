@@ -133,7 +133,7 @@ class BorrowedNavigatorTest {
 
         BorrowedByteArrayTag byteArrayTag = (BorrowedByteArrayTag) borrowed.get("bytes");
         assertNotNull(byteArrayTag);
-        assertEquals(bytes.length, byteArrayTag.size());
+        assertEquals(bytes.length, byteArrayTag.length());
         assertArrayEquals(bytes, byteArrayTag.getValue());
         RawList byteList = byteArrayTag.rawList();
         assertEquals(TapeKind.BYTE_ARRAY_PTR, byteList.elementKind());
@@ -142,7 +142,7 @@ class BorrowedNavigatorTest {
 
         BorrowedIntArrayTag intArrayTag = (BorrowedIntArrayTag) borrowed.get("ints");
         assertNotNull(intArrayTag);
-        assertEquals(ints.length, intArrayTag.size());
+        assertEquals(ints.length, intArrayTag.length());
         assertArrayEquals(ints, intArrayTag.getValue());
         RawList intList = intArrayTag.rawList();
         for (int i = 0; i < ints.length; i++)
@@ -150,7 +150,7 @@ class BorrowedNavigatorTest {
 
         BorrowedLongArrayTag longArrayTag = (BorrowedLongArrayTag) borrowed.get("longs");
         assertNotNull(longArrayTag);
-        assertEquals(longs.length, longArrayTag.size());
+        assertEquals(longs.length, longArrayTag.length());
         assertArrayEquals(longs, longArrayTag.getValue());
         RawList longList = longArrayTag.rawList();
         for (int i = 0; i < longs.length; i++)
@@ -236,9 +236,8 @@ class BorrowedNavigatorTest {
         assertEquals(0, borrowedList.size());
         assertTrue(borrowedList.isEmpty());
 
-        // materialize() preserves the elementId on round trip.
-        ListTag<?> materialized = borrowedList.materialize();
-        assertEquals((byte) 1, materialized.getListType());
+        // The borrowed list IS-A ListTag - the wire elementId carries through directly.
+        assertEquals((byte) 1, borrowedList.getListType());
     }
 
     @Test

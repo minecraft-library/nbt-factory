@@ -19,6 +19,7 @@ import lib.minecraft.nbt.tags.IntTag;
 import lib.minecraft.nbt.tags.LongTag;
 import lib.minecraft.nbt.tags.ShortTag;
 import lib.minecraft.nbt.tags.StringTag;
+import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -208,7 +209,7 @@ public final class Tape {
         }
     }
 
-    private static @NotNull lib.minecraft.nbt.tags.Tag<?> readValue(@NotNull MaterializeContext ctx) {
+    private static @NotNull Tag<?> readValue(@NotNull MaterializeContext ctx) {
         long element = ctx.elements[ctx.tapeIndex];
         TapeKind kind = TapeElement.unpackKind(element);
 
@@ -395,6 +396,41 @@ public final class Tape {
         }
 
         return NOT_FOUND;
+    }
+
+    /**
+     * Dispatches on the {@link TapeKind} at {@code valueIndex} and returns the matching borrowed-tag
+     * navigator typed as {@link Tag}.
+     *
+     * <p>Construction is cheap - just two field stores plus a supplier closure. The expensive work
+     * (string decode, primitive byteswap, key-name comparison) is deferred to the first accessor
+     * call.</p>
+     *
+     * @param valueIndex tape index of a value element (any kind except {@link TapeKind#KEY_PTR},
+     *     {@link TapeKind#COMPOUND_END}, or {@link TapeKind#LIST_END})
+     * @return a navigator over the tape entry
+     * @throws NbtException if the tape entry's kind is not a value kind
+     */
+    @NotNull Tag<?> tagAt(int valueIndex) {
+        long element = this.elements[valueIndex];
+        TapeKind kind = TapeElement.unpackKind(element);
+
+        return switch (kind) {
+            case BYTE_INLINE -> new BorrowedByteTag(this, valueIndex);
+            case SHORT_INLINE -> new BorrowedShortTag(this, valueIndex);
+            case INT_INLINE -> new BorrowedIntTag(this, valueIndex);
+            case FLOAT_INLINE -> new BorrowedFloatTag(this, valueIndex);
+            case LONG_PTR -> new BorrowedLongTag(this, valueIndex);
+            case DOUBLE_PTR -> new BorrowedDoubleTag(this, valueIndex);
+            case STRING_PTR -> new BorrowedStringTag(this, valueIndex);
+            case BYTE_ARRAY_PTR -> new BorrowedByteArrayTag(this, valueIndex);
+            case INT_ARRAY_PTR -> new BorrowedIntArrayTag(this, valueIndex);
+            case LONG_ARRAY_PTR -> new BorrowedLongArrayTag(this, valueIndex);
+            case COMPOUND_HEADER -> new BorrowedCompoundTag(this, valueIndex);
+            case LIST_HEADER -> new BorrowedListTag(this, valueIndex);
+            default -> throw new NbtTypeException(
+                "Cannot construct borrowed tag from kind %s at tape index %d", kind, valueIndex);
+        };
     }
 
     /**

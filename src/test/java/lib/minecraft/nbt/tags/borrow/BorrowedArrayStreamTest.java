@@ -208,7 +208,7 @@ class BorrowedArrayStreamTest {
         BorrowedCompoundTag borrowedRoot = Tape.encode(root).root();
         BorrowedIntArrayTag tag = (BorrowedIntArrayTag) borrowedRoot.get("ints");
         assertNotNull(tag);
-        assertEquals(payload.length, tag.size());
+        assertEquals(payload.length, tag.length());
         return tag;
     }
 
@@ -218,7 +218,7 @@ class BorrowedArrayStreamTest {
         BorrowedCompoundTag borrowedRoot = Tape.encode(root).root();
         BorrowedLongArrayTag tag = (BorrowedLongArrayTag) borrowedRoot.get("longs");
         assertNotNull(tag);
-        assertEquals(payload.length, tag.size());
+        assertEquals(payload.length, tag.length());
         return tag;
     }
 
@@ -228,7 +228,7 @@ class BorrowedArrayStreamTest {
         BorrowedCompoundTag borrowedRoot = Tape.encode(root).root();
         BorrowedByteArrayTag tag = (BorrowedByteArrayTag) borrowedRoot.get("bytes");
         assertNotNull(tag);
-        assertEquals(payload.length, tag.size());
+        assertEquals(payload.length, tag.length());
         return tag;
     }
 

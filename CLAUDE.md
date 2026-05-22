@@ -72,10 +72,11 @@ checks, search filters, key probes). Don't use when you'll read every field - th
 materializing path is roughly equal there.
 
 ```java
-BorrowedCompoundTag bc = NbtFactory.borrowFromByteArray(payload);
-BorrowedTag<?> display = bc.get("display");
+CompoundTag bc = NbtFactory.borrowFromByteArray(payload);
+Tag<?> display = bc.get("display");
 // payload bytes retained until bc is GC'd - do not mutate them.
-CompoundTag detached = bc.materialize(); // escape hatch; no buffer retention
+// For a fully-detached copy, just use the materializing path on the same payload:
+CompoundTag detached = NbtFactory.fromByteArray(payload);
 ```
 
 Buffer-retention rule: the returned `BorrowedCompoundTag` holds a strong reference

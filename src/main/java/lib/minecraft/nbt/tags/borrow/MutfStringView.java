@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.UTFDataFormatException;
+import java.util.Arrays;
 
 /**
  * Zero-copy view over a modified-UTF-8 byte slice inside a retained tape buffer.
@@ -214,15 +215,9 @@ public final class MutfStringView {
         if (other == this)
             return true;
 
-        if (this.length != other.length)
-            return false;
-
-        for (int i = 0; i < this.length; i++) {
-            if (this.buffer[this.offset + i] != other.buffer[other.offset + i])
-                return false;
-        }
-
-        return true;
+        return Arrays.equals(
+            this.buffer, this.offset, this.offset + this.length,
+            other.buffer, other.offset, other.offset + other.length);
     }
 
     /**

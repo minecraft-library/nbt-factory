@@ -45,17 +45,4 @@ public final class BorrowedCompoundTag extends CompoundTag {
         return () -> new TapeMapView(tape, tapeIndex);
     }
 
-    /**
-     * Forces the lazy {@link TapeMapView} to be allocated and returns this tag as a plain
-     * {@link CompoundTag}. Provided as an alias for callers migrating from the prior
-     * {@code BorrowedTag.materialize()} entry point - functionally equivalent to using this tag
-     * directly through the {@link CompoundTag} surface.
-     *
-     * @return this tag, with the backing view forced
-     */
-    public @NotNull CompoundTag materialize() {
-        this.getValue();
-        return this;
-    }
-
 }
