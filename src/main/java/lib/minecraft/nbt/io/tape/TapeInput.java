@@ -13,8 +13,6 @@ import lib.minecraft.nbt.tags.borrow.TapeElement;
 import lib.minecraft.nbt.tags.borrow.TapeKind;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.EOFException;
 import java.io.IOException;
 
 /**
@@ -124,8 +122,8 @@ public class TapeInput implements NbtInput {
         if (rootType != TagType.COMPOUND.getId())
             throw new NbtFormatException("Root tag must be TAG_Compound, found id %d", rootType & 0xFF);
 
-        int rootNameLen = in.readUnsignedShortInternal();
-        in.advanceInternal(rootNameLen);
+        int rootNameLen = in.readUnsignedShort();
+        in.advance(rootNameLen);
 
         in.buildCompoundBodyIntoTape();
         return new Tape(in.tape, in.tapeSize, input);
@@ -146,75 +144,85 @@ public class TapeInput implements NbtInput {
      * overflow.</p>
      */
     @Override
-    public @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
+    public @NotNull CompoundTag readCompoundTag(int depth) {
         this.buildCompoundBodyIntoTape();
         Tape built = new Tape(this.tape, this.tapeSize, this.input);
         return new BorrowedCompoundTag(built, 0);
     }
 
     // ------------------------------------------------------------------
-    // NbtInput primitive reads (mirror NbtInputBuffer's VarHandle path).
+    // NbtInput primitive reads. Truncated input surfaces as the unchecked
+    // NbtFormatException with location info - more useful than the bare
+    // EOFException NbtInputBuffer raises, and unchecked so it flies through
+    // the NbtInput {@code throws IOException} contract unwrapped.
     // ------------------------------------------------------------------
 
     @Override
-    public boolean readBoolean() throws IOException {
-        if (this.position >= this.input.length) throw new EOFException();
+    public boolean readBoolean() {
+        this.requireRemaining(1);
         return this.input[this.position++] != 0;
     }
 
     @Override
-    public byte readByte() throws IOException {
-        if (this.position >= this.input.length) throw new EOFException();
+    public byte readByte() {
+        this.requireRemaining(1);
         return this.input[this.position++];
     }
 
     @Override
-    public short readShort() throws IOException {
-        if (this.position + 2 > this.input.length) throw new EOFException();
+    public short readShort() {
+        this.requireRemaining(2);
         short v = NbtByteCodec.getShort(this.input, this.position);
         this.position += 2;
         return v;
     }
 
+    private int readUnsignedShort() {
+        this.requireRemaining(2);
+        int v = NbtByteCodec.getUnsignedShort(this.input, this.position);
+        this.position += 2;
+        return v;
+    }
+
     @Override
-    public int readInt() throws IOException {
-        if (this.position + 4 > this.input.length) throw new EOFException();
+    public int readInt() {
+        this.requireRemaining(4);
         int v = NbtByteCodec.getInt(this.input, this.position);
         this.position += 4;
         return v;
     }
 
     @Override
-    public long readLong() throws IOException {
-        if (this.position + 8 > this.input.length) throw new EOFException();
+    public long readLong() {
+        this.requireRemaining(8);
         long v = NbtByteCodec.getLong(this.input, this.position);
         this.position += 8;
         return v;
     }
 
     @Override
-    public float readFloat() throws IOException {
+    public float readFloat() {
         return Float.intBitsToFloat(this.readInt());
     }
 
     @Override
-    public double readDouble() throws IOException {
+    public double readDouble() {
         return Double.longBitsToDouble(this.readLong());
     }
 
     @Override
     public @NotNull String readUTF() throws IOException {
-        int utfLen = this.readUnsignedShortInternal();
-        if (this.position + utfLen > this.input.length) throw new EOFException();
+        int utfLen = this.readUnsignedShort();
+        this.requireRemaining(utfLen);
         String value = NbtModifiedUtf8.decode(this.input, this.position, utfLen);
         this.position += utfLen;
         return value;
     }
 
     @Override
-    public byte @NotNull [] readByteArray() throws IOException {
+    public byte @NotNull [] readByteArray() {
         int length = this.readInt();
-        if (this.position + length > this.input.length) throw new EOFException();
+        this.requireRemaining(length);
         byte[] data = new byte[length];
         System.arraycopy(this.input, this.position, data, 0, length);
         this.position += length;
@@ -222,9 +230,9 @@ public class TapeInput implements NbtInput {
     }
 
     @Override
-    public int @NotNull [] readIntArray() throws IOException {
+    public int @NotNull [] readIntArray() {
         int length = this.readInt();
-        if (this.position + ((long) length << 2) > this.input.length) throw new EOFException();
+        this.requireRemainingBytes((long) length << 2);
         int[] data = new int[length];
         NbtByteCodec.getIntArrayBE(this.input, this.position, data, 0, length);
         this.position += length << 2;
@@ -232,49 +240,16 @@ public class TapeInput implements NbtInput {
     }
 
     @Override
-    public long @NotNull [] readLongArray() throws IOException {
+    public long @NotNull [] readLongArray() {
         int length = this.readInt();
-        if (this.position + ((long) length << 3) > this.input.length) throw new EOFException();
+        this.requireRemainingBytes((long) length << 3);
         long[] data = new long[length];
         NbtByteCodec.getLongArrayBE(this.input, this.position, data, 0, length);
         this.position += length << 3;
         return data;
     }
 
-    // ------------------------------------------------------------------
-    // Internal helpers used by the tape builder. Kept separate from the
-    // NbtInput primitive surface because they throw NbtFormatException for
-    // tape-specific diagnostics rather than the generic {@link IOException}
-    // contract NbtInput callers expect.
-    // ------------------------------------------------------------------
-
-    private int readUnsignedShortInternal() throws IOException {
-        this.requireRemaining(2);
-        int v = NbtByteCodec.getUnsignedShort(this.input, this.position);
-        this.position += 2;
-        return v;
-    }
-
-    private byte readByteInternal() throws IOException {
-        this.requireRemaining(1);
-        return this.input[this.position++];
-    }
-
-    private short readShortInternal() throws IOException {
-        this.requireRemaining(2);
-        short v = NbtByteCodec.getShort(this.input, this.position);
-        this.position += 2;
-        return v;
-    }
-
-    private int readIntInternal() throws IOException {
-        this.requireRemaining(4);
-        int v = NbtByteCodec.getInt(this.input, this.position);
-        this.position += 4;
-        return v;
-    }
-
-    private void advanceInternal(int byteCount) throws IOException {
+    private void advance(int byteCount) {
         if (byteCount < 0)
             throw new NbtFormatException("Negative advance %d at offset %d", byteCount, this.position);
 
@@ -282,7 +257,18 @@ public class TapeInput implements NbtInput {
         this.position += byteCount;
     }
 
-    private void requireRemaining(int byteCount) throws IOException {
+    private void requireRemaining(int byteCount) {
+        if (this.position + byteCount > this.input.length)
+            throw new NbtFormatException(
+                "Truncated NBT input - need %d bytes at offset %d, only %d available",
+                byteCount, this.position, this.input.length - this.position);
+    }
+
+    /**
+     * {@code long}-arithmetic overload for the bulk-array readers - {@code length << 2/3} can
+     * overflow {@code int} on pathological array lengths.
+     */
+    private void requireRemainingBytes(long byteCount) {
         if (this.position + byteCount > this.input.length)
             throw new NbtFormatException(
                 "Truncated NBT input - need %d bytes at offset %d, only %d available",
@@ -295,7 +281,7 @@ public class TapeInput implements NbtInput {
     // exposed through the NbtInput contract.
     // ------------------------------------------------------------------
 
-    private void buildCompoundBodyIntoTape() throws IOException {
+    private void buildCompoundBodyIntoTape() {
         int rootHeaderIdx = this.appendTape(TapeElement.packCompoundHeader(0, 0));
         this.openFrame(rootHeaderIdx, COMPOUND_FRAME, (byte) 0);
         this.driveStack();
@@ -304,7 +290,7 @@ public class TapeInput implements NbtInput {
             throw new NbtFormatException("Parser ended with %d open frames remaining", this.sp + 1);
     }
 
-    private void driveStack() throws IOException {
+    private void driveStack() {
         while (this.sp >= 0) {
             int remaining = this.openFrameRemaining[this.sp];
 
@@ -317,8 +303,8 @@ public class TapeInput implements NbtInput {
         }
     }
 
-    private void stepCompound() throws IOException {
-        byte typeId = this.readByteInternal();
+    private void stepCompound() {
+        byte typeId = this.readByte();
 
         if (typeId == TagType.END.getId()) {
             this.closeCompoundFrame();
@@ -326,8 +312,8 @@ public class TapeInput implements NbtInput {
         }
 
         int keyOffset = this.position;
-        int keyLen = this.readUnsignedShortInternal();
-        this.advanceInternal(keyLen);
+        int keyLen = this.readUnsignedShort();
+        this.advance(keyLen);
 
         this.appendTape(TapeElement.pack(TapeKind.KEY_PTR, keyOffset));
         this.openFrameCompoundEntries[this.sp]++;
@@ -335,7 +321,7 @@ public class TapeInput implements NbtInput {
         this.dispatchValue(typeId);
     }
 
-    private void stepList(int remaining) throws IOException {
+    private void stepList(int remaining) {
         if (remaining == 0) {
             this.closeListFrame();
             return;
@@ -345,58 +331,58 @@ public class TapeInput implements NbtInput {
         this.dispatchValue(this.openFrameListElementId[this.sp]);
     }
 
-    private void dispatchValue(byte typeId) throws IOException {
+    private void dispatchValue(byte typeId) {
         switch (typeId) {
             case 1 -> {
-                byte v = this.readByteInternal();
+                byte v = this.readByte();
                 this.appendTape(TapeElement.pack(TapeKind.BYTE_INLINE, v));
             }
             case 2 -> {
-                short v = this.readShortInternal();
+                short v = this.readShort();
                 this.appendTape(TapeElement.pack(TapeKind.SHORT_INLINE, v));
             }
             case 3 -> {
-                int v = this.readIntInternal();
+                int v = this.readInt();
                 this.appendTape(TapeElement.pack(TapeKind.INT_INLINE, v));
             }
             case 4 -> {
                 int offset = this.position;
-                this.advanceInternal(8);
+                this.advance(8);
                 this.appendTape(TapeElement.pack(TapeKind.LONG_PTR, offset));
             }
             case 5 -> {
-                int bits = this.readIntInternal();
+                int bits = this.readInt();
                 this.appendTape(TapeElement.pack(TapeKind.FLOAT_INLINE, bits));
             }
             case 6 -> {
                 int offset = this.position;
-                this.advanceInternal(8);
+                this.advance(8);
                 this.appendTape(TapeElement.pack(TapeKind.DOUBLE_PTR, offset));
             }
             case 7 -> {
                 int offset = this.position;
-                int len = this.readIntInternal();
-                this.advanceInternal(len);
+                int len = this.readInt();
+                this.advance(len);
                 this.appendTape(TapeElement.pack(TapeKind.BYTE_ARRAY_PTR, offset));
             }
             case 8 -> {
                 int offset = this.position;
-                int len = this.readUnsignedShortInternal();
-                this.advanceInternal(len);
+                int len = this.readUnsignedShort();
+                this.advance(len);
                 this.appendTape(TapeElement.pack(TapeKind.STRING_PTR, offset));
             }
             case 9 -> this.openListValue();
             case 10 -> this.openCompoundValue();
             case 11 -> {
                 int offset = this.position;
-                int len = this.readIntInternal();
-                this.advanceInternal(Math.multiplyExact(len, 4));
+                int len = this.readInt();
+                this.advance(Math.multiplyExact(len, 4));
                 this.appendTape(TapeElement.pack(TapeKind.INT_ARRAY_PTR, offset));
             }
             case 12 -> {
                 int offset = this.position;
-                int len = this.readIntInternal();
-                this.advanceInternal(Math.multiplyExact(len, 8));
+                int len = this.readInt();
+                this.advance(Math.multiplyExact(len, 8));
                 this.appendTape(TapeElement.pack(TapeKind.LONG_ARRAY_PTR, offset));
             }
             default -> throw new NbtFormatException("Unknown tag id encountered while parsing buffer: %d", typeId & 0xFF);
@@ -408,9 +394,9 @@ public class TapeInput implements NbtInput {
         this.openFrame(headerIdx, COMPOUND_FRAME, (byte) 0);
     }
 
-    private void openListValue() throws IOException {
-        byte elementType = this.readByteInternal();
-        int rawLength = this.readIntInternal();
+    private void openListValue() {
+        byte elementType = this.readByte();
+        int rawLength = this.readInt();
         int length = Math.max(0, rawLength);
 
         int headerIdx = this.appendTape(TapeElement.packListHeader(elementType, length, 0));
