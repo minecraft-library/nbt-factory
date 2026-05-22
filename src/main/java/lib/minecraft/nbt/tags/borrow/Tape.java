@@ -198,7 +198,7 @@ public final class Tape {
                 throw new NbtFormatException("Expected KEY_PTR or COMPOUND_END inside compound, found %s", kind);
 
             int keyOffset = (int) TapeElement.unpackValue(element);
-            String key = decodeUtf8(ctx.buffer, keyOffset);
+            String key = NbtModifiedUtf8.decode(ctx.buffer, keyOffset);
             ctx.tapeIndex++;
 
             compound.put(key, readValue(ctx));
@@ -262,7 +262,7 @@ public final class Tape {
             }
             case STRING_PTR -> {
                 int offset = (int) TapeElement.unpackValue(element);
-                String value = decodeUtf8(ctx.buffer, offset);
+                String value = NbtModifiedUtf8.decode(ctx.buffer, offset);
                 ctx.tapeIndex++;
                 yield new StringTag(value);
             }
@@ -410,25 +410,6 @@ public final class Tape {
             case COMPOUND_HEADER, LIST_HEADER -> TapeElement.unpackEndOffset(element) + 1;
             default -> valueIndex + 1;
         };
-    }
-
-    /**
-     * Decodes a length-prefixed modified-UTF-8 string at {@code offset} in {@code buffer}.
-     *
-     * <p>{@link NbtModifiedUtf8#decode(byte[], int, int) NbtModifiedUtf8.decode} declares
-     * {@link UTFDataFormatException} but the bytes already round-tripped through
-     * {@link NbtFactory#toByteArray} (or, in C2+, through a parser that ran the same MUTF-8 probe
-     * on the way in), so a malformed sequence here would indicate corruption of the retained
-     * buffer rather than user input. Wrap as {@link NbtException} to keep the borrow API's
-     * checked-exception surface free.</p>
-     */
-    private static @NotNull String decodeUtf8(byte @NotNull [] buffer, int offset) {
-        int len = NbtByteCodec.getUnsignedShort(buffer, offset);
-        try {
-            return NbtModifiedUtf8.decode(buffer, offset + 2, len);
-        } catch (UTFDataFormatException exception) {
-            throw new NbtFormatException(exception, "Malformed modified UTF-8 in tape buffer at offset %d", offset);
-        }
     }
 
 }

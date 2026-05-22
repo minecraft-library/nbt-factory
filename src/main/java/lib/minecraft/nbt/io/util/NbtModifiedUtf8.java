@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.io.util;
 
+import lib.minecraft.nbt.exception.NbtFormatException;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,6 +118,33 @@ public final class NbtModifiedUtf8 {
      *
      * @throws UTFDataFormatException if the bytes are not a valid modified UTF-8 sequence
      */
+    /**
+     * Decodes the length-prefixed modified-UTF-8 string at {@code tagOffset} in {@code src}.
+     *
+     * <p>Reads the 2-byte big-endian length prefix at {@code tagOffset}, then decodes the
+     * following {@code length} bytes via {@link #decode(byte[], int, int)}. Wraps the checked
+     * {@link UTFDataFormatException} as {@link NbtFormatException} - corruption at this layer
+     * means the buffer was malformed or tampered with, not user input.</p>
+     *
+     * <p>This is the borrow-mode shape: the tape stores a buffer offset pointing at the framed
+     * string layout (length + payload), and callers want one method that handles both pieces.</p>
+     *
+     * @param src buffer containing the framed string
+     * @param tagOffset byte offset of the 2-byte length prefix
+     * @return the decoded string
+     * @throws NbtFormatException if the bytes are not valid modified UTF-8
+     */
+    public static @NotNull String decode(byte[] src, int tagOffset) {
+        int len = NbtByteCodec.getUnsignedShort(src, tagOffset);
+
+        try {
+            return decode(src, tagOffset + 2, len);
+        } catch (UTFDataFormatException exception) {
+            throw new NbtFormatException(
+                exception, "Malformed modified UTF-8 in buffer at offset %d", tagOffset);
+        }
+    }
+
     public static @NotNull String decode(byte[] src, int offset, int utfLen) throws UTFDataFormatException {
         // 8-byte high-bit probe. Any high bit set means a multi-byte sequence and triggers the
         // slow path. 0x00 has high bit zero, so the probe accepts it - the existing fast-path

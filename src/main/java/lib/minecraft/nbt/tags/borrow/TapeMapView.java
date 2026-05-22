@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags.borrow;
 
 import lib.minecraft.nbt.exception.NbtFormatException;
+import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +136,7 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
                     idx, TapeElement.unpackKind(keyElement));
 
             int keyOffset = (int) TapeElement.unpackValue(keyElement);
-            String name = BorrowedTagSupport.decodeUtf8At(this.tape.buffer(), keyOffset);
+            String name = NbtModifiedUtf8.decode(this.tape.buffer(), keyOffset);
             int valueIdx = idx + 1;
             Tag<?> value = BorrowedTag.fromTape(this.tape, valueIdx);
             map.put(name, value);
@@ -225,7 +226,7 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
                     this.cursor, TapeElement.unpackKind(keyElement));
 
             int keyOffset = (int) TapeElement.unpackValue(keyElement);
-            String name = BorrowedTagSupport.decodeUtf8At(tape.buffer(), keyOffset);
+            String name = NbtModifiedUtf8.decode(tape.buffer(), keyOffset);
             int valueIdx = this.cursor + 1;
             Tag<?> value = BorrowedTag.fromTape(tape, valueIdx);
             this.cursor = tape.nextSibling(valueIdx);
