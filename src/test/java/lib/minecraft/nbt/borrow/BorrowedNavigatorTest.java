@@ -74,28 +74,28 @@ class BorrowedNavigatorTest {
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
 
         Tag<?> byteTag = borrowed.get("byte");
-        assertInstanceOf(ByteTag.class, byteTag);
-        assertEquals((byte) -42, ((ByteTag) byteTag).byteValue());
+        assertInstanceOf(BorrowedByteTag.class, byteTag);
+        assertEquals((byte) -42, ((BorrowedByteTag) byteTag).byteValue());
 
         Tag<?> shortTag = borrowed.get("short");
-        assertInstanceOf(ShortTag.class, shortTag);
-        assertEquals((short) -32000, ((ShortTag) shortTag).shortValue());
+        assertInstanceOf(BorrowedShortTag.class, shortTag);
+        assertEquals((short) -32000, ((BorrowedShortTag) shortTag).shortValue());
 
         Tag<?> intTag = borrowed.get("int");
-        assertInstanceOf(IntTag.class, intTag);
-        assertEquals(Integer.MIN_VALUE, ((IntTag) intTag).intValue());
+        assertInstanceOf(BorrowedIntTag.class, intTag);
+        assertEquals(Integer.MIN_VALUE, ((BorrowedIntTag) intTag).intValue());
 
         Tag<?> longTag = borrowed.get("long");
-        assertInstanceOf(LongTag.class, longTag);
-        assertEquals(Long.MIN_VALUE, ((LongTag) longTag).longValue());
+        assertInstanceOf(BorrowedLongTag.class, longTag);
+        assertEquals(Long.MIN_VALUE, ((BorrowedLongTag) longTag).longValue());
 
         Tag<?> floatTag = borrowed.get("float");
-        assertInstanceOf(FloatTag.class, floatTag);
-        assertEquals(1.5f, ((FloatTag) floatTag).floatValue());
+        assertInstanceOf(BorrowedFloatTag.class, floatTag);
+        assertEquals(1.5f, ((BorrowedFloatTag) floatTag).floatValue());
 
         Tag<?> doubleTag = borrowed.get("double");
-        assertInstanceOf(DoubleTag.class, doubleTag);
-        assertEquals(Math.PI, ((DoubleTag) doubleTag).doubleValue());
+        assertInstanceOf(BorrowedDoubleTag.class, doubleTag);
+        assertEquals(Math.PI, ((BorrowedDoubleTag) doubleTag).doubleValue());
     }
 
     @Test
@@ -177,17 +177,17 @@ class BorrowedNavigatorTest {
         assertEquals(3, borrowedList.size());
         assertFalse(borrowedList.isEmpty());
 
-        assertEquals(10, ((IntTag) borrowedList.get(0)).intValue());
-        assertEquals(20, ((IntTag) borrowedList.get(1)).intValue());
-        assertEquals(30, ((IntTag) borrowedList.get(2)).intValue());
+        assertEquals(10, ((BorrowedIntTag) borrowedList.get(0)).intValue());
+        assertEquals(20, ((BorrowedIntTag) borrowedList.get(1)).intValue());
+        assertEquals(30, ((BorrowedIntTag) borrowedList.get(2)).intValue());
         assertThrows(IndexOutOfBoundsException.class, () -> borrowedList.get(3));
         assertThrows(IndexOutOfBoundsException.class, () -> borrowedList.get(-1));
 
         // Iterator walks in insertion order.
         Iterator<Tag<?>> it = borrowedList.iterator();
-        assertEquals(10, ((IntTag) it.next()).intValue());
-        assertEquals(20, ((IntTag) it.next()).intValue());
-        assertEquals(30, ((IntTag) it.next()).intValue());
+        assertEquals(10, ((BorrowedIntTag) it.next()).intValue());
+        assertEquals(20, ((BorrowedIntTag) it.next()).intValue());
+        assertEquals(30, ((BorrowedIntTag) it.next()).intValue());
         assertFalse(it.hasNext());
     }
 
@@ -204,7 +204,7 @@ class BorrowedNavigatorTest {
         for (Map.Entry<String, Tag<?>> entry : borrowed.entrySet()) {
             keys.add(entry.getKey());
             // Exercise the value navigator while iterating.
-            assertInstanceOf(IntTag.class, entry.getValue());
+            assertInstanceOf(BorrowedIntTag.class, entry.getValue());
         }
 
         assertEquals(List.of("zeta", "alpha", "middle"), keys);
@@ -257,7 +257,7 @@ class BorrowedNavigatorTest {
         BorrowedCompoundTag b = (BorrowedCompoundTag) a.get("b");
         assertNotNull(b);
         Tag<?> c = b.get("c");
-        assertEquals(42, ((IntTag) c).intValue());
+        assertEquals(42, ((BorrowedIntTag) c).intValue());
     }
 
     @Test

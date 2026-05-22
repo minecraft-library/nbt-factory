@@ -1,8 +1,11 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
+import lib.minecraft.nbt.borrow.BorrowedByteTag;
 import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.borrow.BorrowedIntTag;
 import lib.minecraft.nbt.borrow.BorrowedListTag;
+import lib.minecraft.nbt.borrow.BorrowedShortTag;
 import lib.minecraft.nbt.borrow.BorrowedStringTag;
 import lib.minecraft.nbt.borrow.BorrowedTag;
 import lib.minecraft.nbt.tags.Tag;
@@ -296,7 +299,7 @@ public class SimdNbtHypixelExtractBenchmarks {
             return new HashMap<>();
         Map<String, Integer> out = new HashMap<>(enchants.size());
         for (Map.Entry<String, Tag<?>> e : enchants.entrySet()) {
-            int value = (e.getValue() instanceof IntTag bi) ? bi.intValue() : 0;
+            int value = (e.getValue() instanceof BorrowedIntTag bi) ? bi.intValue() : 0;
             out.put(e.getKey(), value);
         }
         return out;
@@ -321,19 +324,19 @@ public class SimdNbtHypixelExtractBenchmarks {
     private static short shortValueBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return 0;
         Tag<?> t = c.get(key);
-        return (t instanceof ShortTag s) ? s.shortValue() : 0;
+        return (t instanceof BorrowedShortTag s) ? s.shortValue() : 0;
     }
 
     private static byte byteValueBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return 0;
         Tag<?> t = c.get(key);
-        return (t instanceof ByteTag b) ? b.byteValue() : 0;
+        return (t instanceof BorrowedByteTag b) ? b.byteValue() : 0;
     }
 
     private static Integer intValueBoxedBorrow(BorrowedCompoundTag c, String key) {
         if (c == null) return null;
         Tag<?> t = c.get(key);
-        return (t instanceof IntTag i) ? i.intValue() : null;
+        return (t instanceof BorrowedIntTag i) ? i.intValue() : null;
     }
 
     private static String stringValueBorrow(BorrowedCompoundTag c, String key) {
