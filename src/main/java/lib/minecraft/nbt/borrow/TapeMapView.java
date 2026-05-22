@@ -7,8 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -26,9 +29,13 @@ import java.util.Set;
  * no further tape decode happens. The original tape reference is retained so any borrowed-tag
  * children still hold valid pointers into the buffer.</p>
  *
- * <p>{@link #entrySet()} forces promotion - the entry-set view must reflect mutations made
- * through it, and the cheapest contract-correct implementation is to materialize once and return
- * the promoted map's entrySet.</p>
+ * <p>{@link #entrySet()} returns a lazy {@link TapeEntrySet} that walks the tape per
+ * {@link Iterator#next() next()} call without forcing promotion - iteration over a 60-entry
+ * borrowed compound visits 60 tape slots and constructs 60 borrowed-tag navigators, with no
+ * intermediate {@link LinkedHashMap}. Mutation through the entry-set (i.e. {@code remove()} on
+ * the iterator) promotes-and-forwards just like the other mutation entry points; after that
+ * {@code entrySet()} returns the promoted map's own entrySet so the standard {@code Map} contract
+ * holds.</p>
  */
 @ApiStatus.Internal
 final class TapeMapView extends AbstractMap<String, Tag<?>> {
@@ -109,7 +116,8 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
 
     @Override
     public @NotNull Set<Map.Entry<String, Tag<?>>> entrySet() {
-        return this.ensureMaterialized().entrySet();
+        if (this.promoted != null) return this.promoted.entrySet();
+        return new TapeEntrySet();
     }
 
     private @NotNull LinkedHashMap<String, Tag<?>> ensureMaterialized() {
@@ -136,6 +144,94 @@ final class TapeMapView extends AbstractMap<String, Tag<?>> {
 
         this.promoted = map;
         return map;
+    }
+
+    /**
+     * Lazy entrySet that walks the tape per {@code next()} call. The set holds no state itself;
+     * its iterator carries the cursor.
+     */
+    private final class TapeEntrySet extends AbstractSet<Map.Entry<String, Tag<?>>> {
+
+        @Override
+        public int size() {
+            return TapeMapView.this.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return TapeMapView.this.isEmpty();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            if (!(o instanceof Map.Entry<?, ?> entry)) return false;
+            Object key = entry.getKey();
+            if (!(key instanceof String name)) return false;
+            Tag<?> value = TapeMapView.this.get(name);
+            if (value == null) return false;
+            Object other = entry.getValue();
+            return value.equals(other);
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            if (!(o instanceof Map.Entry<?, ?> entry)) return false;
+            Object key = entry.getKey();
+            if (!(key instanceof String name)) return false;
+            return TapeMapView.this.ensureMaterialized().entrySet().remove(entry);
+        }
+
+        @Override
+        public void clear() {
+            TapeMapView.this.clear();
+        }
+
+        @Override
+        public @NotNull Iterator<Map.Entry<String, Tag<?>>> iterator() {
+            // Promotion that happens mid-iteration must not break iteration semantics. Snapshot
+            // the promoted reference up front: if it was null at iterator construction, we walk
+            // the tape; if it gets set later by an unrelated mutation, our iterator keeps using
+            // the tape and the resulting view reflects the pre-mutation state. This matches the
+            // ConcurrentModificationException-free contract a typical Map.entrySet().iterator()
+            // wouldn't offer, which is fine for the borrow read-mostly workload.
+            if (TapeMapView.this.promoted != null)
+                return TapeMapView.this.promoted.entrySet().iterator();
+
+            return new TapeEntryIterator();
+        }
+
+    }
+
+    private final class TapeEntryIterator implements Iterator<Map.Entry<String, Tag<?>>> {
+
+        private int cursor = TapeMapView.this.tapeIndex + 1;
+
+        @Override
+        public boolean hasNext() {
+            return this.cursor < TapeMapView.this.endIdx;
+        }
+
+        @Override
+        public Map.Entry<String, Tag<?>> next() {
+            if (this.cursor >= TapeMapView.this.endIdx)
+                throw new NoSuchElementException();
+
+            Tape tape = TapeMapView.this.tape;
+            long keyElement = tape.elementAt(this.cursor);
+
+            if (TapeElement.unpackKind(keyElement) != TapeKind.KEY_PTR)
+                throw new NbtFormatException(
+                    "Expected KEY_PTR inside compound at tape index %d, found %s",
+                    this.cursor, TapeElement.unpackKind(keyElement));
+
+            int keyOffset = (int) TapeElement.unpackValue(keyElement);
+            String name = BorrowedTagSupport.decodeUtf8At(tape.buffer(), keyOffset);
+            int valueIdx = this.cursor + 1;
+            Tag<?> value = BorrowedTag.fromTape(tape, valueIdx);
+            this.cursor = tape.nextSibling(valueIdx);
+            return Map.entry(name, value);
+        }
+
     }
 
 }

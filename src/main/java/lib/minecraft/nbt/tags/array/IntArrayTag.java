@@ -61,18 +61,24 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
 
     /**
      * Number of elements in this int array tag.
+     *
+     * <p>Borrow subclasses override this to read the size from the tape header without
+     * materializing the payload.</p>
      */
-    public final int length() {
+    public int length() {
         return this.getValue().length;
     }
 
     /**
      * Returns the int at the specified position in this array tag.
      *
+     * <p>Borrow subclasses override this to read the single int directly from the retained
+     * buffer.</p>
+     *
      * @param index index of the element to return
      * @return the int at the specified position
      */
-    public final int get(int index) {
+    public int get(int index) {
         return this.getValue()[index];
     }
 
@@ -92,8 +98,12 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
 
     /**
      * Returns a sequential {@link IntStream} over the backing {@code int[]} - zero boxing.
+     *
+     * <p>Borrow subclasses override this to stream directly from the tape's
+     * {@link lib.minecraft.nbt.borrow.RawList RawList} view, skipping the full-payload
+     * materialize.</p>
      */
-    public final @NotNull IntStream intStream() {
+    public @NotNull IntStream intStream() {
         return Arrays.stream(this.getValue());
     }
 
@@ -120,7 +130,7 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
     }
 
     @Override
-    public final void forEach(@NotNull Consumer<? super Integer> action) {
+    public void forEach(@NotNull Consumer<? super Integer> action) {
         for (int i : this.getValue())
             action.accept(i);
     }
@@ -132,15 +142,18 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
      * require a boxed {@link Integer}; named distinctly to avoid creating an overload-resolution
      * ambiguity for callers that pass a method reference such as {@code System.out::println}.</p>
      *
+     * <p>Borrow subclasses override this to walk the tape's {@link lib.minecraft.nbt.borrow.RawList
+     * RawList} directly, skipping the full-payload materialize.</p>
+     *
      * @param action the action to perform on each int
      */
-    public final void forEachInt(@NotNull IntConsumer action) {
+    public void forEachInt(@NotNull IntConsumer action) {
         for (int i : this.getValue())
             action.accept(i);
     }
 
     @Override
-    public final @NotNull Iterator<Integer> iterator() {
+    public @NotNull Iterator<Integer> iterator() {
         final int[] array = this.getValue();
         return new Iterator<>() {
             private int index = 0;
@@ -161,7 +174,7 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
     }
 
     @Override
-    public final @NotNull Spliterator<Integer> spliterator() {
+    public @NotNull Spliterator<Integer> spliterator() {
         return Spliterators.spliterator(
             this.iterator(),
             this.length(),

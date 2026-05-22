@@ -61,18 +61,24 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
 
     /**
      * Number of elements in this long array tag.
+     *
+     * <p>Borrow subclasses override this to read the size from the tape header without
+     * materializing the payload.</p>
      */
-    public final int length() {
+    public int length() {
         return this.getValue().length;
     }
 
     /**
      * Returns the long at the specified position in this array tag.
      *
+     * <p>Borrow subclasses override this to read the single long directly from the retained
+     * buffer.</p>
+     *
      * @param index index of the element to return
      * @return the long at the specified position
      */
-    public final long get(int index) {
+    public long get(int index) {
         return this.getValue()[index];
     }
 
@@ -92,8 +98,12 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
 
     /**
      * Returns a sequential {@link LongStream} over the backing {@code long[]} - zero boxing.
+     *
+     * <p>Borrow subclasses override this to stream directly from the tape's
+     * {@link lib.minecraft.nbt.borrow.RawList RawList} view, skipping the full-payload
+     * materialize.</p>
      */
-    public final @NotNull LongStream longStream() {
+    public @NotNull LongStream longStream() {
         return Arrays.stream(this.getValue());
     }
 
@@ -120,7 +130,7 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
     }
 
     @Override
-    public final void forEach(@NotNull Consumer<? super Long> action) {
+    public void forEach(@NotNull Consumer<? super Long> action) {
         for (long l : this.getValue())
             action.accept(l);
     }
@@ -132,15 +142,18 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
      * require a boxed {@link Long}; named distinctly to avoid creating an overload-resolution
      * ambiguity for callers that pass a method reference such as {@code System.out::println}.</p>
      *
+     * <p>Borrow subclasses override this to walk the tape's {@link lib.minecraft.nbt.borrow.RawList
+     * RawList} directly, skipping the full-payload materialize.</p>
+     *
      * @param action the action to perform on each long
      */
-    public final void forEachLong(@NotNull LongConsumer action) {
+    public void forEachLong(@NotNull LongConsumer action) {
         for (long l : this.getValue())
             action.accept(l);
     }
 
     @Override
-    public final @NotNull Iterator<Long> iterator() {
+    public @NotNull Iterator<Long> iterator() {
         final long[] array = this.getValue();
         return new Iterator<>() {
             private int index = 0;
@@ -161,7 +174,7 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
     }
 
     @Override
-    public final @NotNull Spliterator<Long> spliterator() {
+    public @NotNull Spliterator<Long> spliterator() {
         return Spliterators.spliterator(
             this.iterator(),
             this.length(),

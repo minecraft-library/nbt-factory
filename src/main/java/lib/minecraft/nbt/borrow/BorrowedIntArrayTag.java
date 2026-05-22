@@ -7,13 +7,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 /**
  * Borrowed view over a {@link TapeKind#INT_ARRAY_PTR} tape entry. The tape element addresses a
  * 4-byte big-endian length prefix followed by {@code length * 4} payload bytes (big-endian ints).
  *
- * <p>{@link #rawList()} returns a zero-allocation {@link RawList} view over the payload; the
- * inherited {@link #getValue()} allocates a fresh {@code int[]} on first call.</p>
+ * <p>The standard {@link IntArrayTag} accessor surface ({@link #length()}, {@link #get(int)},
+ * {@link #forEachInt(IntConsumer)}, {@link #intStream()}) is overridden here to read direct from
+ * the retained buffer via the same {@link RawList} the borrow API has always exposed. The
+ * inherited {@link #getValue()} still allocates and copies the full payload, deferred until first
+ * call.</p>
  *
  * @see IntArrayTag
  */
@@ -39,36 +43,50 @@ public final class BorrowedIntArrayTag extends IntArrayTag {
     }
 
     /**
-     * Number of ints in the array (read from the 4-byte big-endian length prefix without
-     * materializing the payload).
-     *
-     * @return the element count
+     * Number of ints in the array. Reads the 4-byte big-endian length prefix from the retained
+     * buffer without materializing the payload.
      */
-    public int size() {
+    @Override
+    public int length() {
         int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
         return NbtByteCodec.getInt(this.tape.buffer(), offset);
     }
 
     /**
+     * Reads the int at {@code index} directly from the retained buffer via
+     * {@link NbtByteCodec#getInt(byte[], int)}.
+     */
+    @Override
+    public int get(int index) {
+        int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
+        return NbtByteCodec.getInt(this.tape.buffer(), offset + 4 + index * 4);
+    }
+
+    @Override
+    public void forEachInt(@NotNull IntConsumer action) {
+        this.rawList().forEachInt(action);
+    }
+
+    @Override
+    public @NotNull IntStream intStream() {
+        RawList list = this.rawList();
+        return IntStream.range(0, list.size()).map(list::getInt);
+    }
+
+    /**
+     * Alias for {@link #length()} - retained from the pre-subclass borrow API.
+     */
+    public int size() {
+        return this.length();
+    }
+
+    /**
      * Returns a zero-allocation {@link RawList} view over the payload bytes.
-     *
-     * @return the raw-list view
      */
     public @NotNull RawList rawList() {
         int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
         int len = NbtByteCodec.getInt(this.tape.buffer(), offset);
         return new RawList(this.tape.buffer(), offset + 4, len, TapeKind.INT_ARRAY_PTR);
-    }
-
-    /**
-     * Iterates over every {@code int} in the array in order, invoking {@code consumer} for each
-     * element. Reads each value from the retained tape buffer via
-     * {@link NbtByteCodec#getInt(byte[], int)} - no {@code int[]} is allocated.
-     *
-     * @param consumer the action to perform on each element
-     */
-    public void forEachBorrowed(@NotNull IntConsumer consumer) {
-        this.rawList().forEachInt(consumer);
     }
 
 }

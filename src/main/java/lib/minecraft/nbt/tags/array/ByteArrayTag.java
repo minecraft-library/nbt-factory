@@ -61,18 +61,24 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
 
     /**
      * Number of elements in this byte array tag.
+     *
+     * <p>Borrow subclasses override this to read the size from the tape header without
+     * materializing the payload.</p>
      */
-    public final int length() {
+    public int length() {
         return this.getValue().length;
     }
 
     /**
      * Returns the byte at the specified position in this array tag.
      *
+     * <p>Borrow subclasses override this to read the single byte directly from the retained
+     * buffer, skipping the full-payload materialize.</p>
+     *
      * @param index index of the element to return
      * @return the byte at the specified position
      */
-    public final byte get(int index) {
+    public byte get(int index) {
         return this.getValue()[index];
     }
 
@@ -113,7 +119,7 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
     }
 
     @Override
-    public final void forEach(@NotNull Consumer<? super Byte> action) {
+    public void forEach(@NotNull Consumer<? super Byte> action) {
         for (byte b : this.getValue())
             action.accept(b);
     }
@@ -125,9 +131,12 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
      * declares its own. Use this overload in preference to {@link #forEach(Consumer)} when the
      * action does not require a boxed {@link Byte}.</p>
      *
+     * <p>Borrow subclasses override this to walk the tape's {@link lib.minecraft.nbt.borrow.RawList
+     * RawList} directly, skipping the full-payload materialize.</p>
+     *
      * @param action the action to perform on each byte
      */
-    public final void forEachByte(@NotNull ByteConsumer action) {
+    public void forEachByte(@NotNull ByteConsumer action) {
         for (byte b : this.getValue())
             action.accept(b);
     }
@@ -152,7 +161,7 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
     }
 
     @Override
-    public final @NotNull Iterator<Byte> iterator() {
+    public @NotNull Iterator<Byte> iterator() {
         final byte[] array = this.getValue();
         return new Iterator<>() {
             private int index = 0;
@@ -173,7 +182,7 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
     }
 
     @Override
-    public final @NotNull Spliterator<Byte> spliterator() {
+    public @NotNull Spliterator<Byte> spliterator() {
         final byte[] array = this.getValue();
         return Spliterators.spliterator(
             new Iterator<Byte>() {

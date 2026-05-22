@@ -11,9 +11,10 @@ import java.util.function.Supplier;
  * Borrowed view over a {@link TapeKind#BYTE_ARRAY_PTR} tape entry. The tape element addresses a
  * 4-byte big-endian length prefix followed by {@code length} payload bytes.
  *
- * <p>{@link #rawList()} returns a zero-allocation {@link RawList} view over the payload; per-element
- * access through it does not copy. The inherited {@link #getValue()} allocates and copies the full
- * payload, deferred until first call.</p>
+ * <p>The standard {@link ByteArrayTag} accessor surface ({@link #length()}, {@link #get(int)},
+ * {@link #forEachByte(ByteConsumer)}) is overridden here to read direct from the retained buffer
+ * via the same {@link RawList} the borrow API has always exposed. The inherited
+ * {@link #getValue()} still allocates and copies the full payload, deferred until first call.</p>
  *
  * @see ByteArrayTag
  */
@@ -39,39 +40,45 @@ public final class BorrowedByteArrayTag extends ByteArrayTag {
     }
 
     /**
-     * Number of bytes in the array (read from the 4-byte big-endian length prefix without
-     * materializing the payload).
-     *
-     * @return the element count
+     * Number of bytes in the array. Reads the 4-byte big-endian length prefix from the retained
+     * buffer without materializing the payload.
      */
-    public int size() {
+    @Override
+    public int length() {
         int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
         return NbtByteCodec.getInt(this.tape.buffer(), offset);
     }
 
     /**
-     * Returns a zero-allocation {@link RawList} view over the payload bytes.
-     *
-     * @return the raw-list view
+     * Reads the byte at {@code index} directly from the retained buffer.
+     */
+    @Override
+    public byte get(int index) {
+        int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
+        return this.tape.buffer()[offset + 4 + index];
+    }
+
+    @Override
+    public void forEachByte(@NotNull ByteConsumer action) {
+        this.rawList().forEachByte(action);
+    }
+
+    /**
+     * Alias for {@link #length()} - retained from the pre-subclass borrow API.
+     */
+    public int size() {
+        return this.length();
+    }
+
+    /**
+     * Returns a zero-allocation {@link RawList} view over the payload bytes. Use this when
+     * iterating without going through the standard {@link #forEachByte(ByteConsumer)} entry point
+     * (e.g. for the array-kind discriminator on {@link RawList#elementKind()}).
      */
     public @NotNull RawList rawList() {
         int offset = (int) TapeElement.unpackValue(this.tape.elementAt(this.tapeIndex));
         int len = NbtByteCodec.getInt(this.tape.buffer(), offset);
         return new RawList(this.tape.buffer(), offset + 4, len, TapeKind.BYTE_ARRAY_PTR);
-    }
-
-    /**
-     * Iterates over every {@code byte} in the array in order, invoking {@code consumer} for each
-     * element. Reads each value directly from the retained tape buffer - no {@code byte[]} is
-     * allocated.
-     *
-     * <p>Reuses {@link ByteArrayTag.ByteConsumer} - the JDK does not ship a primitive
-     * {@code ByteConsumer} variant.</p>
-     *
-     * @param consumer the action to perform on each element
-     */
-    public void forEachBorrowed(ByteArrayTag.@NotNull ByteConsumer consumer) {
-        this.rawList().forEachByte(consumer);
     }
 
 }
