@@ -3,22 +3,23 @@ package lib.minecraft.nbt;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.array.ByteArrayTag;
-import lib.minecraft.nbt.tags.array.IntArrayTag;
-import lib.minecraft.nbt.tags.array.LongArrayTag;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
-import lib.minecraft.nbt.tags.collection.ListTag;
-import lib.minecraft.nbt.tags.primitive.ByteTag;
-import lib.minecraft.nbt.tags.primitive.DoubleTag;
-import lib.minecraft.nbt.tags.primitive.FloatTag;
-import lib.minecraft.nbt.tags.primitive.IntTag;
-import lib.minecraft.nbt.tags.primitive.LongTag;
-import lib.minecraft.nbt.tags.primitive.ShortTag;
-import lib.minecraft.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.tag.Tag;
+import lib.minecraft.nbt.tag.TagType;
+import lib.minecraft.nbt.tag.ByteArrayTag;
+import lib.minecraft.nbt.tag.IntArrayTag;
+import lib.minecraft.nbt.tag.LongArrayTag;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.ByteTag;
+import lib.minecraft.nbt.tag.DoubleTag;
+import lib.minecraft.nbt.tag.FloatTag;
+import lib.minecraft.nbt.tag.IntTag;
+import lib.minecraft.nbt.tag.LongTag;
+import lib.minecraft.nbt.tag.ShortTag;
+import lib.minecraft.nbt.tag.StringTag;
 import dev.simplified.util.compression.Compression;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -48,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Binary NBT via {@link NbtOutputStream}/{@link NbtInputStream} (streaming)</li>
  *   <li>{@link Compression#GZIP}-compressed binary NBT</li>
  *   <li>SNBT via {@link NbtFactory#toSnbt(CompoundTag)}/{@link NbtFactory#fromSnbt(String)}</li>
- *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link lib.minecraft.nbt.io.json.NbtJsonDeserializer} for the round-trip contract)</li>
+ *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link NbtJsonDeserializer} for the round-trip contract)</li>
  * </ul>
  *
  * <p>Each fixture covers different aspects of the format: primitives, edge values, strings,

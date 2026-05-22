@@ -163,10 +163,12 @@ To run a single test: right-click `NbtRoundTripTest` > **Run**.
                │
                ▼
     ┌──────────────────────────────────────────────┐
-    │  tags/                                       │
-    │  ├─ primitive/  (Byte, Short, Int, …)        │
-    │  ├─ array/      (ByteArray, IntArray, Long…) │
-    │  └─ collection/ (Compound, List)             │
+    │  tag/                                        │
+    │  Tag, TagType, ByteTag..DoubleTag,           │
+    │  StringTag, EndTag, NumericalTag,            │
+    │  ByteArrayTag/IntArrayTag/LongArrayTag,      │
+    │  CompoundTag, ListTag                        │
+    │  └─ borrow/ (BorrowedXxxTag, Tape)           │
     └──────────────────────────────────────────────┘
 
 Format wrappers:
@@ -221,21 +223,16 @@ nbt-factory/
     │   ├── NbtFactory.java              # public entry point
     │   ├── exception/                   # NbtException, NbtMaxDepthException
     │   ├── io/
-    │   │   ├── NbtByteCodec.java        # tag-type codec contract
     │   │   ├── NbtInput.java            # read dispatch
     │   │   ├── NbtOutput.java           # write dispatch
-    │   │   ├── NbtKnownKeys.java
-    │   │   ├── NbtModifiedUtf8.java     # Mojang's modified UTF-8
+    │   │   ├── util/                    # NbtByteCodec, NbtModifiedUtf8, NbtKnownKeys, ByteList/IntList/LongList
     │   │   ├── buffer/                  # heap-backed codec
     │   │   ├── stream/                  # DataInputStream/DataOutputStream wrappers
     │   │   ├── snbt/                    # SnbtSerializer / SnbtDeserializer
-    │   │   └── json/                    # NbtJsonSerializer / NbtJsonDeserializer
-    │   └── tags/
-    │       ├── Tag.java                 # base contract
-    │       ├── TagType.java             # enum dispatch
-    │       ├── primitive/               # ByteTag, ShortTag, IntTag, ...
-    │       ├── array/                   # ByteArrayTag, IntArrayTag, LongArrayTag
-    │       └── collection/              # CompoundTag, ListTag
+    │   │   ├── json/                    # NbtJsonSerializer / NbtJsonDeserializer
+    │   │   └── tape/                    # NbtInputTape (borrow-API parser)
+    │   └── tag/                         # Tag, TagType, every concrete tag class
+    │       └── borrow/                  # BorrowedXxxTag navigators + Tape
     ├── test/java/lib/minecraft/nbt/
     │   ├── NbtRoundTripTest.java
     │   └── AuctionFixtureGenerator.java

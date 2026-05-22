@@ -1,12 +1,12 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.borrow.BorrowedIntArrayTag;
-import lib.minecraft.nbt.borrow.BorrowedLongArrayTag;
-import lib.minecraft.nbt.tags.array.IntArrayTag;
-import lib.minecraft.nbt.tags.array.LongArrayTag;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.IntArrayTag;
+import lib.minecraft.nbt.tag.LongArrayTag;
+import lib.minecraft.nbt.tag.borrow.BorrowedIntArrayTag;
+import lib.minecraft.nbt.tag.borrow.BorrowedLongArrayTag;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -84,7 +84,7 @@ public class BorrowedArrayStreamBenchmarks {
         root.put("longs", new LongArrayTag(longs));
 
         byte[] encoded = NbtFactory.toByteArray(root);
-        BorrowedCompoundTag borrowedRoot = NbtFactory.borrowFromByteArray(encoded);
+        CompoundTag borrowedRoot = NbtFactory.borrowFromByteArray(encoded);
         this.borrowedInts = (BorrowedIntArrayTag) borrowedRoot.get("ints");
         this.borrowedLongs = (BorrowedLongArrayTag) borrowedRoot.get("longs");
     }
@@ -92,12 +92,12 @@ public class BorrowedArrayStreamBenchmarks {
     /**
      * Materialize the {@code int[]} once, then sum it via {@link Arrays#stream(int[])}. After
      * Phase E1 this is the obvious choice for int-array reductions: the bulk-byteswap path
-     * ({@link lib.minecraft.nbt.io.NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
+     * ({@link NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
      * auto-vectorizes cleanly, beating any per-element spliterator we tried.
      */
     @Benchmark
     public long sumViaToIntArray() {
-        return Arrays.stream(this.borrowedInts.toIntArray()).asLongStream().sum();
+        return Arrays.stream(this.borrowedInts.getValue()).asLongStream().sum();
     }
 
     /**
@@ -105,7 +105,7 @@ public class BorrowedArrayStreamBenchmarks {
      */
     @Benchmark
     public long sumViaToLongArray() {
-        return Arrays.stream(this.borrowedLongs.toLongArray()).sum();
+        return Arrays.stream(this.borrowedLongs.getValue()).sum();
     }
 
     /**

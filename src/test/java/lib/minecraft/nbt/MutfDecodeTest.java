@@ -1,6 +1,6 @@
 package lib.minecraft.nbt;
 
-import lib.minecraft.nbt.io.NbtModifiedUtf8;
+import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

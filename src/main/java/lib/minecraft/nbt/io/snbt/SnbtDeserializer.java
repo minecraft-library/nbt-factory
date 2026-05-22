@@ -1,15 +1,13 @@
 package lib.minecraft.nbt.io.snbt;
 
+import dev.simplified.util.StringUtil;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.exception.NbtSnbtException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.util.ByteList;
 import lib.minecraft.nbt.io.util.IntList;
 import lib.minecraft.nbt.io.util.LongList;
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
-import lib.minecraft.nbt.tags.collection.ListTag;
-import dev.simplified.util.StringUtil;
+import lib.minecraft.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,41 +29,41 @@ import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
  * <p>Type reconstruction rules (case-insensitive suffixes):</p>
  * <ul>
  *   <li><b>Numeric literal with suffix</b> - resolves directly to the matching primitive tag:
- *       {@code 34b} to {@link lib.minecraft.nbt.tags.primitive.ByteTag ByteTag},
- *       {@code 31415s} to {@link lib.minecraft.nbt.tags.primitive.ShortTag ShortTag},
- *       {@code 31415926l} to {@link lib.minecraft.nbt.tags.primitive.LongTag LongTag},
- *       {@code 3.14f} to {@link lib.minecraft.nbt.tags.primitive.FloatTag FloatTag},
- *       {@code 3.14d} to {@link lib.minecraft.nbt.tags.primitive.DoubleTag DoubleTag}.</li>
- *   <li><b>Numeric literal without suffix</b> - {@link lib.minecraft.nbt.tags.primitive.IntTag IntTag}
+ *       {@code 34b} to {@link ByteTag},
+ *       {@code 31415s} to {@link ShortTag},
+ *       {@code 31415926l} to {@link LongTag},
+ *       {@code 3.14f} to {@link FloatTag},
+ *       {@code 3.14d} to {@link DoubleTag}.</li>
+ *   <li><b>Numeric literal without suffix</b> - {@link IntTag}
  *       when the literal has no decimal point,
- *       {@link lib.minecraft.nbt.tags.primitive.DoubleTag DoubleTag} when it does.</li>
- *   <li><b>Quoted string</b> - {@link lib.minecraft.nbt.tags.primitive.StringTag StringTag}
+ *       {@link DoubleTag} when it does.</li>
+ *   <li><b>Quoted string</b> - {@link StringTag}
  *       always, even when the contents look numeric. Either {@code "text"} or {@code 'text'}
  *       delimiters are accepted; {@code \"}, {@code \\}, and {@code \'} escape sequences are
  *       unescaped character-for-character.</li>
  *   <li><b>Unquoted identifier</b> - classified by a single-pass scan that dispatches on the
  *       trailing suffix character ({@code b/B/s/S/l/L/f/F/d/D}) and validates the leading
  *       numeric body; falls back to
- *       {@link lib.minecraft.nbt.tags.primitive.StringTag StringTag} on no match. Valid
+ *       {@link StringTag} on no match. Valid
  *       unquoted characters are {@code [A-Za-z0-9._+-]}.</li>
  *   <li><b>{@code [B;...]}</b> /
  *       <b>{@code [I;...]}</b> /
  *       <b>{@code [L;...]}</b> - typed arrays
- *       ({@link lib.minecraft.nbt.tags.array.ByteArrayTag ByteArrayTag} /
- *       {@link lib.minecraft.nbt.tags.array.IntArrayTag IntArrayTag} /
- *       {@link lib.minecraft.nbt.tags.array.LongArrayTag LongArrayTag}).</li>
+ *       ({@link ByteArrayTag} /
+ *       {@link IntArrayTag} /
+ *       {@link LongArrayTag}).</li>
  *   <li><b>{@code [value,value,...]}</b> -
- *       {@link lib.minecraft.nbt.tags.collection.ListTag ListTag} whose element type is
+ *       {@link ListTag} whose element type is
  *       decided from the first element and then enforced for the rest via
- *       {@link lib.minecraft.nbt.tags.collection.ListTag#add(Tag) ListTag.add}.</li>
+ *       {@link ListTag#add(Tag)}.</li>
  *   <li><b>{@code {key:value,...}}</b> -
- *       {@link lib.minecraft.nbt.tags.collection.CompoundTag CompoundTag}.</li>
+ *       {@link CompoundTag}.</li>
  * </ul>
  *
  * <p>Tag-type classification for list and compound children runs through {@code peekTagId()},
  * which uses {@link StringReader#mark(int)} / {@link StringReader#reset()} lookahead to identify
  * the next value without consuming it. The depth guard and
- * {@link lib.minecraft.nbt.exception.NbtMaxDepthException} behaviour match the binary
+ * {@link NbtMaxDepthException} behaviour match the binary
  * backends exactly: nesting deeper than 512 throws.</p>
  *
  * @see SnbtSerializer
@@ -182,13 +180,13 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     private void readArrayHeader(char typeIndicator) throws IOException {
         if (this.read() != ARRAY_START)
-            throw new IOException("Invalid start of SNBT array.");
+            throw new NbtSnbtException("Invalid start of SNBT array.");
 
         if (this.read() != typeIndicator)
-            throw new IOException("Invalid array type indicator, expected '" + typeIndicator + "'.");
+            throw new NbtSnbtException("Invalid array type indicator, expected '" + typeIndicator + "'.");
 
         if (this.read() != ARRAY_TYPE_INDICATOR)
-            throw new IOException("Invalid array type separator.");
+            throw new NbtSnbtException("Invalid array type separator.");
     }
 
     @Override
@@ -199,7 +197,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         ListTag<Tag<?>> listTag = new ListTag<>();
 
         if (this.read() != ARRAY_START)
-            throw new IOException("Invalid start of SNBT ListTag.");
+            throw new NbtSnbtException("Invalid start of SNBT ListTag.");
 
         do {
             this.skipWhitespace();
@@ -224,7 +222,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         CompoundTag compoundTag = new CompoundTag();
 
         if (this.read() != COMPOUND_START)
-            throw new IOException("Invalid start of SNBT CompoundTag.");
+            throw new NbtSnbtException("Invalid start of SNBT CompoundTag.");
 
         do {
             this.skipWhitespace();
@@ -238,7 +236,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
             this.skipWhitespace();
             if (this.read() != ENTRY_VALUE_INDICATOR)
-                throw new IOException("Invalid value indicator in SNBT CompoundTag.");
+                throw new NbtSnbtException("Invalid value indicator in SNBT CompoundTag.");
             this.skipWhitespace();
 
             Tag<?> tag = this.readTag(this.peekTagId(), depth);
@@ -291,13 +289,13 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                 lastChar = this.read();
 
                 if (lastChar == -1)
-                    throw new IOException("Unterminated SNBT string literal.");
+                    throw new NbtSnbtException("Unterminated SNBT string literal.");
 
                 if (lastChar == STRING_ESCAPE) {
                     int escaped = this.read();
 
                     if (escaped == -1)
-                        throw new IOException("Unterminated SNBT escape sequence.");
+                        throw new NbtSnbtException("Unterminated SNBT escape sequence.");
 
                     builder.append((char) escaped);
                     continue;
@@ -348,7 +346,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
                         case ARRAY_PREFIX_BYTE -> TagType.BYTE_ARRAY.getId();
                         case ARRAY_PREFIX_INT -> TagType.INT_ARRAY.getId();
                         case ARRAY_PREFIX_LONG -> TagType.LONG_ARRAY.getId();
-                        default -> throw new IOException("Unknown NBT array type.");
+                        default -> throw new NbtSnbtException("Unknown NBT array type.");
                     };
                 } else
                     yield TagType.LIST.getId();

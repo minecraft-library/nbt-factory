@@ -1,6 +1,6 @@
 package lib.minecraft.nbt;
 
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tag.CompoundTag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Sanity check that every fixture vendored from {@code simdnbt}'s test corpus decodes via
+ * Sanity check that every vendored corpus fixture decodes via
  * {@link NbtFactory#fromByteArray(byte[])}.
  *
  * <p>Performance is intentionally not asserted - this test only proves the bytes survived
@@ -38,7 +38,7 @@ class SimdNbtCorpusTest {
         "hello_world.nbt",
         "inttest1023.nbt"
     })
-    @DisplayName("simdnbt corpus fixture decodes via NbtFactory.fromByteArray")
+    @DisplayName("corpus fixture decodes via NbtFactory.fromByteArray")
     void corpusFileDecodes(String filename) throws IOException {
         Path file = CORPUS_DIR.resolve(filename);
         assertTrue(Files.exists(file), "corpus fixture missing: " + file);
@@ -54,8 +54,8 @@ class SimdNbtCorpusTest {
 
     /**
      * Reads {@code file}, peeking at the first two bytes to decide whether to gzip-decode. The
-     * simdnbt corpus mixes raw NBT (the {@code .nbt} files) with gzipped NBT (the {@code .dat}
-     * files); both shapes need to round-trip through {@link NbtFactory#fromByteArray}.
+     * corpus mixes raw NBT (the {@code .nbt} files) with gzipped NBT (the {@code .dat} files);
+     * both shapes need to round-trip through {@link NbtFactory#fromByteArray}.
      */
     private static byte[] readPossiblyGzipped(Path file) throws IOException {
         byte[] raw = Files.readAllBytes(file);

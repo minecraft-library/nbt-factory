@@ -1,9 +1,8 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.borrow.BorrowedTag;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tag.Tag;
+import lib.minecraft.nbt.tag.CompoundTag;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -57,7 +56,7 @@ import java.util.zip.GZIPInputStream;
  *
  * <p><b>Disclosure:</b> simdnbt::borrow holds slices into the input bytes (zero-copy strings +
  * arrays). Our {@link BorrowedCompoundTag} materializes strings via {@code MutfStringView.toString()}
- * on access and arrays via {@code RawList.toIntArray()} on access; the lazy-decode win is real
+ * on access and arrays via {@code RawList.getValue()} on access; the lazy-decode win is real
  * (unread fields are never decoded), but per-tag accessor allocation still dominates short-payload
  * throughput.</p>
  */
@@ -125,7 +124,7 @@ public class BorrowBenchmarks {
      * that escape analysis can prove unreachable downstream.
      */
     @Benchmark
-    public BorrowedCompoundTag borrowDecode(BytesProcessed bytes) {
+    public CompoundTag borrowDecode(BytesProcessed bytes) {
         bytes.payloadBytes += this.payloadBytes;
         return NbtFactory.borrowFromByteArray(this.payload);
     }
@@ -139,16 +138,16 @@ public class BorrowBenchmarks {
     @Benchmark
     public void borrowDecodeAndAccessRoot(Blackhole blackhole, BytesProcessed bytes) {
         bytes.payloadBytes += this.payloadBytes;
-        BorrowedCompoundTag root = NbtFactory.borrowFromByteArray(this.payload);
+        CompoundTag root = NbtFactory.borrowFromByteArray(this.payload);
         // Top-level header read + a handful of common-name lookups. None of these
         // strings is guaranteed to exist on every fixture; null returns are fine and
         // are themselves consumed by the Blackhole.
         blackhole.consume(root.size());
         blackhole.consume(root.containsKey(""));
-        BorrowedTag<?> a = root.get("Data");        // level.dat root
-        BorrowedTag<?> b = root.get("");            // bigtest.nbt anonymous root
-        BorrowedTag<?> c = root.get("i");           // hypixel.nbt auctions list
-        BorrowedTag<?> d = root.get("RootVehicle"); // complex_player.dat
+        Tag<?> a = root.get("Data");        // level.dat root
+        Tag<?> b = root.get("");            // bigtest.nbt anonymous root
+        Tag<?> c = root.get("i");           // hypixel.nbt auctions list
+        Tag<?> d = root.get("RootVehicle"); // complex_player.dat
         blackhole.consume(a);
         blackhole.consume(b);
         blackhole.consume(c);

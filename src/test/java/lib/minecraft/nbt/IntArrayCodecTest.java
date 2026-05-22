@@ -1,6 +1,6 @@
 package lib.minecraft.nbt;
 
-import lib.minecraft.nbt.io.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +15,9 @@ import static org.hamcrest.Matchers.is;
  * {@link NbtByteCodec#putIntArrayBE}, {@link NbtByteCodec#putLongArrayBE}) to bit-identical output
  * versus the per-element {@link NbtByteCodec#getInt} / {@link NbtByteCodec#getLong} path.
  *
- * <p>Sized at 1023 ints to match {@code simdnbt-corpus/inttest1023.nbt} - the dominant payload
- * Phase B1 targets - and 1024 longs as the natural counterpart. Equivalence with the per-element
- * path is the hard contract; performance is measured separately under JMH.</p>
+ * <p>Sized at 1023 ints to match the {@code inttest1023.nbt} corpus fixture and 1024 longs as
+ * the natural counterpart. Equivalence with the per-element path is the hard contract;
+ * performance is measured separately under JMH.</p>
  */
 @DisplayName("NbtByteCodec bulk array byteswap - bit-identical contract")
 class IntArrayCodecTest {

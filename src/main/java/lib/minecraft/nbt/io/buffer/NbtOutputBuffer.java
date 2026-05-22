@@ -1,9 +1,9 @@
 package lib.minecraft.nbt.io.buffer;
 
-import lib.minecraft.nbt.io.NbtByteCodec;
-import lib.minecraft.nbt.io.NbtModifiedUtf8;
 import lib.minecraft.nbt.io.NbtOutput;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;

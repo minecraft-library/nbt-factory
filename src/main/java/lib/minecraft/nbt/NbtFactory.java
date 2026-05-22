@@ -1,8 +1,8 @@
 package lib.minecraft.nbt;
 
-import lib.minecraft.nbt.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.borrow.Tape;
-import lib.minecraft.nbt.borrow.TapeParser;
+import dev.simplified.util.StringUtil;
+import dev.simplified.util.SystemUtil;
+import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
@@ -12,11 +12,11 @@ import lib.minecraft.nbt.io.snbt.SnbtDeserializer;
 import lib.minecraft.nbt.io.snbt.SnbtSerializer;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
-import dev.simplified.util.compression.Compression;
-import dev.simplified.util.StringUtil;
-import dev.simplified.util.SystemUtil;
+import lib.minecraft.nbt.io.tape.NbtInputTape;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.TagType;
+import lib.minecraft.nbt.tag.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.tag.borrow.Tape;
 import lombok.Cleanup;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.ApiStatus;
@@ -86,7 +86,7 @@ public class NbtFactory {
      * <p>Mirrors {@link #fromByteArray(byte[])}'s gzip auto-detect via
      * {@link Compression#decompress(byte[])} - raw payloads pass through, gzipped payloads are
      * inflated - then routes the decompressed bytes through
-     * {@link TapeParser#parse(byte[])} instead of materializing a {@link CompoundTag}. The returned
+     * {@link NbtInputTape#parse(byte[])} instead of materializing a {@link CompoundTag}. The returned
      * navigator decodes values lazily as the caller traverses the tree, so payloads where most
      * fields are read once and discarded skip the per-value allocation overhead of the
      * materializing path entirely.</p>
@@ -103,9 +103,9 @@ public class NbtFactory {
      * <p><b>Mutation hazard.</b> Callers must not mutate the input array after invoking this
      * method (and, for gzipped input, must not assume the inflated buffer surfaces anywhere - it
      * does not). Mutating the retained buffer corrupts every pointer-kind tape element addressing
-     * it, including subsequent {@link BorrowedCompoundTag#materialize() materialize} calls.</p>
+     * the modified bytes.</p>
      *
-     * <p><b>Thread safety.</b> Decoding is single-threaded - the {@link TapeParser} runs on the
+     * <p><b>Thread safety.</b> Decoding is single-threaded - the {@link NbtInputTape} runs on the
      * calling thread before this method returns. Once returned, the borrow tree is read-only and
      * the underlying {@link Tape} is immutable, so navigation can be parallelized across threads.
      * Note that {@code BorrowedStringTag} caches the materialized {@link String} the first time
@@ -114,11 +114,10 @@ public class NbtFactory {
      * idempotent (every observer sees the same {@link String} value), so this is a performance
      * concern, not a correctness one.</p>
      *
-     * <p><b>Escape hatch.</b> Call {@link BorrowedCompoundTag#materialize()} on the returned
-     * navigator (or on any descendant) to obtain a fully-allocated {@link CompoundTag} subtree
-     * detached from the retained buffer. The materialized tree retains no reference to the input
-     * array, so the buffer becomes eligible for collection as soon as every borrowed view is
-     * dropped.</p>
+     * <p><b>Detached copy.</b> When the caller wants a fully-allocated subtree that retains no
+     * reference to the input bytes, call {@link #fromByteArray(byte[])} on the same payload - the
+     * materializing path produces a tree with no tape backing, so the buffer is free for collection
+     * once that result is dropped.</p>
      *
      * @param bytes the {@code byte[]} array to read from; gzipped payloads are auto-detected and
      *     decompressed before parsing
@@ -127,14 +126,10 @@ public class NbtFactory {
      *     corruption, malformed binary NBT, or nesting deeper than the parser's 512-frame cap
      */
     @ApiStatus.Experimental
-    public @NotNull BorrowedCompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
+    public @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
         try {
-            // Mirror fromByteArray's auto-detect: Compression.decompress is a no-op for raw payloads
-            // and inflates gzipped ones. Route the decompressed bytes - which the returned tape
-            // retains - through TapeParser instead of materializing a CompoundTag.
             byte[] decompressed = Compression.decompress(bytes);
-            Tape tape = TapeParser.parse(decompressed);
-            return tape.root();
+            return NbtInputTape.parse(decompressed).root();
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
@@ -501,7 +496,7 @@ public class NbtFactory {
             }
 
             @Override
-            public void write(byte[] b, int off, int len) throws IOException {
+            public void write(byte @NotNull [] b, int off, int len) throws IOException {
                 // FilterOutputStream's default writes byte-by-byte; forward bulk writes intact.
                 this.out.write(b, off, len);
             }

@@ -1,8 +1,8 @@
 package lib.minecraft.nbt.io.stream;
 
-import lib.minecraft.nbt.io.NbtByteCodec;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;

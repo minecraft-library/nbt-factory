@@ -1,5 +1,7 @@
 package lib.minecraft.nbt.io.stream;
 
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.OutputStream;
@@ -18,7 +20,7 @@ import java.io.OutputStream;
  *       downstream buffering (typically a {@link BufferedOutputStream}) to amortize the
  *       per-byte cost and on the JIT to intrinsify the big-endian conversion.</li>
  *   <li><b>CHUNKED_THREADLOCAL</b> - encodes into a 64 KiB thread-local scratch buffer through
- *       the {@link lib.minecraft.nbt.io.NbtByteCodec} {@code VarHandle} path, then flushes each
+ *       the {@link NbtByteCodec} {@code VarHandle} path, then flushes each
  *       chunk with a single {@link OutputStream#write(byte[], int, int)} call. Arrays
  *       larger than the cap are written in 64 KiB chunks; the {@link ThreadLocal} never retains
  *       a buffer larger than that, so virtual threads and fork-join carriers pay a fixed
@@ -43,7 +45,7 @@ public enum ArrayWriteStrategy {
 
     /**
      * Encode into a 64 KiB {@link ThreadLocal} scratch buffer via
-     * {@link lib.minecraft.nbt.io.NbtByteCodec}, flush each chunk with a single
+     * {@link NbtByteCodec}, flush each chunk with a single
      * {@link OutputStream#write(byte[], int, int)} call. Arrays larger than the cap are
      * processed in fixed-size chunks; the thread-local never grows past the cap.
      */

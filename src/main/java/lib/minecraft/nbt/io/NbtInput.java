@@ -1,21 +1,10 @@
 package lib.minecraft.nbt.io;
 
 import com.google.gson.stream.JsonToken;
+import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.array.ByteArrayTag;
-import lib.minecraft.nbt.tags.array.IntArrayTag;
-import lib.minecraft.nbt.tags.array.LongArrayTag;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
-import lib.minecraft.nbt.tags.collection.ListTag;
-import lib.minecraft.nbt.tags.primitive.ByteTag;
-import lib.minecraft.nbt.tags.primitive.DoubleTag;
-import lib.minecraft.nbt.tags.primitive.FloatTag;
-import lib.minecraft.nbt.tags.primitive.IntTag;
-import lib.minecraft.nbt.tags.primitive.LongTag;
-import lib.minecraft.nbt.tags.primitive.ShortTag;
-import lib.minecraft.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -83,7 +72,7 @@ public interface NbtInput {
             case 10 -> this.readCompoundTag(maxDepth);
             case 11 -> new IntArrayTag(this.readIntArray());
             case 12 -> new LongArrayTag(this.readLongArray());
-            default -> throw new UnsupportedOperationException("Tag with id " + id + " is not supported.");
+            default -> throw new NbtFormatException("Unknown tag id %d at wire dispatch", id & 0xFF);
         };
     }
 
@@ -172,7 +161,7 @@ public interface NbtInput {
             // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte abstract
             // on this interface, which would force SnbtDeserializer (whose readByte parses text) to
             // provide a meaningless implementation.
-            for (int id = this.readByte() & 0xFF; id != 0; id = this.readByte() & 0xFF) {
+            for (int id = this.readByte() & 0xFF; id != TagType.END.getId(); id = this.readByte() & 0xFF) {
                 String key = this.readUTF();
                 Tag<?> tag = this.readTag((byte) id, depth);
                 compoundTag.put(key, tag);
