@@ -1,0 +1,480 @@
+package lib.minecraft.nbt.io.tape;
+
+import lib.minecraft.nbt.exception.NbtFormatException;
+import lib.minecraft.nbt.exception.NbtMaxDepthException;
+import lib.minecraft.nbt.io.NbtInput;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
+import lib.minecraft.nbt.tags.CompoundTag;
+import lib.minecraft.nbt.tags.TagType;
+import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
+import lib.minecraft.nbt.tags.borrow.Tape;
+import lib.minecraft.nbt.tags.borrow.TapeElement;
+import lib.minecraft.nbt.tags.borrow.TapeKind;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.DataInput;
+import java.io.EOFException;
+import java.io.IOException;
+
+/**
+ * {@link NbtInput} backend that builds a {@link Tape} directly from a binary NBT {@code byte[]}
+ * without materializing intermediate {@link CompoundTag} instances. Sibling of
+ * {@link lib.minecraft.nbt.io.buffer.NbtInputBuffer NbtInputBuffer} and
+ * {@link lib.minecraft.nbt.io.stream.NbtInputStream NbtInputStream}: the same {@code readByte} /
+ * {@code readUTF} / {@code readCompoundTag} surface, the same wire format, but the
+ * {@link #readCompoundTag(int)} override yields a {@link BorrowedCompoundTag} backed by a freshly-
+ * built tape instead of an owned-tree {@code CompoundTag}.
+ *
+ * <p>Mirrors {@code simdnbt::borrow::compound::read_with_depth_check}
+ * ({@code simdnbt/src/borrow/compound.rs:278-356}). The parser walks the input buffer once and
+ * pushes packed tape entries describing the depth-first iteration order of the tree. Open
+ * containers are tracked on a fixed-capacity 512-frame stack so deeply nested adversarial input
+ * throws {@link NbtMaxDepthException} rather than {@link StackOverflowError}.</p>
+ *
+ * <p>Reads use {@link NbtByteCodec}'s {@code VarHandle}-driven big-endian primitives - no
+ * {@code DataInputStream} layer, no per-byte syscalls. Pointer-kind tape elements record buffer
+ * offsets pointing at the wire length prefix (2 bytes for strings / keys, 4 bytes for arrays);
+ * 8-byte primitives that do not fit in the 56-bit inline payload also become {@code *_PTR}
+ * entries.</p>
+ *
+ * <p>The retained buffer in the produced {@link Tape} is the caller's input array, by reference -
+ * callers must not mutate it. {@link lib.minecraft.nbt.NbtFactory#borrowFromByteArray
+ * NbtFactory.borrowFromByteArray} owns the lifetime of the buffer.</p>
+ */
+public class TapeInput implements NbtInput {
+
+    /**
+     * Maximum nesting depth for open containers. Matches the 512 cap on every other deserializer
+     * in the codebase.
+     */
+    private static final int MAX_DEPTH = 512;
+
+    /**
+     * Frame-kind sentinel for compound frames: {@code openFrameRemaining[sp] == COMPOUND_FRAME}.
+     * Compound frames terminate on a {@code TAG_End} byte rather than a known element count, so
+     * the remaining-count field is unused.
+     */
+    private static final int COMPOUND_FRAME = -1;
+
+    /**
+     * The retained buffer being parsed. Pointer-kind tape elements record offsets into this array.
+     */
+    private final byte @NotNull [] input;
+
+    /**
+     * Current read position in {@link #input}.
+     */
+    private int position;
+
+    // ------------------------------------------------------------------
+    // Tape-builder state. Reset on each readCompoundTag / readListTag call.
+    // ------------------------------------------------------------------
+
+    private long @NotNull [] tape;
+
+    private int tapeSize;
+
+    private final int @NotNull [] openFrameTapeIndex;
+
+    private final int @NotNull [] openFrameRemaining;
+
+    private final int @NotNull [] openFrameCompoundEntries;
+
+    private final byte @NotNull [] openFrameListElementId;
+
+    private int sp;
+
+    public TapeInput(byte @NotNull [] input) {
+        this.input = input;
+        this.position = 0;
+        this.tape = new long[Math.max(16, input.length * 2)];
+        this.tapeSize = 0;
+        this.openFrameTapeIndex = new int[MAX_DEPTH];
+        this.openFrameRemaining = new int[MAX_DEPTH];
+        this.openFrameCompoundEntries = new int[MAX_DEPTH];
+        this.openFrameListElementId = new byte[MAX_DEPTH];
+        this.sp = -1;
+    }
+
+    // ------------------------------------------------------------------
+    // Static convenience for callers that want the raw Tape (e.g. tests).
+    // ------------------------------------------------------------------
+
+    /**
+     * Parses the given binary NBT buffer into a tape.
+     *
+     * <p>The buffer is retained by the returned tape - pointer-kind tape elements address bytes
+     * inside it. The caller must not mutate the array after passing it in.</p>
+     *
+     * @param input the binary NBT buffer; must start with a {@code TAG_Compound} root (id
+     *     {@code 10}) followed by a 2-byte big-endian root-name length and the name bytes
+     * @return a fully populated tape backed by {@code input}
+     * @throws IOException on malformed input - bad type id, truncated buffer, deeper than
+     *     {@value #MAX_DEPTH} levels of nesting, or a tape size that overflows the 24-bit
+     *     {@code endOffset} field
+     */
+    public static @NotNull Tape parse(byte @NotNull [] input) throws IOException {
+        if (input.length < 3)
+            throw new NbtFormatException("Buffer too short for an NBT root (need at least 3 bytes, got %d)", input.length);
+
+        TapeInput in = new TapeInput(input);
+        byte rootType = in.readByte();
+
+        if (rootType != TagType.COMPOUND.getId())
+            throw new NbtFormatException("Root tag must be TAG_Compound, found id %d", rootType & 0xFF);
+
+        int rootNameLen = in.readUnsignedShortInternal();
+        in.advanceInternal(rootNameLen);
+
+        in.buildCompoundBodyIntoTape();
+        return new Tape(in.tape, in.tapeSize, input);
+    }
+
+    // ------------------------------------------------------------------
+    // NbtInput structural override - builds a tape from the current cursor.
+    // ------------------------------------------------------------------
+
+    /**
+     * Reads a {@code TAG_Compound} body from the current cursor and returns a
+     * {@link BorrowedCompoundTag} backed by a freshly-built tape. Mirrors the contract of every
+     * other {@link NbtInput} backend's {@code readCompoundTag} - the caller has already consumed
+     * the leading id byte and (if present) the framing name.
+     *
+     * <p>The {@code depth} argument is accepted for interface conformance but the tape builder
+     * tracks its own 512-frame open-container stack and throws {@link NbtMaxDepthException} on
+     * overflow.</p>
+     */
+    @Override
+    public @NotNull CompoundTag readCompoundTag(int depth) throws IOException {
+        this.buildCompoundBodyIntoTape();
+        Tape built = new Tape(this.tape, this.tapeSize, this.input);
+        return new BorrowedCompoundTag(built, 0);
+    }
+
+    // ------------------------------------------------------------------
+    // NbtInput primitive reads (mirror NbtInputBuffer's VarHandle path).
+    // ------------------------------------------------------------------
+
+    @Override
+    public boolean readBoolean() throws IOException {
+        if (this.position >= this.input.length) throw new EOFException();
+        return this.input[this.position++] != 0;
+    }
+
+    @Override
+    public byte readByte() throws IOException {
+        if (this.position >= this.input.length) throw new EOFException();
+        return this.input[this.position++];
+    }
+
+    @Override
+    public short readShort() throws IOException {
+        if (this.position + 2 > this.input.length) throw new EOFException();
+        short v = NbtByteCodec.getShort(this.input, this.position);
+        this.position += 2;
+        return v;
+    }
+
+    @Override
+    public int readInt() throws IOException {
+        if (this.position + 4 > this.input.length) throw new EOFException();
+        int v = NbtByteCodec.getInt(this.input, this.position);
+        this.position += 4;
+        return v;
+    }
+
+    @Override
+    public long readLong() throws IOException {
+        if (this.position + 8 > this.input.length) throw new EOFException();
+        long v = NbtByteCodec.getLong(this.input, this.position);
+        this.position += 8;
+        return v;
+    }
+
+    @Override
+    public float readFloat() throws IOException {
+        return Float.intBitsToFloat(this.readInt());
+    }
+
+    @Override
+    public double readDouble() throws IOException {
+        return Double.longBitsToDouble(this.readLong());
+    }
+
+    @Override
+    public @NotNull String readUTF() throws IOException {
+        int utfLen = this.readUnsignedShortInternal();
+        if (this.position + utfLen > this.input.length) throw new EOFException();
+        String value = NbtModifiedUtf8.decode(this.input, this.position, utfLen);
+        this.position += utfLen;
+        return value;
+    }
+
+    @Override
+    public byte @NotNull [] readByteArray() throws IOException {
+        int length = this.readInt();
+        if (this.position + length > this.input.length) throw new EOFException();
+        byte[] data = new byte[length];
+        System.arraycopy(this.input, this.position, data, 0, length);
+        this.position += length;
+        return data;
+    }
+
+    @Override
+    public int @NotNull [] readIntArray() throws IOException {
+        int length = this.readInt();
+        if (this.position + ((long) length << 2) > this.input.length) throw new EOFException();
+        int[] data = new int[length];
+        NbtByteCodec.getIntArrayBE(this.input, this.position, data, 0, length);
+        this.position += length << 2;
+        return data;
+    }
+
+    @Override
+    public long @NotNull [] readLongArray() throws IOException {
+        int length = this.readInt();
+        if (this.position + ((long) length << 3) > this.input.length) throw new EOFException();
+        long[] data = new long[length];
+        NbtByteCodec.getLongArrayBE(this.input, this.position, data, 0, length);
+        this.position += length << 3;
+        return data;
+    }
+
+    // ------------------------------------------------------------------
+    // Internal helpers used by the tape builder. Kept separate from the
+    // NbtInput primitive surface because they throw NbtFormatException for
+    // tape-specific diagnostics rather than the generic {@link IOException}
+    // contract NbtInput callers expect.
+    // ------------------------------------------------------------------
+
+    private int readUnsignedShortInternal() throws IOException {
+        this.requireRemaining(2);
+        int v = NbtByteCodec.getUnsignedShort(this.input, this.position);
+        this.position += 2;
+        return v;
+    }
+
+    private byte readByteInternal() throws IOException {
+        this.requireRemaining(1);
+        return this.input[this.position++];
+    }
+
+    private short readShortInternal() throws IOException {
+        this.requireRemaining(2);
+        short v = NbtByteCodec.getShort(this.input, this.position);
+        this.position += 2;
+        return v;
+    }
+
+    private int readIntInternal() throws IOException {
+        this.requireRemaining(4);
+        int v = NbtByteCodec.getInt(this.input, this.position);
+        this.position += 4;
+        return v;
+    }
+
+    private void advanceInternal(int byteCount) throws IOException {
+        if (byteCount < 0)
+            throw new NbtFormatException("Negative advance %d at offset %d", byteCount, this.position);
+
+        this.requireRemaining(byteCount);
+        this.position += byteCount;
+    }
+
+    private void requireRemaining(int byteCount) throws IOException {
+        if (this.position + byteCount > this.input.length)
+            throw new NbtFormatException(
+                "Truncated NBT input - need %d bytes at offset %d, only %d available",
+                byteCount, this.position, this.input.length - this.position);
+    }
+
+    // ------------------------------------------------------------------
+    // Tape builder. The driveStack loop and per-kind dispatch are lifted
+    // verbatim from the prior TapeParser - this is the same shape, just
+    // exposed through the NbtInput contract.
+    // ------------------------------------------------------------------
+
+    private void buildCompoundBodyIntoTape() throws IOException {
+        int rootHeaderIdx = this.appendTape(TapeElement.packCompoundHeader(0, 0));
+        this.openFrame(rootHeaderIdx, COMPOUND_FRAME, (byte) 0);
+        this.driveStack();
+
+        if (this.sp != -1)
+            throw new NbtFormatException("Parser ended with %d open frames remaining", this.sp + 1);
+    }
+
+    private void driveStack() throws IOException {
+        while (this.sp >= 0) {
+            int remaining = this.openFrameRemaining[this.sp];
+
+            if (remaining == COMPOUND_FRAME) {
+                this.stepCompound();
+                continue;
+            }
+
+            this.stepList(remaining);
+        }
+    }
+
+    private void stepCompound() throws IOException {
+        byte typeId = this.readByteInternal();
+
+        if (typeId == TagType.END.getId()) {
+            this.closeCompoundFrame();
+            return;
+        }
+
+        int keyOffset = this.position;
+        int keyLen = this.readUnsignedShortInternal();
+        this.advanceInternal(keyLen);
+
+        this.appendTape(TapeElement.pack(TapeKind.KEY_PTR, keyOffset));
+        this.openFrameCompoundEntries[this.sp]++;
+
+        this.dispatchValue(typeId);
+    }
+
+    private void stepList(int remaining) throws IOException {
+        if (remaining == 0) {
+            this.closeListFrame();
+            return;
+        }
+
+        this.openFrameRemaining[this.sp] = remaining - 1;
+        this.dispatchValue(this.openFrameListElementId[this.sp]);
+    }
+
+    private void dispatchValue(byte typeId) throws IOException {
+        switch (typeId) {
+            case 1 -> {
+                byte v = this.readByteInternal();
+                this.appendTape(TapeElement.pack(TapeKind.BYTE_INLINE, v));
+            }
+            case 2 -> {
+                short v = this.readShortInternal();
+                this.appendTape(TapeElement.pack(TapeKind.SHORT_INLINE, v));
+            }
+            case 3 -> {
+                int v = this.readIntInternal();
+                this.appendTape(TapeElement.pack(TapeKind.INT_INLINE, v));
+            }
+            case 4 -> {
+                int offset = this.position;
+                this.advanceInternal(8);
+                this.appendTape(TapeElement.pack(TapeKind.LONG_PTR, offset));
+            }
+            case 5 -> {
+                int bits = this.readIntInternal();
+                this.appendTape(TapeElement.pack(TapeKind.FLOAT_INLINE, bits));
+            }
+            case 6 -> {
+                int offset = this.position;
+                this.advanceInternal(8);
+                this.appendTape(TapeElement.pack(TapeKind.DOUBLE_PTR, offset));
+            }
+            case 7 -> {
+                int offset = this.position;
+                int len = this.readIntInternal();
+                this.advanceInternal(len);
+                this.appendTape(TapeElement.pack(TapeKind.BYTE_ARRAY_PTR, offset));
+            }
+            case 8 -> {
+                int offset = this.position;
+                int len = this.readUnsignedShortInternal();
+                this.advanceInternal(len);
+                this.appendTape(TapeElement.pack(TapeKind.STRING_PTR, offset));
+            }
+            case 9 -> this.openListValue();
+            case 10 -> this.openCompoundValue();
+            case 11 -> {
+                int offset = this.position;
+                int len = this.readIntInternal();
+                this.advanceInternal(Math.multiplyExact(len, 4));
+                this.appendTape(TapeElement.pack(TapeKind.INT_ARRAY_PTR, offset));
+            }
+            case 12 -> {
+                int offset = this.position;
+                int len = this.readIntInternal();
+                this.advanceInternal(Math.multiplyExact(len, 8));
+                this.appendTape(TapeElement.pack(TapeKind.LONG_ARRAY_PTR, offset));
+            }
+            default -> throw new NbtFormatException("Unknown tag id encountered while parsing buffer: %d", typeId & 0xFF);
+        }
+    }
+
+    private void openCompoundValue() {
+        int headerIdx = this.appendTape(TapeElement.packCompoundHeader(0, 0));
+        this.openFrame(headerIdx, COMPOUND_FRAME, (byte) 0);
+    }
+
+    private void openListValue() throws IOException {
+        byte elementType = this.readByteInternal();
+        int rawLength = this.readIntInternal();
+        int length = Math.max(0, rawLength);
+
+        int headerIdx = this.appendTape(TapeElement.packListHeader(elementType, length, 0));
+        this.openFrame(headerIdx, length, elementType);
+    }
+
+    private void openFrame(int headerTapeIdx, int remaining, byte elementId) {
+        int newSp = this.sp + 1;
+
+        if (newSp >= MAX_DEPTH)
+            throw new NbtMaxDepthException();
+
+        this.sp = newSp;
+        this.openFrameTapeIndex[newSp] = headerTapeIdx;
+        this.openFrameRemaining[newSp] = remaining;
+        this.openFrameCompoundEntries[newSp] = 0;
+        this.openFrameListElementId[newSp] = elementId;
+    }
+
+    private void closeCompoundFrame() {
+        int headerIdx = this.openFrameTapeIndex[this.sp];
+        int entries = this.openFrameCompoundEntries[this.sp];
+        this.sp--;
+
+        int endIdx = this.appendTape(TapeElement.pack(TapeKind.COMPOUND_END, headerIdx));
+        this.checkEndOffsetFits(endIdx);
+        this.tape[headerIdx] = TapeElement.packCompoundHeader(entries, endIdx);
+    }
+
+    private void closeListFrame() {
+        int headerIdx = this.openFrameTapeIndex[this.sp];
+        byte elementId = TapeElement.unpackListElementId(this.tape[headerIdx]);
+        int approxLen = TapeElement.unpackApproxLen(this.tape[headerIdx]);
+        this.sp--;
+
+        int endIdx = this.appendTape(TapeElement.pack(TapeKind.LIST_END, headerIdx));
+        this.checkEndOffsetFits(endIdx);
+        this.tape[headerIdx] = TapeElement.packListHeader(elementId, approxLen, endIdx);
+    }
+
+    private void checkEndOffsetFits(int endIdx) {
+        if (endIdx > TapeElement.MAX_END_OFFSET)
+            throw new NbtFormatException(
+                "Tape size %d exceeds 24-bit endOffset cap (%d) - input is too large to address",
+                endIdx, TapeElement.MAX_END_OFFSET
+            );
+    }
+
+    private int appendTape(long element) {
+        this.ensureCapacity(this.tapeSize + 1);
+        int idx = this.tapeSize;
+        this.tape[idx] = element;
+        this.tapeSize = idx + 1;
+        return idx;
+    }
+
+    private void ensureCapacity(int needed) {
+        if (needed <= this.tape.length)
+            return;
+
+        int newSize = Math.max(this.tape.length * 2, needed);
+        long[] grown = new long[newSize];
+        System.arraycopy(this.tape, 0, grown, 0, this.tapeSize);
+        this.tape = grown;
+    }
+
+}

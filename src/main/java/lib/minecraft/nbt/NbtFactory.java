@@ -2,10 +2,10 @@ package lib.minecraft.nbt;
 
 import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
 import lib.minecraft.nbt.tags.borrow.Tape;
-import lib.minecraft.nbt.tags.borrow.TapeParser;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.io.tape.TapeInput;
 import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
 import lib.minecraft.nbt.io.json.NbtJsonSerializer;
 import lib.minecraft.nbt.io.snbt.SnbtDeserializer;
@@ -130,11 +130,21 @@ public class NbtFactory {
     public @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
         try {
             // Mirror fromByteArray's auto-detect: Compression.decompress is a no-op for raw payloads
-            // and inflates gzipped ones. Route the decompressed bytes - which the returned tape
-            // retains - through TapeParser instead of materializing a CompoundTag.
+            // and inflates gzipped ones. Route the decompressed bytes through TapeInput - the
+            // tape-building NbtInput backend - instead of materializing a CompoundTag tree.
             byte[] decompressed = Compression.decompress(bytes);
-            Tape tape = TapeParser.parse(decompressed);
-            return tape.root();
+
+            if (decompressed.length < 3)
+                throw new lib.minecraft.nbt.exception.NbtFormatException(
+                    "Buffer too short for an NBT root (need at least 3 bytes, got %d)", decompressed.length);
+
+            TapeInput buffer = new TapeInput(decompressed);
+
+            if (buffer.readByte() != TagType.COMPOUND.getId())
+                throw new IOException("Root tag in NBT structure must be a CompoundTag.");
+
+            buffer.readUTF(); // Discard root name
+            return buffer.readCompoundTag();
         } catch (Exception exception) {
             throw new NbtException(exception);
         }

@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>This is the gold-standard parity check for the public Phase C5 entry point - any divergence
  * indicates a bug in the gzip-detect path or in how the entry point hands its decompressed buffer
- * to {@link TapeParser}.</p>
+ * to {@link TapeInput}.</p>
  */
 class BorrowFromByteArrayTest {
 
@@ -153,7 +153,7 @@ class BorrowFromByteArrayTest {
     @Test
     @DisplayName("non-compound root id surfaces as NbtException")
     void nonCompoundRootRejected() {
-        // 0x42 is not TAG_Compound. Same case the TapeParser already covers, but exercised through
+        // 0x42 is not TAG_Compound. Same case the TapeInput already covers, but exercised through
         // the public entry point to confirm the wrapping path preserves the diagnostic.
         byte[] payload = new byte[]{0x42, 0x00, 0x00};
 

@@ -2,6 +2,7 @@ package lib.minecraft.nbt.tags.borrow;
 
 import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.NbtFactory;
+import lib.minecraft.nbt.io.tape.TapeInput;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.tags.CompoundTag;
@@ -25,14 +26,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Pins parity between {@link TapeParser#parse(byte[])} and {@link NbtFactory#fromByteArray(byte[])}
+ * Pins parity between {@link TapeInput#parse(byte[])} and {@link NbtFactory#fromByteArray(byte[])}
  * on every fixture in the simdnbt corpus and a sample of the auction fixture, plus exercises the
  * adversarial-input failure modes (depth cap, truncated buffer, bad type id).
  *
  * <p>For each fixture the test materializes the binary in two ways:</p>
  * <ol>
  *   <li>{@link NbtFactory#fromByteArray(byte[])} - the production materializing path.</li>
- *   <li>{@link TapeParser#parse(byte[])} followed by {@link Tape#materialize()} - the new
+ *   <li>{@link TapeInput#parse(byte[])} followed by {@link Tape#materialize()} - the new
  *       streaming-parser path.</li>
  * </ol>
  *
@@ -40,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * parser and the existing path; any divergence here breaks the contract C3's borrowed navigators
  * depend on.</p>
  */
-class TapeParserTest {
+class TapeInputTest {
 
     private static final Path CORPUS_DIR = Paths.get("src/test/resources/simdnbt-corpus");
 
@@ -57,7 +58,7 @@ class TapeParserTest {
         "simple_player.dat",
         "inttest1023.nbt"
     })
-    @DisplayName("simdnbt corpus fixture: TapeParser.parse + materialize matches NbtFactory.fromByteArray")
+    @DisplayName("simdnbt corpus fixture: TapeInput.parse + materialize matches NbtFactory.fromByteArray")
     void corpusFixtureMatchesProduction(String filename) throws IOException {
         Path file = CORPUS_DIR.resolve(filename);
         assertTrue(Files.exists(file), "corpus fixture missing: " + file);
@@ -67,15 +68,15 @@ class TapeParserTest {
         CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
         assertNotNull(viaProduction);
 
-        Tape parsed = TapeParser.parse(payload);
+        Tape parsed = TapeInput.parse(payload);
         assertTrue(parsed.tapeSize() >= 2, "tape too short for non-empty compound: " + filename);
 
         CompoundTag viaTape = parsed.materialize();
-        assertEquals(viaProduction, viaTape, "TapeParser parity mismatch on " + filename);
+        assertEquals(viaProduction, viaTape, "TapeInput parity mismatch on " + filename);
     }
 
     @Test
-    @DisplayName("first 100 auction items: TapeParser.parse + materialize matches NbtFactory.fromByteArray")
+    @DisplayName("first 100 auction items: TapeInput.parse + materialize matches NbtFactory.fromByteArray")
     void auctionFixtureMatchesProduction() throws IOException {
         if (!Files.exists(AUCTION_FIXTURE))
             // Auction fixture is generated on demand; absence is not a test failure (mirrors the
@@ -92,13 +93,13 @@ class TapeParserTest {
 
                 CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
                 // Auction items ship gzipped on the wire; NbtFactory.fromByteArray transparently
-                // decompresses, but TapeParser.parse takes raw NBT bytes only (the C5 entry point
+                // decompresses, but TapeInput.parse takes raw NBT bytes only (the C5 entry point
                 // will own the decompression decision; here we feed the parser what it expects).
                 byte[] raw = Compression.decompress(payload);
-                Tape parsed = TapeParser.parse(raw);
+                Tape parsed = TapeInput.parse(raw);
                 CompoundTag viaTape = parsed.materialize();
 
-                assertEquals(viaProduction, viaTape, "TapeParser parity mismatch on auction item " + i);
+                assertEquals(viaProduction, viaTape, "TapeInput parity mismatch on auction item " + i);
             }
         }
     }
@@ -128,7 +129,7 @@ class TapeParserTest {
         out.write(0); // TAG_End closes root
         byte[] payload = out.toByteArray();
 
-        assertThrows(NbtMaxDepthException.class, () -> TapeParser.parse(payload),
+        assertThrows(NbtMaxDepthException.class, () -> TapeInput.parse(payload),
             "parser must reject 600-level nesting with NbtMaxDepthException");
     }
 
@@ -139,7 +140,7 @@ class TapeParserTest {
         // in parseRoot when it tries to read the 2-byte root name length.
         byte[] payload = new byte[]{10};
 
-        assertThrows(NbtException.class, () -> TapeParser.parse(payload),
+        assertThrows(NbtException.class, () -> TapeInput.parse(payload),
             "parser must reject truncated input");
     }
 
@@ -149,7 +150,7 @@ class TapeParserTest {
         // Root type 0x42 is not TAG_Compound (10).
         byte[] payload = new byte[]{0x42, 0x00, 0x00};
 
-        assertThrows(NbtException.class, () -> TapeParser.parse(payload),
+        assertThrows(NbtException.class, () -> TapeInput.parse(payload),
             "parser must reject non-compound root type id");
     }
 
@@ -160,7 +161,7 @@ class TapeParserTest {
         // Layout: 0x0A 0x00 0x00 [0x63 0x00 0x01 'a' ...] - the inner type id 0x63 (99) is invalid.
         byte[] payload = new byte[]{0x0A, 0x00, 0x00, 0x63, 0x00, 0x01, 'a', 0x00};
 
-        assertThrows(NbtException.class, () -> TapeParser.parse(payload),
+        assertThrows(NbtException.class, () -> TapeInput.parse(payload),
             "parser must reject unknown tag id inside compound");
     }
 

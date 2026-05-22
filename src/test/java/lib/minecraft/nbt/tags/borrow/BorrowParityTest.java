@@ -2,6 +2,7 @@ package lib.minecraft.nbt.tags.borrow;
 
 import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.NbtFactory;
+import lib.minecraft.nbt.io.tape.TapeInput;
 import lib.minecraft.nbt.tags.CompoundTag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Gold-standard parity check for the C3 borrow API.
  *
  * <p>For every fixture in the simdnbt corpus and the first 100 entries in {@code auctions.bin},
- * asserts {@code TapeParser.parse(payload).root().materialize().equals(NbtFactory.fromByteArray(payload))}.
+ * asserts {@code TapeInput.parse(payload).root().materialize().equals(NbtFactory.fromByteArray(payload))}.
  * Any divergence indicates a bug in one of the C3 navigator types' {@code materialize()}
  * implementations.</p>
  *
@@ -60,7 +61,7 @@ class BorrowParityTest {
         CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
         assertNotNull(viaProduction);
 
-        Tape parsed = TapeParser.parse(payload);
+        Tape parsed = TapeInput.parse(payload);
         BorrowedCompoundTag root = parsed.root();
         CompoundTag viaBorrow = root.materialize();
 
@@ -86,9 +87,9 @@ class BorrowParityTest {
 
                 CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
                 // Auction items ship gzipped on the wire; NbtFactory.fromByteArray transparently
-                // decompresses, but TapeParser.parse takes raw NBT bytes only.
+                // decompresses, but TapeInput.parse takes raw NBT bytes only.
                 byte[] raw = Compression.decompress(payload);
-                Tape parsed = TapeParser.parse(raw);
+                Tape parsed = TapeInput.parse(raw);
                 CompoundTag viaBorrow = parsed.root().materialize();
 
                 assertEquals(viaProduction, viaBorrow,
