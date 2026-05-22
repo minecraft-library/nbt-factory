@@ -48,17 +48,15 @@ The script verifies SHA-256 hashes; CI never runs it.
 |---------|------|
 | `lib.minecraft.nbt` | `NbtFactory` - all public read/write methods |
 | `lib.minecraft.nbt.exception` | `NbtException`, `NbtMaxDepthException` |
-| `lib.minecraft.nbt.tags` | `Tag`, `TagType` enum (dispatch) |
-| `lib.minecraft.nbt.tags.primitive` | `ByteTag`..`DoubleTag`, `StringTag`, `EndTag`, `NumericalTag` (shared base) |
-| `lib.minecraft.nbt.tags.array` | `ByteArrayTag`, `IntArrayTag`, `LongArrayTag` |
-| `lib.minecraft.nbt.tags.collection` | `CompoundTag` (map), `ListTag` (homogeneous list) |
+| `lib.minecraft.nbt.tag` | `Tag` base + `TagType` dispatch enum + every concrete tag (`ByteTag`..`DoubleTag`, `StringTag`, `ByteArrayTag`/`IntArrayTag`/`LongArrayTag`, `CompoundTag`, `ListTag`, `EndTag`, `NumericalTag` shared base) |
 | `lib.minecraft.nbt.io` | `NbtInput`/`NbtOutput` dispatch |
 | `lib.minecraft.nbt.io.util` | `NbtByteCodec` contract, `NbtModifiedUtf8`, `NbtKnownKeys` canonical-key lookup, plus the small growable primitive `ByteList`/`IntList`/`LongList` buffers |
 | `lib.minecraft.nbt.io.buffer` | heap-backed `NbtInputBuffer` / `NbtOutputBuffer` |
 | `lib.minecraft.nbt.io.stream` | `DataInputStream` / `DataOutputStream` wrappers |
 | `lib.minecraft.nbt.io.snbt` | stringified-NBT serializer + deserializer |
 | `lib.minecraft.nbt.io.json` | JSON serializer + deserializer |
-| `lib.minecraft.nbt.borrow` | zero-allocation read-only navigator API (tape + retained buffer) |
+| `lib.minecraft.nbt.io.tape` | `NbtInputTape` - tape-building parser for the borrow API |
+| `lib.minecraft.nbt.tag.borrow` | zero-allocation read-only navigator API (tape + retained buffer) |
 
 ## Borrow API
 
@@ -84,7 +82,7 @@ the input array.
 
 Performance ballpark from Phase C6's `BorrowVsMaterializeBenchmark`: ~2.26x on
 `complex_player.dat`, 2-3x on compound- and string-heavy NBT, 1.2-1.5x on
-primitive-array-heavy NBT. See `lib.minecraft.nbt.borrow.package-info` for the full
+primitive-array-heavy NBT. See `lib.minecraft.nbt.tag.borrow.package-info` for the full
 contract.
 
 ## Dependencies
@@ -108,7 +106,7 @@ No Spring, no JPA, no Hibernate, no Feign, no service locator. This is a pure li
 
 ## When adding a new tag type
 
-1. Create the `Tag` subclass under the appropriate `tags/` subpackage.
+1. Create the `Tag` subclass in `lib.minecraft.nbt.tag`.
 2. Add a `TagType` enum constant with its id and codec.
 3. Implement `NbtByteCodec<T>` for buffer I/O.
 4. Add SNBT + JSON serializer cases (`SnbtSerializer`, `NbtJsonSerializer`) and their deserializer mirrors.

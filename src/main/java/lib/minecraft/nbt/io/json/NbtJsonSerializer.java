@@ -3,10 +3,10 @@ package lib.minecraft.nbt.io.json;
 import com.google.gson.stream.JsonWriter;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtOutput;
-import lib.minecraft.nbt.tags.ByteTag;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.ListTag;
-import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tag.ByteTag;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

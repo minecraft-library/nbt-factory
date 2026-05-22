@@ -4,7 +4,7 @@ import com.google.gson.stream.JsonToken;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
-import lib.minecraft.nbt.tags.*;
+import lib.minecraft.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

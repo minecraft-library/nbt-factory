@@ -2,7 +2,7 @@ package lib.minecraft.nbt;
 
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
-import lib.minecraft.nbt.tags.CompoundTag;
+import lib.minecraft.nbt.tag.CompoundTag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

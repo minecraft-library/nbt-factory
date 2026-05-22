@@ -3,14 +3,14 @@ package lib.minecraft.nbt.benchmark;
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.ByteArrayTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.ListTag;
-import lib.minecraft.nbt.tags.IntTag;
-import lib.minecraft.nbt.tags.StringTag;
+import lib.minecraft.nbt.tag.TagType;
+import lib.minecraft.nbt.tag.ByteArrayTag;
+import lib.minecraft.nbt.tag.IntArrayTag;
+import lib.minecraft.nbt.tag.LongArrayTag;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.IntTag;
+import lib.minecraft.nbt.tag.StringTag;
 import dev.simplified.util.compression.Compression;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -234,7 +234,7 @@ public class NbtBenchmarks {
     @Benchmark
     public int synthetic_traverse_compound(Blackhole bh) {
         int counter = 0;
-        for (Map.Entry<String, lib.minecraft.nbt.tags.Tag<?>> entry : this.syntheticCompound) {
+        for (Map.Entry<String, lib.minecraft.nbt.tag.Tag<?>> entry : this.syntheticCompound) {
             bh.consume(entry.getKey());
             counter++;
         }

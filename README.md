@@ -163,10 +163,12 @@ To run a single test: right-click `NbtRoundTripTest` > **Run**.
                │
                ▼
     ┌──────────────────────────────────────────────┐
-    │  tags/                                       │
-    │  ├─ primitive/  (Byte, Short, Int, …)        │
-    │  ├─ array/      (ByteArray, IntArray, Long…) │
-    │  └─ collection/ (Compound, List)             │
+    │  tag/                                        │
+    │  Tag, TagType, ByteTag..DoubleTag,           │
+    │  StringTag, EndTag, NumericalTag,            │
+    │  ByteArrayTag/IntArrayTag/LongArrayTag,      │
+    │  CompoundTag, ListTag                        │
+    │  └─ borrow/ (BorrowedXxxTag, Tape)           │
     └──────────────────────────────────────────────┘
 
 Format wrappers:
@@ -227,13 +229,10 @@ nbt-factory/
     │   │   ├── buffer/                  # heap-backed codec
     │   │   ├── stream/                  # DataInputStream/DataOutputStream wrappers
     │   │   ├── snbt/                    # SnbtSerializer / SnbtDeserializer
-    │   │   └── json/                    # NbtJsonSerializer / NbtJsonDeserializer
-    │   └── tags/
-    │       ├── Tag.java                 # base contract
-    │       ├── TagType.java             # enum dispatch
-    │       ├── primitive/               # ByteTag, ShortTag, IntTag, ...
-    │       ├── array/                   # ByteArrayTag, IntArrayTag, LongArrayTag
-    │       └── collection/              # CompoundTag, ListTag
+    │   │   ├── json/                    # NbtJsonSerializer / NbtJsonDeserializer
+    │   │   └── tape/                    # NbtInputTape (borrow-API parser)
+    │   └── tag/                         # Tag, TagType, every concrete tag class
+    │       └── borrow/                  # BorrowedXxxTag navigators + Tape
     ├── test/java/lib/minecraft/nbt/
     │   ├── NbtRoundTripTest.java
     │   └── AuctionFixtureGenerator.java

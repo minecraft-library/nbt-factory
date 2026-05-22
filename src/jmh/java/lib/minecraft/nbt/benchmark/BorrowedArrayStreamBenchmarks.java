@@ -2,12 +2,11 @@ package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
-import lib.minecraft.nbt.tags.borrow.BorrowedIntArrayTag;
-import lib.minecraft.nbt.tags.borrow.BorrowedLongArrayTag;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.IntArrayTag;
+import lib.minecraft.nbt.tag.LongArrayTag;
+import lib.minecraft.nbt.tag.borrow.BorrowedIntArrayTag;
+import lib.minecraft.nbt.tag.borrow.BorrowedLongArrayTag;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;

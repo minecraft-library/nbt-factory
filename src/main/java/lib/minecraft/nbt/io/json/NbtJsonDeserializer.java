@@ -8,7 +8,7 @@ import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.util.ByteList;
 import lib.minecraft.nbt.io.util.IntList;
 import lib.minecraft.nbt.io.util.LongList;
-import lib.minecraft.nbt.tags.*;
+import lib.minecraft.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

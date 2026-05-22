@@ -6,11 +6,11 @@ import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.borrow.Tape;
-import lib.minecraft.nbt.tags.borrow.TapeElement;
-import lib.minecraft.nbt.tags.borrow.TapeKind;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.TagType;
+import lib.minecraft.nbt.tag.borrow.Tape;
+import lib.minecraft.nbt.tag.borrow.TapeElement;
+import lib.minecraft.nbt.tag.borrow.TapeKind;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.tags.CompoundTag;
+import lib.minecraft.nbt.tag.CompoundTag;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

@@ -23,7 +23,7 @@
  *       {@link NbtFactory#fromFile}, {@link NbtFactory#fromResource}, and the streaming write
  *       entry points for payloads larger than the in-memory codec wants to hold.</li>
  *   <li>{@code lib.minecraft.nbt.io.tape} - {@code NbtInputTape}. The tape-building backend that
- *       feeds the zero-allocation {@code lib.minecraft.nbt.tags.borrow} navigator API; reads each
+ *       feeds the zero-allocation {@code lib.minecraft.nbt.tag.borrow} navigator API; reads each
  *       value into a packed {@code long[]} entry rather than a {@link Tag} subtree.</li>
  *   <li>{@code lib.minecraft.nbt.io.snbt} - {@code SnbtSerializer} / {@code SnbtDeserializer}.
  *       The stringified-NBT text codec used by command-line tooling.</li>
@@ -41,9 +41,4 @@
  */
 package lib.minecraft.nbt.io;
 
-import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.tags.CompoundTag;
-import lib.minecraft.nbt.tags.Tag;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import lib.minecraft.nbt.tag.CompoundTag;
