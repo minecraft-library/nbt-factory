@@ -161,7 +161,7 @@ public interface NbtInput {
             // readByte() & 0xFF is the unsigned-byte form. Avoids making readUnsignedByte abstract
             // on this interface, which would force SnbtDeserializer (whose readByte parses text) to
             // provide a meaningless implementation.
-            for (int id = this.readByte() & 0xFF; id != 0; id = this.readByte() & 0xFF) {
+            for (int id = this.readByte() & 0xFF; id != TagType.END.getId(); id = this.readByte() & 0xFF) {
                 String key = this.readUTF();
                 Tag<?> tag = this.readTag((byte) id, depth);
                 compoundTag.put(key, tag);
