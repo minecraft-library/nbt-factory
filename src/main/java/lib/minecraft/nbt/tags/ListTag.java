@@ -1,4 +1,4 @@
-package lib.minecraft.nbt.tags.collection;
+package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
 import lib.minecraft.nbt.tags.TagType;

@@ -314,8 +314,8 @@ class MutfStringViewTest {
     @DisplayName("BorrowedStringTag exposes the backing view")
     void borrowedStringTagExposesView() {
         // Indirectly via Tape.encode -> tape.root() -> borrowed.get(...).
-        lib.minecraft.nbt.tags.collection.CompoundTag root = new lib.minecraft.nbt.tags.collection.CompoundTag();
-        root.put("k", new lib.minecraft.nbt.tags.primitive.StringTag("hello"));
+        lib.minecraft.nbt.tags.CompoundTag root = new lib.minecraft.nbt.tags.CompoundTag();
+        root.put("k", new lib.minecraft.nbt.tags.StringTag("hello"));
 
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
         BorrowedStringTag tag = (BorrowedStringTag) borrowed.get("k");

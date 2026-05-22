@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.borrow;
 
-import lib.minecraft.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.tags.StringTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

@@ -66,7 +66,7 @@
  * <h2>Escape hatch</h2>
  *
  * <p>{@link lib.minecraft.nbt.borrow.BorrowedTag#materialize() BorrowedTag.materialize} returns
- * the equivalent owned {@link lib.minecraft.nbt.tags.collection.CompoundTag CompoundTag} (or
+ * the equivalent owned {@link lib.minecraft.nbt.tags.CompoundTag CompoundTag} (or
  * primitive / array / list tag) detached from the retained buffer. The {@code BorrowParityTest}
  * pins the contract: the materialized tree compares {@code equals} byte-for-byte to the result of
  * {@link lib.minecraft.nbt.NbtFactory#fromByteArray(byte[]) NbtFactory.fromByteArray} on the same

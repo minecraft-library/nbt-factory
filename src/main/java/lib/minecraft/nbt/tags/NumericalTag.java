@@ -1,4 +1,4 @@
-package lib.minecraft.nbt.tags.primitive;
+package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.NotNull;

@@ -1,4 +1,4 @@
-package lib.minecraft.nbt.tags.primitive;
+package lib.minecraft.nbt.tags;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
