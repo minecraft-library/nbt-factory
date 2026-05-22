@@ -5,6 +5,7 @@ import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
  * {@code CompoundTag}, just one whose backing {@link Map} is a {@link TapeMapView} that decodes
  * entries lazily from the underlying {@link Tape}. Reads through the standard {@code Map} surface
  * ({@link #containsKey}, {@link #get}, {@link #size}, ...) consult the tape on a per-key basis;
- * the first mutation promotes the view to a {@link java.util.LinkedHashMap LinkedHashMap} and
+ * the first mutation promotes the view to a {@link LinkedHashMap} and
  * every subsequent operation forwards there.</p>
  *
  * <p>Buffer-retention contract from {@code NbtFactory.borrowFromByteArray} applies: callers must

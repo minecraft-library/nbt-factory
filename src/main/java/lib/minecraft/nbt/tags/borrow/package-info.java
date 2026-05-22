@@ -1,15 +1,15 @@
 /**
  * Zero-allocation NBT navigation for read-heavy workloads.
  *
- * <p>The entry point {@link lib.minecraft.nbt.NbtFactory#borrowFromByteArray(byte[])
- * NbtFactory.borrowFromByteArray} parses the input bytes once into a flat tape - a {@link lib.minecraft.nbt.tags.borrow.Tape}
+ * <p>The entry point {@link NbtFactory#borrowFromByteArray(byte[])
+ * NbtFactory.borrowFromByteArray} parses the input bytes once into a flat tape - a {@link Tape}
  * composed of a packed {@code long[]} plus the retained {@code byte[]} backing buffer - and
- * returns a {@link lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag} navigator rooted at the parsed compound.</p>
+ * returns a {@link BorrowedCompoundTag} navigator rooted at the parsed compound.</p>
  *
  * <h2>Tape representation</h2>
  *
  * <p>Each NBT tag is encoded as one or more entries in the tape's {@code long[]} - the high 8 bits
- * carry a {@link lib.minecraft.nbt.tags.borrow.TapeKind} discriminant, the low 56 bits carry either an inline primitive value or
+ * carry a {@link TapeKind} discriminant, the low 56 bits carry either an inline primitive value or
  * a byte offset into the retained buffer for strings, arrays, longs, and doubles. Containers
  * ({@code COMPOUND_HEADER} / {@code LIST_HEADER}) pack an approximate length and a tape index
  * pointing at their matching {@code *_END} marker, so skipping past a subtree is O(1) instead of
@@ -19,22 +19,22 @@
  *
  * <p>Each borrowed tag is a thin subclass of its materialize counterpart that holds a
  * {@code (Tape, int tapeIndex)} pair and decodes value bytes on demand.
- * {@link lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag} extends {@link lib.minecraft.nbt.tags.CompoundTag} and is backed by a {@link lib.minecraft.nbt.tags.borrow.TapeMapView}
- * that resolves keys via a per-call linear scan; {@link lib.minecraft.nbt.tags.borrow.BorrowedListTag} extends {@link ListTag}
- * and is backed by a {@link lib.minecraft.nbt.tags.borrow.TapeListView}. Primitive and array borrow types
- * ({@link lib.minecraft.nbt.tags.borrow.BorrowedIntTag}, {@link lib.minecraft.nbt.tags.borrow.BorrowedByteArrayTag}, etc.) override the standard typed
+ * {@link BorrowedCompoundTag} extends {@link CompoundTag} and is backed by a {@link TapeMapView}
+ * that resolves keys via a per-call linear scan; {@link BorrowedListTag} extends {@link ListTag}
+ * and is backed by a {@link TapeListView}. Primitive and array borrow types
+ * ({@link BorrowedIntTag}, {@link BorrowedByteArrayTag}, etc.) override the standard typed
  * accessors ({@code intValue()}, {@code forEachByte()}, ...) to read direct from the tape buffer
  * without materializing the boxed wrapper or copying the array.</p>
  *
  * <p>The win comes from <b>skipping the decode of every field the caller never touches</b>: a
  * compound with thirty entries where the caller reads three pays decode cost for three, not
- * thirty. MUTF-8 key comparison via {@link lib.minecraft.nbt.tags.borrow.MutfStringView#equalsString(String)} takes an ASCII
+ * thirty. MUTF-8 key comparison via {@link MutfStringView#equalsString(String)} takes an ASCII
  * fast path that compares bytes against {@code char}s directly with no decode, so the linear key
- * scan inside {@link lib.minecraft.nbt.tags.borrow.Tape#findChildTapeIndex(int, String)} also pays zero allocations on the
+ * scan inside {@link Tape#findChildTapeIndex(int, String)} also pays zero allocations on the
  * typical (ASCII-keyed) input.</p>
  *
- * <p>Strings still materialize through {@link lib.minecraft.nbt.tags.borrow.MutfStringView#toString()} once the caller asks for
- * the decoded form, and primitive arrays still materialize through {@link lib.minecraft.nbt.tags.borrow.RawList#toIntArray()}
+ * <p>Strings still materialize through {@link MutfStringView#toString()} once the caller asks for
+ * the decoded form, and primitive arrays still materialize through {@link RawList#toIntArray()}
  * and its byte / long siblings when the caller asks for an owned {@code int[]} / {@code long[]} /
  * {@code byte[]}.</p>
  *
@@ -49,8 +49,8 @@
  *
  * <h2>Buffer-retention contract</h2>
  *
- * <p>The returned {@link lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag} retains a strong reference to the (possibly
- * decompressed) input bytes through the underlying {@link lib.minecraft.nbt.tags.borrow.Tape}. Pointer-kind tape elements
+ * <p>The returned {@link BorrowedCompoundTag} retains a strong reference to the (possibly
+ * decompressed) input bytes through the underlying {@link Tape}. Pointer-kind tape elements
  * address bytes inside that retained array, so the array stays alive as long as any borrowed view
  * derived from this call is reachable. Callers must not assume the input array is eligible for
  * garbage collection just because the parse call has returned, and must not mutate the array
@@ -59,12 +59,9 @@
  * <h2>Escape hatch</h2>
  *
  * <p>Because every borrowed tag IS-A {@link Tag} of the matching kind, the consumer surface is
- * unified: pass a {@link lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag} anywhere a {@link CompoundTag} is accepted, and the
- * standard {@code Map} / {@code List} read methods work transparently. Two convenience methods
- * force the lazy tape view to be allocated and return the same tag as a plain
- * {@code CompoundTag} / {@code ListTag} reference: {@link lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag#materialize()} and
- * {@link lib.minecraft.nbt.tags.borrow.BorrowedListTag#materialize()}. The {@code BorrowParityTest} pins the contract: the
- * materialized tree compares {@code equals} byte-for-byte to the result of
+ * unified: pass a {@link BorrowedCompoundTag} anywhere a {@link CompoundTag} is accepted, and the
+ * standard {@code Map} / {@code List} read methods work transparently. The {@code BorrowParityTest}
+ * pins the contract: the materialized tree compares {@code equals} byte-for-byte to the result of
  * {@link NbtFactory#fromByteArray(byte[])} on the same input.</p>
  *
  * <h2>Stability</h2>

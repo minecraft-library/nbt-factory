@@ -1,12 +1,13 @@
 package lib.minecraft.nbt.benchmark;
 
 import lib.minecraft.nbt.NbtFactory;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+import lib.minecraft.nbt.tags.CompoundTag;
+import lib.minecraft.nbt.tags.IntArrayTag;
+import lib.minecraft.nbt.tags.LongArrayTag;
 import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
 import lib.minecraft.nbt.tags.borrow.BorrowedIntArrayTag;
 import lib.minecraft.nbt.tags.borrow.BorrowedLongArrayTag;
-import lib.minecraft.nbt.tags.IntArrayTag;
-import lib.minecraft.nbt.tags.LongArrayTag;
-import lib.minecraft.nbt.tags.CompoundTag;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -92,7 +93,7 @@ public class BorrowedArrayStreamBenchmarks {
     /**
      * Materialize the {@code int[]} once, then sum it via {@link Arrays#stream(int[])}. After
      * Phase E1 this is the obvious choice for int-array reductions: the bulk-byteswap path
-     * ({@link lib.minecraft.nbt.io.util.NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
+     * ({@link NbtByteCodec#getIntArrayBE NbtByteCodec.getIntArrayBE}) C2
      * auto-vectorizes cleanly, beating any per-element spliterator we tried.
      */
     @Benchmark

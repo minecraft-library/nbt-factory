@@ -5,6 +5,7 @@ import lib.minecraft.nbt.tags.Tag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -15,8 +16,8 @@ import java.util.function.Supplier;
  * {@code ListTag<Tag<?>>}, just one whose backing {@link List} is a {@link TapeListView} that
  * decodes elements lazily from the underlying {@link Tape}. Reads through the standard
  * {@code List} surface ({@link #get(int)}, {@link #size}, {@link #iterator}, ...) consult the
- * tape on a per-index basis; the first mutation promotes the view to an {@link java.util.ArrayList
- * ArrayList} and every subsequent operation forwards there.</p>
+ * tape on a per-index basis; the first mutation promotes the view to an {@link ArrayList} and
+ * every subsequent operation forwards there.</p>
  *
  * <p>The packed list header carries the wire {@code elementId} (NBT tag id of the list's
  * elements) which is read directly from the header without forcing the supplier, so callers can
