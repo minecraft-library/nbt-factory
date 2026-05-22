@@ -4,13 +4,10 @@ import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
-import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
-import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.CompoundTag;
 import lib.minecraft.nbt.tags.TagType;
-import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
 import lib.minecraft.nbt.tags.borrow.Tape;
 import lib.minecraft.nbt.tags.borrow.TapeElement;
 import lib.minecraft.nbt.tags.borrow.TapeKind;
@@ -19,13 +16,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 /**
- * {@link NbtInput} backend that builds a {@link Tape} directly from a binary NBT {@code byte[]}
- * without materializing intermediate {@link CompoundTag} instances. Sibling of
- * {@link NbtInputBuffer} and
- * {@link NbtInputStream}: the same {@code readByte} /
- * {@code readUTF} / {@code readCompoundTag} surface, the same wire format, but the
- * {@link #readCompoundTag(int)} override yields a {@link BorrowedCompoundTag} backed by a freshly-
- * built tape instead of an owned-tree {@code CompoundTag}.
+ * Tape-building parser for binary NBT. {@link #parse(byte[])} consumes a {@code byte[]} once and
+ * returns a {@link Tape} - no intermediate {@link CompoundTag} instances are materialized.
+ *
+ * <p>Implements {@link NbtInput} for the primitive byte-reading surface only ({@code readByte},
+ * {@code readShort}, ..., {@code readUTF}, the typed array reads). The structural
+ * {@code readCompoundTag} / {@code readListTag} defaults are intentionally not specialized here -
+ * the tape builder has its own non-recursive dispatcher that walks the wire format directly into
+ * packed tape entries, and {@link #parse(byte[])} is the only supported entry point.</p>
  *
  * <p>The parser walks the input buffer once and pushes packed tape entries describing the
  * depth-first iteration order of the tree. Open containers are tracked on a fixed-capacity
@@ -129,27 +127,6 @@ public class NbtInputTape implements NbtInput {
 
         in.buildCompoundBodyIntoTape();
         return new Tape(in.tape, in.tapeSize, input);
-    }
-
-    // ------------------------------------------------------------------
-    // NbtInput structural override - builds a tape from the current cursor.
-    // ------------------------------------------------------------------
-
-    /**
-     * Reads a {@code TAG_Compound} body from the current cursor and returns a
-     * {@link BorrowedCompoundTag} backed by a freshly-built tape. Mirrors the contract of every
-     * other {@link NbtInput} backend's {@code readCompoundTag} - the caller has already consumed
-     * the leading id byte and (if present) the framing name.
-     *
-     * <p>The {@code depth} argument is accepted for interface conformance but the tape builder
-     * tracks its own 512-frame open-container stack and throws {@link NbtMaxDepthException} on
-     * overflow.</p>
-     */
-    @Override
-    public @NotNull CompoundTag readCompoundTag(int depth) {
-        this.buildCompoundBodyIntoTape();
-        Tape built = new Tape(this.tape, this.tapeSize, this.input);
-        return new BorrowedCompoundTag(built, 0);
     }
 
     // ------------------------------------------------------------------

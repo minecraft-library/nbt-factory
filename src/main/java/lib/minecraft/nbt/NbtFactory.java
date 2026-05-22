@@ -128,22 +128,8 @@ public class NbtFactory {
     @ApiStatus.Experimental
     public @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
         try {
-            // Mirror fromByteArray's auto-detect: Compression.decompress is a no-op for raw payloads
-            // and inflates gzipped ones. Route the decompressed bytes through NbtInputTape - the
-            // tape-building NbtInput backend - instead of materializing a CompoundTag tree.
             byte[] decompressed = Compression.decompress(bytes);
-
-            if (decompressed.length < 3)
-                throw new lib.minecraft.nbt.exception.NbtFormatException(
-                    "Buffer too short for an NBT root (need at least 3 bytes, got %d)", decompressed.length);
-
-            NbtInputTape buffer = new NbtInputTape(decompressed);
-
-            if (buffer.readByte() != TagType.COMPOUND.getId())
-                throw new IOException("Root tag in NBT structure must be a CompoundTag.");
-
-            buffer.readUTF(); // Discard root name
-            return buffer.readCompoundTag();
+            return NbtInputTape.parse(decompressed).root();
         } catch (Exception exception) {
             throw new NbtException(exception);
         }
@@ -510,7 +496,7 @@ public class NbtFactory {
             }
 
             @Override
-            public void write(byte[] b, int off, int len) throws IOException {
+            public void write(byte @NotNull [] b, int off, int len) throws IOException {
                 // FilterOutputStream's default writes byte-by-byte; forward bulk writes intact.
                 this.out.write(b, off, len);
             }
