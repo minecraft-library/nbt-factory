@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedListTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     /**
      * Constructs a list tag whose backing list is supplied lazily on first access, with the
      * element type pre-seeded so callers can read {@link #getListType()} before the supplier
-     * fires. Used by {@link lib.minecraft.nbt.tags.borrow.BorrowedListTag BorrowedListTag}.
+     * fires. Used by {@link BorrowedListTag}.
      *
      * @param elementId the NBT tag id every element of this list must carry
      * @param supplier supplier invoked on first {@code getValue()}

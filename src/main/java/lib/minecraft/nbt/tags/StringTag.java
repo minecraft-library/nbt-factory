@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedStringTag;
 import lib.minecraft.nbt.tags.TagType;
 import dev.simplified.util.StringUtil;
 import lombok.Getter;
@@ -37,7 +38,7 @@ public class StringTag extends Tag<String> {
 
     /**
      * Constructs a string tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedStringTag BorrowedStringTag}.
+     * {@link BorrowedStringTag}.
      */
     public StringTag(@NotNull Supplier<String> supplier) {
         super(supplier);

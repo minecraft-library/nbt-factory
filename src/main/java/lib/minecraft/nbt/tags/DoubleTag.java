@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.tags;
 
+import lib.minecraft.nbt.tags.borrow.BorrowedDoubleTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ public class DoubleTag extends NumericalTag<Double> {
 
     /**
      * Constructs a double tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedDoubleTag BorrowedDoubleTag}.
+     * {@link BorrowedDoubleTag}.
      */
     public DoubleTag(@NotNull Supplier<Double> supplier) {
         super(supplier);

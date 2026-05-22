@@ -4,6 +4,7 @@ import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtTypeException;
+import lib.minecraft.nbt.io.tape.NbtInputTape;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.ByteArrayTag;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.UTFDataFormatException;
 
 /**
  * Flat tape representation of an NBT compound tree.
@@ -38,13 +38,12 @@ import java.io.UTFDataFormatException;
  *   <li>{@code buffer} is a {@code byte[]} carrying the binary NBT bytes that pointer-kind tape
  *       elements address. {@link #encode(CompoundTag)} retains the
  *       {@link NbtFactory#toByteArray(CompoundTag)} output (including its {@code 0x0A 0x00 0x00}
- *       root preamble); {@link lib.minecraft.nbt.io.tape.TapeInput#parse(byte[])} retains the caller's input array
+ *       root preamble); {@link NbtInputTape#parse(byte[])} retains the caller's input array
  *       directly.</li>
  * </ul>
  *
  * <p>All container traversal helpers run in {@code O(n)} where {@code n} is the number of tape
- * entries, never the buffer length, matching simdnbt's design (see
- * {@code simdnbt::borrow::tape::TapeElement::skip_offset}).</p>
+ * entries, never the buffer length.</p>
  */
 @ApiStatus.Experimental
 public final class Tape {
@@ -66,7 +65,7 @@ public final class Tape {
 
     /**
      * Retained byte buffer that pointer-kind tape elements address. Owned by the tape; callers
-     * must not mutate it. {@link lib.minecraft.nbt.io.tape.TapeInput#parse(byte[])} retains the caller's input by
+     * must not mutate it. {@link NbtInputTape#parse(byte[])} retains the caller's input by
      * reference; {@link #encode(CompoundTag)} retains its own serializer output.
      */
     final byte @NotNull [] buffer;
@@ -74,12 +73,12 @@ public final class Tape {
     /**
      * Constructs a tape from already-packed elements + the retained buffer.
      *
-     * <p>Public so that the {@link lib.minecraft.nbt.io.tape.TapeInput TapeInput} builder (which
+     * <p>Public so that the {@link NbtInputTape} builder (which
      * lives in the {@code io.tape} package) can hand off its accumulated {@code long[]} without
      * a copy. The tape's invariants (kind ordering, matched headers, valid offsets) are not
      * re-validated here - callers are responsible for producing a well-formed tape, typically
      * by routing through {@link #encode(CompoundTag)} or
-     * {@link lib.minecraft.nbt.io.tape.TapeInput#parse(byte[])}.</p>
+     * {@link NbtInputTape#parse(byte[])}.</p>
      *
      * @param elements packed tape entries
      * @param size number of valid entries in {@code elements}
@@ -127,19 +126,19 @@ public final class Tape {
     }
 
     // ------------------------------------------------------------------
-    // Encoder (round-trips a CompoundTag through NbtFactory.toByteArray + lib.minecraft.nbt.io.tape.TapeInput.parse)
+    // Encoder (round-trips a CompoundTag through NbtFactory.toByteArray + NbtInputTape.parse)
     // ------------------------------------------------------------------
 
     /**
      * Encodes a fully-materialized {@link CompoundTag} into a tape.
      *
      * <p>Serializes {@code root} via {@link NbtFactory#toByteArray(CompoundTag)} (no compression),
-     * then hands the produced bytes to {@link lib.minecraft.nbt.io.tape.TapeInput#parse(byte[])}. The retained buffer is
+     * then hands the produced bytes to {@link NbtInputTape#parse(byte[])}. The retained buffer is
      * the full serializer output including its {@code 0x0A 0x00 0x00} root preamble; pointer-kind
      * tape elements address bytes inside that payload.</p>
      *
      * <p>Used by the round-trip tests as a convenience; production callers building a tape from
-     * raw NBT bytes should call {@link lib.minecraft.nbt.io.tape.TapeInput#parse(byte[])} directly to avoid the extra
+     * raw NBT bytes should call {@link NbtInputTape#parse(byte[])} directly to avoid the extra
      * serialize step.</p>
      *
      * @param root the compound to encode
@@ -150,7 +149,7 @@ public final class Tape {
     public static @NotNull Tape encode(@NotNull CompoundTag root) {
         try {
             byte[] buffer = NbtFactory.toByteArray(root);
-            return lib.minecraft.nbt.io.tape.TapeInput.parse(buffer);
+            return NbtInputTape.parse(buffer);
         } catch (IOException exception) {
             throw new NbtFormatException(exception, "Failed to encode CompoundTag into a tape");
         }
@@ -325,7 +324,7 @@ public final class Tape {
      * Returns a {@link BorrowedCompoundTag} navigator over the root compound at tape index 0.
      *
      * <p>This is the user-facing entry point into the borrow API in C3. C5 will wire
-     * {@code NbtFactory.borrowFromByteArray} to {@code lib.minecraft.nbt.io.tape.TapeInput.parse(bytes).root()} as a
+     * {@code NbtFactory.borrowFromByteArray} to {@code NbtInputTape.parse(bytes).root()} as a
      * one-call entry point that does not depend on internal types.</p>
      *
      * @return a navigator over the root compound
@@ -354,7 +353,7 @@ public final class Tape {
      * {@link #NOT_FOUND} when no entry matches.
      *
      * <p>Used by {@code TapeShapeTest} to assert structural invariants without depending on
-     * {@link #materialize()}, and by {@link BorrowedCompoundTag#get(String)} as the user-facing
+     * {@link #materialize()}, and by {@link BorrowedCompoundTag#get(Object)} as the user-facing
      * lookup path.</p>
      *
      * <p>Compares each entry's key bytes against {@code key} via

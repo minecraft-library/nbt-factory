@@ -3,6 +3,7 @@ package lib.minecraft.nbt;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
 import lib.minecraft.nbt.tags.Tag;
@@ -48,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Binary NBT via {@link NbtOutputStream}/{@link NbtInputStream} (streaming)</li>
  *   <li>{@link Compression#GZIP}-compressed binary NBT</li>
  *   <li>SNBT via {@link NbtFactory#toSnbt(CompoundTag)}/{@link NbtFactory#fromSnbt(String)}</li>
- *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link lib.minecraft.nbt.io.json.NbtJsonDeserializer} for the round-trip contract)</li>
+ *   <li>JSON via {@link NbtFactory#toJson(CompoundTag)} / {@link NbtFactory#fromJson(String)} (lossy - see {@link NbtJsonDeserializer} for the round-trip contract)</li>
  * </ul>
  *
  * <p>Each fixture covers different aspects of the format: primitives, edge values, strings,

@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedByteTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,7 +93,7 @@ public class ByteTag extends NumericalTag<Byte> {
 
     /**
      * Constructs a byte tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedByteTag BorrowedByteTag}.
+     * {@link BorrowedByteTag}.
      *
      * @param supplier supplier invoked on first {@code getValue()}
      */

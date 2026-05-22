@@ -20,9 +20,9 @@ import java.util.Set;
  * entries lazily on a per-key basis.
  *
  * <p>{@link #containsKey(Object)} and {@link #get(Object)} run a linear scan via
- * {@link Tape#findChildTapeIndex(int, String)} - the same shape as simdnbt's borrow path. Touching
- * a single field on a 60-entry compound costs at most 60 key-byte compares; touching all 60 fields
- * costs the same as materializing the whole map up front, plus the per-tag wrapper allocations.</p>
+ * {@link Tape#findChildTapeIndex(int, String)}. Touching a single field on a 60-entry compound
+ * costs at most 60 key-byte compares; touching all 60 fields costs the same as materializing the
+ * whole map up front, plus the per-tag wrapper allocations.</p>
  *
  * <p>Mutation paths ({@link #put(String, Tag)}, {@link #remove(Object)}, {@link #clear()}) promote
  * the view to a {@link LinkedHashMap} on first call. Promotion copies every entry from the tape

@@ -5,7 +5,7 @@ import lib.minecraft.nbt.tags.borrow.Tape;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
-import lib.minecraft.nbt.io.tape.TapeInput;
+import lib.minecraft.nbt.io.tape.NbtInputTape;
 import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
 import lib.minecraft.nbt.io.json.NbtJsonSerializer;
 import lib.minecraft.nbt.io.snbt.SnbtDeserializer;
@@ -86,7 +86,7 @@ public class NbtFactory {
      * <p>Mirrors {@link #fromByteArray(byte[])}'s gzip auto-detect via
      * {@link Compression#decompress(byte[])} - raw payloads pass through, gzipped payloads are
      * inflated - then routes the decompressed bytes through
-     * {@link TapeParser#parse(byte[])} instead of materializing a {@link CompoundTag}. The returned
+     * {@link NbtInputTape#parse(byte[])} instead of materializing a {@link CompoundTag}. The returned
      * navigator decodes values lazily as the caller traverses the tree, so payloads where most
      * fields are read once and discarded skip the per-value allocation overhead of the
      * materializing path entirely.</p>
@@ -105,7 +105,7 @@ public class NbtFactory {
      * does not). Mutating the retained buffer corrupts every pointer-kind tape element addressing
      * it, including subsequent {@link BorrowedCompoundTag#materialize() materialize} calls.</p>
      *
-     * <p><b>Thread safety.</b> Decoding is single-threaded - the {@link TapeParser} runs on the
+     * <p><b>Thread safety.</b> Decoding is single-threaded - the {@link NbtInputTape} runs on the
      * calling thread before this method returns. Once returned, the borrow tree is read-only and
      * the underlying {@link Tape} is immutable, so navigation can be parallelized across threads.
      * Note that {@code BorrowedStringTag} caches the materialized {@link String} the first time
@@ -130,7 +130,7 @@ public class NbtFactory {
     public @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
         try {
             // Mirror fromByteArray's auto-detect: Compression.decompress is a no-op for raw payloads
-            // and inflates gzipped ones. Route the decompressed bytes through TapeInput - the
+            // and inflates gzipped ones. Route the decompressed bytes through NbtInputTape - the
             // tape-building NbtInput backend - instead of materializing a CompoundTag tree.
             byte[] decompressed = Compression.decompress(bytes);
 
@@ -138,7 +138,7 @@ public class NbtFactory {
                 throw new lib.minecraft.nbt.exception.NbtFormatException(
                     "Buffer too short for an NBT root (need at least 3 bytes, got %d)", decompressed.length);
 
-            TapeInput buffer = new TapeInput(decompressed);
+            NbtInputTape buffer = new NbtInputTape(decompressed);
 
             if (buffer.readByte() != TagType.COMPOUND.getId())
                 throw new IOException("Root tag in NBT structure must be a CompoundTag.");

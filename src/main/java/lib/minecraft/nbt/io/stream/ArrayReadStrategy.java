@@ -1,5 +1,7 @@
 package lib.minecraft.nbt.io.stream;
 
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 
@@ -17,7 +19,7 @@ import java.io.DataInputStream;
  *       intrinsify the big-endian conversion. Best when the JIT successfully inlines the call
  *       chain - typical for the auction workload's many small arrays.</li>
  *   <li><b>CHUNKED_THREADLOCAL</b> - bulk-reads into a 64 KiB thread-local scratch buffer and
- *       decodes through the {@link lib.minecraft.nbt.io.util.NbtByteCodec} {@code VarHandle} path.
+ *       decodes through the {@link NbtByteCodec} {@code VarHandle} path.
  *       Arrays larger than the cap are decoded in 64 KiB chunks; the {@link ThreadLocal} never
  *       retains a buffer larger than that, so virtual threads and fork-join carriers pay a fixed
  *       per-thread footprint. Best when the JIT's inlining budget for the streamwise path is
@@ -42,7 +44,7 @@ public enum ArrayReadStrategy {
 
     /**
      * Bulk read into a 64 KiB {@link ThreadLocal} scratch buffer, decode via
-     * {@link lib.minecraft.nbt.io.util.NbtByteCodec}. Arrays larger than the cap are processed in
+     * {@link NbtByteCodec}. Arrays larger than the cap are processed in
      * fixed-size chunks; the thread-local never grows past the cap.
      */
     CHUNKED_THREADLOCAL

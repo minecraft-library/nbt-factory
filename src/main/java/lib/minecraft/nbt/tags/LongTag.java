@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedLongTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,7 +96,7 @@ public class LongTag extends NumericalTag<Long> {
 
     /**
      * Constructs a long tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedLongTag BorrowedLongTag}.
+     * {@link BorrowedLongTag}.
      */
     public LongTag(@NotNull Supplier<Long> supplier) {
         super(supplier);

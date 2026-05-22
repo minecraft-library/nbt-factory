@@ -22,14 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pins {@link NbtFactory#borrowFromByteArray(byte[])} parity against
- * {@link NbtFactory#fromByteArray(byte[])} on every fixture in the simdnbt corpus, exercises the
+ * {@link NbtFactory#fromByteArray(byte[])} on every vendored corpus fixture, exercises the
  * gzip auto-detect path on the {@code .dat}-style fixtures, and verifies the buffer-retention
  * contract documented on the entry point: a borrowed tree continues to materialize correctly
  * after the original input array reference is dropped and a GC is forced.
  *
  * <p>This is the gold-standard parity check for the public Phase C5 entry point - any divergence
  * indicates a bug in the gzip-detect path or in how the entry point hands its decompressed buffer
- * to {@link TapeInput}.</p>
+ * to {@link NbtInputTape}.</p>
  */
 class BorrowFromByteArrayTest {
 
@@ -153,7 +153,7 @@ class BorrowFromByteArrayTest {
     @Test
     @DisplayName("non-compound root id surfaces as NbtException")
     void nonCompoundRootRejected() {
-        // 0x42 is not TAG_Compound. Same case the TapeInput already covers, but exercised through
+        // 0x42 is not TAG_Compound. Same case the NbtInputTape already covers, but exercised through
         // the public entry point to confirm the wrapping path preserves the diagnostic.
         byte[] payload = new byte[]{0x42, 0x00, 0x00};
 

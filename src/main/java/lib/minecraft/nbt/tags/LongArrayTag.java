@@ -1,6 +1,8 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedLongArrayTag;
+import lib.minecraft.nbt.tags.borrow.RawList;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +50,7 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
 
     /**
      * Constructs a long array tag whose backing array is supplied lazily on first access. Used
-     * by {@link lib.minecraft.nbt.tags.borrow.BorrowedLongArrayTag BorrowedLongArrayTag}.
+     * by {@link BorrowedLongArrayTag}.
      */
     public LongArrayTag(@NotNull Supplier<long[]> supplier) {
         super(supplier);
@@ -100,7 +102,7 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
      * Returns a sequential {@link LongStream} over the backing {@code long[]} - zero boxing.
      *
      * <p>Borrow subclasses override this to stream directly from the tape's
-     * {@link lib.minecraft.nbt.tags.borrow.RawList RawList} view, skipping the full-payload
+     * {@link RawList} view, skipping the full-payload
      * materialize.</p>
      */
     public @NotNull LongStream longStream() {
@@ -142,8 +144,8 @@ public class LongArrayTag extends Tag<long[]> implements Iterable<Long> {
      * require a boxed {@link Long}; named distinctly to avoid creating an overload-resolution
      * ambiguity for callers that pass a method reference such as {@code System.out::println}.</p>
      *
-     * <p>Borrow subclasses override this to walk the tape's {@link lib.minecraft.nbt.tags.borrow.RawList
-     * RawList} directly, skipping the full-payload materialize.</p>
+     * <p>Borrow subclasses override this to walk the tape's {@link RawList} directly, skipping
+     * the full-payload materialize.</p>
      *
      * @param action the action to perform on each long
      */

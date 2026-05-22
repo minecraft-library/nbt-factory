@@ -1,12 +1,10 @@
 /**
  * Internal codec utilities shared across the NBT I/O backends.
  *
- * <p>Houses tiny growable primitive buffers ({@link lib.minecraft.nbt.io.util.ByteList ByteList},
- * {@link lib.minecraft.nbt.io.util.IntList IntList},
- * {@link lib.minecraft.nbt.io.util.LongList LongList}) used by the SNBT and JSON deserializers
- * to read typed arrays without allocating per-element boxed wrappers. Every type in this package
- * is {@link Internal @ApiStatus.Internal} - external callers
- * must not depend on it.</p>
+ * <p>Houses tiny growable primitive buffers ({@link ByteList}, {@link IntList}, {@link LongList})
+ * used by the SNBT and JSON deserializers to read typed arrays without allocating per-element
+ * boxed wrappers. Every type in this package is {@link Internal @ApiStatus.Internal} - external
+ * callers must not depend on it.</p>
  */
 @ApiStatus.Internal
 package lib.minecraft.nbt.io.util;

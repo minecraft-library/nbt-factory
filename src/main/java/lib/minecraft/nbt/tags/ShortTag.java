@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedShortTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +97,7 @@ public class ShortTag extends NumericalTag<Short> {
 
     /**
      * Constructs a short tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedShortTag BorrowedShortTag}.
+     * {@link BorrowedShortTag}.
      */
     public ShortTag(@NotNull Supplier<Short> supplier) {
         super(supplier);

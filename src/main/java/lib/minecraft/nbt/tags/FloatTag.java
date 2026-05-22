@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.tags;
 
+import lib.minecraft.nbt.tags.borrow.BorrowedFloatTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ public class FloatTag extends NumericalTag<Float> {
 
     /**
      * Constructs a float tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedFloatTag BorrowedFloatTag}.
+     * {@link BorrowedFloatTag}.
      */
     public FloatTag(@NotNull Supplier<Float> supplier) {
         super(supplier);

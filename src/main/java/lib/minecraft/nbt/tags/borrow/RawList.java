@@ -7,7 +7,9 @@ import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tags.ByteArrayTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.VarHandle;
 import java.util.Spliterator;
 import java.util.function.IntConsumer;
 import java.util.function.LongConsumer;
@@ -17,10 +19,9 @@ import java.util.stream.StreamSupport;
 /**
  * Zero-copy view over a length-prefixed primitive array embedded in a borrowed NBT buffer.
  *
- * <p>Mirrors {@code simdnbt::raw_list::RawList} ({@code simdnbt/src/raw_list.rs:7-48}). Holds a
- * {@code (buffer, offset, count, elementKind)} triple where {@code offset} addresses the first
- * element byte (NOT the 4-byte length prefix that precedes it on the wire) and {@code elementKind}
- * is one of {@link TapeKind#BYTE_ARRAY_PTR}, {@link TapeKind#INT_ARRAY_PTR},
+ * <p>Holds a {@code (buffer, offset, count, elementKind)} triple where {@code offset} addresses
+ * the first element byte (NOT the 4-byte length prefix that precedes it on the wire) and
+ * {@code elementKind} is one of {@link TapeKind#BYTE_ARRAY_PTR}, {@link TapeKind#INT_ARRAY_PTR},
  * {@link TapeKind#LONG_ARRAY_PTR}.</p>
  *
  * <p>The view itself allocates nothing - per-element access via {@link #getByte(int)} /
@@ -318,9 +319,12 @@ public final class RawList {
      */
     private static final class LongArraySpliterator implements Spliterator.OfLong {
 
+        // NONNULL is intentionally omitted - it has no meaning for primitive long spliterators
+        // (a primitive long can't be null, the flag describes nullability of encountered elements
+        // for reference-typed sources). SIZED + SUBSIZED + ORDERED + IMMUTABLE is the correct set.
         private static final int CHARACTERISTICS =
             Spliterator.SIZED | Spliterator.SUBSIZED |
-            Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE;
+            Spliterator.ORDERED | Spliterator.IMMUTABLE;
 
         private final byte @NotNull [] buffer;
 
@@ -348,18 +352,20 @@ public final class RawList {
         public void forEachRemaining(@NotNull LongConsumer action) {
             int p = this.position;
             int e = this.end;
-            byte[] buf = this.buffer;
+
             while (p < e) {
-                action.accept(NbtByteCodec.getLong(buf, p));
+                action.accept(NbtByteCodec.getLong(this.buffer, p));
                 p += 8;
             }
+
             this.position = e;
         }
 
         @Override
-        public Spliterator.@NotNull OfLong trySplit() {
+        public Spliterator.@Nullable OfLong trySplit() {
             int remaining = this.end - this.position;
-            // 8 longs (64 bytes) is the smallest split worth taking.
+            // 8 longs (64 bytes) is the smallest split worth taking. Below that, return null
+            // per the Spliterator.trySplit contract (the caller falls back to sequential).
             if (remaining < 128)
                 return null;
 

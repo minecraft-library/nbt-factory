@@ -23,11 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * {@code [reserved:8][approxLen:24][endTapeOffset:24]}. For {@code LIST_HEADER} the same field
  * layout is reused with the {@code reserved} byte repurposed to hold the wire {@code elementId}
  * (NBT type id of the list's elements) so a round trip preserves the element type even on empty
- * lists - simdnbt sidesteps this by giving each element type its own {@code TapeTagKind}
- * (e.g. {@code ByteList}, {@code CompoundList}); we use a single {@code LIST_HEADER} with the
- * type stashed in the high payload byte instead. {@code endTapeOffset} fits in 24 bits since the
- * tape is itself bounded by buffer size: 16M entries == ~128 MB of tape, well past anything a
- * real NBT payload reaches.</p>
+ * lists. {@code endTapeOffset} fits in 24 bits since the tape is itself bounded by buffer size:
+ * 16M entries == ~128 MB of tape, well past anything a real NBT payload reaches.</p>
  *
  * <p>{@code TapeKind.values()} is cached in {@link #BY_ORDINAL} so {@link #unpackKind(long)} does
  * not pay the array-clone tax that {@code TapeKind.values()} performs on every call.</p>
@@ -44,8 +41,7 @@ public class TapeElement {
 
     /**
      * Maximum value the {@code approxLen} field of a {@code COMPOUND_HEADER} / {@code LIST_HEADER}
-     * can hold. Sizes above this saturate to this value, mirroring simdnbt's clamp on the same
-     * field (its {@code 0xff_ffff} cap before this port narrowed the off-end-pointer to 24 bits).
+     * can hold. Sizes above this saturate to the cap ({@code 0xFF_FFFF}, 16M entries).
      */
     public static final int MAX_APPROX_LEN = 0xFF_FFFF;
 

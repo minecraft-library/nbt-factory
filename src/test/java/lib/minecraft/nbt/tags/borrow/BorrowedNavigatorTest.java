@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Targeted coverage for the C3 navigators using hand-built compounds where every key, type, and
- * order is known in advance. {@code BorrowParityTest} pins parity on the simdnbt corpus and the
+ * order is known in advance. {@code BorrowParityTest} pins parity on the vendored corpus and the
  * auction fixture; this class exercises the surface-level navigation methods on every tag kind.
  */
 class BorrowedNavigatorTest {

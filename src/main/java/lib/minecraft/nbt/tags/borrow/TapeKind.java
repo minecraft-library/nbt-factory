@@ -1,18 +1,21 @@
 package lib.minecraft.nbt.tags.borrow;
 
+import lib.minecraft.nbt.io.tape.NbtInputTape;
+import lib.minecraft.nbt.io.util.NbtByteCodec;
+import lib.minecraft.nbt.tags.CompoundTag;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Discriminant for the high 8 bits of a packed tape element {@code long}.
  *
- * <p>Mirrors {@code simdnbt::borrow::tape::TapeTagKind}. The Java port assigns ordinals
- * implicitly (declaration order) so callers must not reorder constants - the ordinal is the wire
- * value packed into the top byte of every {@link TapeElement} {@code long}, and reordering would
- * silently break round-tripping any tape produced by an older version of the library.</p>
+ * <p>Ordinals are assigned implicitly (declaration order); callers must not reorder constants -
+ * the ordinal is the wire value packed into the top byte of every {@link TapeElement}
+ * {@code long}, and reordering would silently break round-tripping any tape produced by an older
+ * version of the library.</p>
  *
- * <p>Each constant documents what the low 56 bits of the tape element carry. The C1 encoder
- * ({@link Tape#encode(lib.minecraft.nbt.tags.CompoundTag) Tape.encode}) and the
- * not-yet-landed C2 streaming parser produce identical tape shapes for the same input.</p>
+ * <p>Each constant documents what the low 56 bits of the tape element carry. The encoder
+ * ({@link Tape#encode(CompoundTag) Tape.encode}) and the streaming parser ({@link NbtInputTape})
+ * produce identical tape shapes for the same input.</p>
  */
 @ApiStatus.Experimental
 public enum TapeKind {
@@ -45,14 +48,14 @@ public enum TapeKind {
      * Pointer to an 8-byte big-endian {@code TAG_Long} payload in the retained buffer. The 64-bit
      * value does not fit in the 56 low bits of a tape element, so the tape stores the buffer
      * offset and the consumer reads the value via
-     * {@link lib.minecraft.nbt.io.util.NbtByteCodec#getLong(byte[], int) NbtByteCodec.getLong}.
+     * {@link NbtByteCodec#getLong(byte[], int)}.
      */
     LONG_PTR,
 
     /**
      * Pointer to an 8-byte big-endian {@code TAG_Double} payload in the retained buffer. Same
      * rationale as {@link #LONG_PTR}; consumer reads via
-     * {@link lib.minecraft.nbt.io.util.NbtByteCodec#getDouble(byte[], int) NbtByteCodec.getDouble}.
+     * {@link NbtByteCodec#getDouble(byte[], int)}.
      */
     DOUBLE_PTR,
 

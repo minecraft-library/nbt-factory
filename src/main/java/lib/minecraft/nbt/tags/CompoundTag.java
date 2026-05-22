@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag;
 import lib.minecraft.nbt.tags.TagType;
 import lib.minecraft.nbt.tags.ByteArrayTag;
 import lib.minecraft.nbt.tags.IntArrayTag;
@@ -73,7 +74,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
 
     /**
      * Constructs a compound tag whose backing map is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedCompoundTag BorrowedCompoundTag} to defer the
+     * {@link BorrowedCompoundTag} to defer the
      * map-view allocation until the first read forces it.
      *
      * @param supplier supplier invoked on first {@code getValue()}

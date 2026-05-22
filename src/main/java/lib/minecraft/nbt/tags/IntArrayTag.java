@@ -1,6 +1,8 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedIntArrayTag;
+import lib.minecraft.nbt.tags.borrow.RawList;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +50,7 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
 
     /**
      * Constructs an int array tag whose backing array is supplied lazily on first access. Used
-     * by {@link lib.minecraft.nbt.tags.borrow.BorrowedIntArrayTag BorrowedIntArrayTag}.
+     * by {@link BorrowedIntArrayTag}.
      */
     public IntArrayTag(@NotNull Supplier<int[]> supplier) {
         super(supplier);
@@ -100,7 +102,7 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
      * Returns a sequential {@link IntStream} over the backing {@code int[]} - zero boxing.
      *
      * <p>Borrow subclasses override this to stream directly from the tape's
-     * {@link lib.minecraft.nbt.tags.borrow.RawList RawList} view, skipping the full-payload
+     * {@link RawList} view, skipping the full-payload
      * materialize.</p>
      */
     public @NotNull IntStream intStream() {
@@ -142,8 +144,8 @@ public class IntArrayTag extends Tag<int[]> implements Iterable<Integer> {
      * require a boxed {@link Integer}; named distinctly to avoid creating an overload-resolution
      * ambiguity for callers that pass a method reference such as {@code System.out::println}.</p>
      *
-     * <p>Borrow subclasses override this to walk the tape's {@link lib.minecraft.nbt.tags.borrow.RawList
-     * RawList} directly, skipping the full-payload materialize.</p>
+     * <p>Borrow subclasses override this to walk the tape's {@link RawList} directly, skipping
+     * the full-payload materialize.</p>
      *
      * @param action the action to perform on each int
      */

@@ -16,8 +16,8 @@ import java.util.NoSuchElementException;
  * elements lazily on a per-index basis.
  *
  * <p>{@link #get(int)} runs an O(i) walk via {@link Tape#nextSibling(int)} - the tape does not
- * store per-element offsets, matching simdnbt's {@code borrow/list.rs}. Sequential traversal via
- * {@link #iterator()} amortizes to O(1) per step.</p>
+ * store per-element offsets. Sequential traversal via {@link #iterator()} amortizes to O(1) per
+ * step.</p>
  *
  * <p>Mutation paths promote the view to an {@link ArrayList} on first call by walking the entire
  * tape range. Subsequent operations forward to the promoted list.</p>

@@ -2,7 +2,7 @@ package lib.minecraft.nbt.tags.borrow;
 
 import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.NbtFactory;
-import lib.minecraft.nbt.io.tape.TapeInput;
+import lib.minecraft.nbt.io.tape.NbtInputTape;
 import lib.minecraft.nbt.tags.CompoundTag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,12 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Gold-standard parity check for the C3 borrow API.
  *
- * <p>For every fixture in the simdnbt corpus and the first 100 entries in {@code auctions.bin},
- * asserts {@code TapeInput.parse(payload).root().materialize().equals(NbtFactory.fromByteArray(payload))}.
+ * <p>For every fixture in the vendored corpus and the first 100 entries in {@code auctions.bin},
+ * asserts {@code NbtInputTape.parse(payload).root().materialize().equals(NbtFactory.fromByteArray(payload))}.
  * Any divergence indicates a bug in one of the C3 navigator types' {@code materialize()}
  * implementations.</p>
  *
- * <p>The simdnbt corpus alone covers compound, list, all six numeric primitive kinds, all three
+ * <p>The vendored corpus alone covers compound, list, all six numeric primitive kinds, all three
  * array kinds, string, and various nesting depths; the auction sample adds the long tail of
  * SkyBlock-style payloads with deeply nested compounds and item-display-style strings.</p>
  */
@@ -51,7 +51,7 @@ class BorrowParityTest {
         "simple_player.dat",
         "inttest1023.nbt"
     })
-    @DisplayName("simdnbt corpus fixture: borrow.materialize matches NbtFactory.fromByteArray")
+    @DisplayName("corpus fixture: borrow.materialize matches NbtFactory.fromByteArray")
     void corpusFixtureBorrowMatchesProduction(String filename) throws IOException {
         Path file = CORPUS_DIR.resolve(filename);
         assertTrue(Files.exists(file), "corpus fixture missing: " + file);
@@ -61,7 +61,7 @@ class BorrowParityTest {
         CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
         assertNotNull(viaProduction);
 
-        Tape parsed = TapeInput.parse(payload);
+        Tape parsed = NbtInputTape.parse(payload);
         BorrowedCompoundTag root = parsed.root();
         CompoundTag viaBorrow = root.materialize();
 
@@ -87,9 +87,9 @@ class BorrowParityTest {
 
                 CompoundTag viaProduction = NbtFactory.fromByteArray(payload);
                 // Auction items ship gzipped on the wire; NbtFactory.fromByteArray transparently
-                // decompresses, but TapeInput.parse takes raw NBT bytes only.
+                // decompresses, but NbtInputTape.parse takes raw NBT bytes only.
                 byte[] raw = Compression.decompress(payload);
-                Tape parsed = TapeInput.parse(raw);
+                Tape parsed = NbtInputTape.parse(raw);
                 CompoundTag viaBorrow = parsed.root().materialize();
 
                 assertEquals(viaProduction, viaBorrow,

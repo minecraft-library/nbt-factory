@@ -1,6 +1,7 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedIntTag;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,7 +102,7 @@ public class IntTag extends NumericalTag<Integer> {
 
     /**
      * Constructs an int tag whose value is supplied lazily on first access. Used by
-     * {@link lib.minecraft.nbt.tags.borrow.BorrowedIntTag BorrowedIntTag}.
+     * {@link BorrowedIntTag}.
      */
     public IntTag(@NotNull Supplier<Integer> supplier) {
         super(supplier);

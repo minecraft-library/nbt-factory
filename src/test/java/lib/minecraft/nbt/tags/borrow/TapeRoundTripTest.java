@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Round-trip parity for {@link Tape#encode(CompoundTag)} + {@link Tape#materialize()} against
- * the simdnbt corpus and a short slice of the auction fixture.
+ * the vendored corpus and a short slice of the auction fixture.
  *
  * <p>Encoding produces a tape from a materialized compound; materializing walks the tape and
  * reconstructs an equivalent compound. The pair must round-trip for every input the production
@@ -46,7 +46,7 @@ class TapeRoundTripTest {
         "simple_player.dat",
         "inttest1023.nbt"
     })
-    @DisplayName("simdnbt corpus fixture round-trips through Tape.encode + Tape.materialize")
+    @DisplayName("corpus fixture round-trips through Tape.encode + Tape.materialize")
     void corpusFileRoundTrips(String filename) throws IOException {
         Path file = CORPUS_DIR.resolve(filename);
         assertTrue(Files.exists(file), "corpus fixture missing: " + file);

@@ -1,6 +1,9 @@
 package lib.minecraft.nbt.io.util;
 
 import lib.minecraft.nbt.exception.NbtFormatException;
+import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
+import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
+import lib.minecraft.nbt.tags.borrow.MutfStringView;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,8 +22,8 @@ import java.nio.charset.StandardCharsets;
  * as a 2-byte big-endian unsigned length prefix followed by {@code length} bytes of modified
  * UTF-8 data, per the <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a>
  * specification. This class owns the inner codec; the length-prefix framing lives in the
- * individual backends ({@link lib.minecraft.nbt.io.buffer.NbtInputBuffer NbtInputBuffer},
- * {@link lib.minecraft.nbt.io.buffer.NbtOutputBuffer NbtOutputBuffer}).</p>
+ * individual backends ({@link NbtInputBuffer},
+ * {@link NbtOutputBuffer}).</p>
  *
  * <p>Modified UTF-8 matches standard UTF-8 for code points in {@code [0x0001..0x007F]}. Two
  * differences from standard UTF-8:</p>
@@ -92,33 +95,6 @@ public final class NbtModifiedUtf8 {
     }
 
     /**
-     * Decodes {@code utfLen} bytes of modified UTF-8 starting at {@code offset} in {@code src}.
-     *
-     * <p>Leniently accepts a raw {@code 0x00} byte as {@code U+0000} even though strict modified
-     * UTF-8 forbids it - this way any payload produced by the previous standard-UTF-8
-     * implementation still round-trips cleanly.</p>
-     *
-     * <p>Fast path: for all-ASCII input (every byte in {@code [0x00..0x7F]}) this delegates to
-     * {@code new String(src, offset, utfLen, UTF_8)} which the JDK intrinsifies to a compact
-     * Latin-1 {@link String} with zero intermediate {@code char[]} allocation. ASCII bytes are
-     * identical under modified UTF-8 and standard UTF-8 (neither emits the forbidden {@code 0x00}
-     * byte normally), so the fast path is both correct and matches the baseline allocation
-     * profile byte-for-byte for the common case. The slow path - a manual modified UTF-8 decoder
-     * with a scratch {@code char[]} - only runs for inputs containing multi-byte sequences (BMP
-     * non-Latin characters, supplementary code points via surrogate pairs, or the
-     * modified-UTF-8-specific {@code C0 80} encoding of U+0000).</p>
-     *
-     * <p>The ASCII probe itself walks {@code src} 8 bytes at a time via
-     * {@link #isPlainAscii(byte[], int, int)}, ANDing each {@code long} chunk against
-     * {@code 0x8080808080808080L} - a single non-zero result short-circuits to the slow path. C2
-     * auto-vectorizes the chunked loop on x86-64 ({@code vptest} / {@code vpmovmskb}) and on
-     * ARM64. This mirrors {@code simdnbt}'s {@code is_plain_ascii} SIMD probe
-     * ({@code simdnbt/src/mutf8.rs:24-78}) using only scalar JDK intrinsics - no incubator vector
-     * API dependency.</p>
-     *
-     * @throws UTFDataFormatException if the bytes are not a valid modified UTF-8 sequence
-     */
-    /**
      * Decodes the length-prefixed modified-UTF-8 string at {@code tagOffset} in {@code src}.
      *
      * <p>Reads the 2-byte big-endian length prefix at {@code tagOffset}, then decodes the
@@ -145,6 +121,31 @@ public final class NbtModifiedUtf8 {
         }
     }
 
+    /**
+     * Decodes {@code utfLen} bytes of modified UTF-8 starting at {@code offset} in {@code src}.
+     *
+     * <p>Leniently accepts a raw {@code 0x00} byte as {@code U+0000} even though strict modified
+     * UTF-8 forbids it - this way any payload produced by the previous standard-UTF-8
+     * implementation still round-trips cleanly.</p>
+     *
+     * <p>Fast path: for all-ASCII input (every byte in {@code [0x00..0x7F]}) this delegates to
+     * {@code new String(src, offset, utfLen, UTF_8)} which the JDK intrinsifies to a compact
+     * Latin-1 {@link String} with zero intermediate {@code char[]} allocation. ASCII bytes are
+     * identical under modified UTF-8 and standard UTF-8 (neither emits the forbidden {@code 0x00}
+     * byte normally), so the fast path is both correct and matches the baseline allocation
+     * profile byte-for-byte for the common case. The slow path - a manual modified UTF-8 decoder
+     * with a scratch {@code char[]} - only runs for inputs containing multi-byte sequences (BMP
+     * non-Latin characters, supplementary code points via surrogate pairs, or the
+     * modified-UTF-8-specific {@code C0 80} encoding of U+0000).</p>
+     *
+     * <p>The ASCII probe itself walks {@code src} 8 bytes at a time via
+     * {@link #isPlainAscii(byte[], int, int)}, ANDing each {@code long} chunk against
+     * {@code 0x8080808080808080L} - a single non-zero result short-circuits to the slow path. C2
+     * auto-vectorizes the chunked loop on x86-64 ({@code vptest} / {@code vpmovmskb}) and on
+     * ARM64. Scalar JDK intrinsics only - no incubator vector API dependency.</p>
+     *
+     * @throws UTFDataFormatException if the bytes are not a valid modified UTF-8 sequence
+     */
     public static @NotNull String decode(byte[] src, int offset, int utfLen) throws UTFDataFormatException {
         // 8-byte high-bit probe. Any high bit set means a multi-byte sequence and triggers the
         // slow path. 0x00 has high bit zero, so the probe accepts it - the existing fast-path
@@ -171,8 +172,8 @@ public final class NbtModifiedUtf8 {
      * symmetric across both byte orders, so we reuse {@link NbtByteCodec}'s big-endian VarHandle
      * directly.</p>
      *
-     * <p>Public so {@link lib.minecraft.nbt.tags.borrow.MutfStringView MutfStringView} (Phase C4 lazy
-     * decode) can share the same probe across package boundaries.</p>
+     * <p>Public so {@link MutfStringView} (the borrow-mode lazy decoder) can share the same probe
+     * across package boundaries.</p>
      *
      * @param src buffer to scan
      * @param offset start offset into {@code src}

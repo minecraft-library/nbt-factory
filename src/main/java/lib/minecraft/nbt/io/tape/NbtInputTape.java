@@ -1,8 +1,11 @@
 package lib.minecraft.nbt.io.tape;
 
+import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
+import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
+import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.io.util.NbtModifiedUtf8;
 import lib.minecraft.nbt.tags.CompoundTag;
@@ -18,17 +21,16 @@ import java.io.IOException;
 /**
  * {@link NbtInput} backend that builds a {@link Tape} directly from a binary NBT {@code byte[]}
  * without materializing intermediate {@link CompoundTag} instances. Sibling of
- * {@link lib.minecraft.nbt.io.buffer.NbtInputBuffer NbtInputBuffer} and
- * {@link lib.minecraft.nbt.io.stream.NbtInputStream NbtInputStream}: the same {@code readByte} /
+ * {@link NbtInputBuffer} and
+ * {@link NbtInputStream}: the same {@code readByte} /
  * {@code readUTF} / {@code readCompoundTag} surface, the same wire format, but the
  * {@link #readCompoundTag(int)} override yields a {@link BorrowedCompoundTag} backed by a freshly-
  * built tape instead of an owned-tree {@code CompoundTag}.
  *
- * <p>Mirrors {@code simdnbt::borrow::compound::read_with_depth_check}
- * ({@code simdnbt/src/borrow/compound.rs:278-356}). The parser walks the input buffer once and
- * pushes packed tape entries describing the depth-first iteration order of the tree. Open
- * containers are tracked on a fixed-capacity 512-frame stack so deeply nested adversarial input
- * throws {@link NbtMaxDepthException} rather than {@link StackOverflowError}.</p>
+ * <p>The parser walks the input buffer once and pushes packed tape entries describing the
+ * depth-first iteration order of the tree. Open containers are tracked on a fixed-capacity
+ * 512-frame stack so deeply nested adversarial input throws {@link NbtMaxDepthException} rather
+ * than {@link StackOverflowError}.</p>
  *
  * <p>Reads use {@link NbtByteCodec}'s {@code VarHandle}-driven big-endian primitives - no
  * {@code DataInputStream} layer, no per-byte syscalls. Pointer-kind tape elements record buffer
@@ -37,10 +39,10 @@ import java.io.IOException;
  * entries.</p>
  *
  * <p>The retained buffer in the produced {@link Tape} is the caller's input array, by reference -
- * callers must not mutate it. {@link lib.minecraft.nbt.NbtFactory#borrowFromByteArray
+ * callers must not mutate it. {@link NbtFactory#borrowFromByteArray
  * NbtFactory.borrowFromByteArray} owns the lifetime of the buffer.</p>
  */
-public class TapeInput implements NbtInput {
+public class NbtInputTape implements NbtInput {
 
     /**
      * Maximum nesting depth for open containers. Matches the 512 cap on every other deserializer
@@ -83,7 +85,7 @@ public class TapeInput implements NbtInput {
 
     private int sp;
 
-    public TapeInput(byte @NotNull [] input) {
+    public NbtInputTape(byte @NotNull [] input) {
         this.input = input;
         this.position = 0;
         this.tape = new long[Math.max(16, input.length * 2)];
@@ -116,7 +118,7 @@ public class TapeInput implements NbtInput {
         if (input.length < 3)
             throw new NbtFormatException("Buffer too short for an NBT root (need at least 3 bytes, got %d)", input.length);
 
-        TapeInput in = new TapeInput(input);
+        NbtInputTape in = new NbtInputTape(input);
         byte rootType = in.readByte();
 
         if (rootType != TagType.COMPOUND.getId())

@@ -1,6 +1,8 @@
 package lib.minecraft.nbt.tags;
 
 import lib.minecraft.nbt.tags.Tag;
+import lib.minecraft.nbt.tags.borrow.BorrowedByteArrayTag;
+import lib.minecraft.nbt.tags.borrow.RawList;
 import lib.minecraft.nbt.tags.TagType;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +50,7 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
 
     /**
      * Constructs a byte array tag whose backing array is supplied lazily on first access. Used
-     * by {@link lib.minecraft.nbt.tags.borrow.BorrowedByteArrayTag BorrowedByteArrayTag}.
+     * by {@link BorrowedByteArrayTag}.
      */
     public ByteArrayTag(@NotNull Supplier<byte[]> supplier) {
         super(supplier);
@@ -131,8 +133,8 @@ public class ByteArrayTag extends Tag<byte[]> implements Iterable<Byte> {
      * declares its own. Use this overload in preference to {@link #forEach(Consumer)} when the
      * action does not require a boxed {@link Byte}.</p>
      *
-     * <p>Borrow subclasses override this to walk the tape's {@link lib.minecraft.nbt.tags.borrow.RawList
-     * RawList} directly, skipping the full-payload materialize.</p>
+     * <p>Borrow subclasses override this to walk the tape's {@link RawList} directly, skipping
+     * the full-payload materialize.</p>
      *
      * @param action the action to perform on each byte
      */
