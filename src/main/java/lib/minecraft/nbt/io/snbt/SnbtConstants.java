@@ -1,6 +1,6 @@
 package lib.minecraft.nbt.io.snbt;
 
-import lombok.experimental.UtilityClass;
+import dev.simplified.annotations.UtilityClass;
 
 /**
  * Shared syntactic constants for SNBT parsing and emission.

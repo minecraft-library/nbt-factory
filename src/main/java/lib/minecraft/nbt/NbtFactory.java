@@ -1,5 +1,7 @@
 package lib.minecraft.nbt;
 
+import dev.simplified.annotations.Cleanup;
+import dev.simplified.annotations.UtilityClass;
 import dev.simplified.util.StringUtil;
 import dev.simplified.util.SystemUtil;
 import dev.simplified.util.compression.Compression;
@@ -17,8 +19,6 @@ import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.TagType;
 import lib.minecraft.nbt.tag.borrow.BorrowedCompoundTag;
 import lib.minecraft.nbt.tag.borrow.Tape;
-import lombok.Cleanup;
-import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +51,7 @@ public class NbtFactory {
      * @param encoded the NBT Base64 encoded string to decode
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromBase64(@NotNull String encoded) throws NbtException {
+    public static @NotNull CompoundTag fromBase64(@NotNull String encoded) throws NbtException {
         return fromByteArray(StringUtil.decodeBase64(encoded));
     }
 
@@ -61,7 +61,7 @@ public class NbtFactory {
      * @param bytes the {@code byte[]} array to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromByteArray(byte[] bytes) throws NbtException {
+    public static @NotNull CompoundTag fromByteArray(byte[] bytes) throws NbtException {
         try {
             // Compression.decompress dispatches GZIP through utils' GzipCompression fast path
             // (ISIZE-presized inflate) and falls through to the growable accumulator for ZLIB
@@ -126,7 +126,7 @@ public class NbtFactory {
      *     corruption, malformed binary NBT, or nesting deeper than the parser's 512-frame cap
      */
     @ApiStatus.Experimental
-    public @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
+    public static @NotNull CompoundTag borrowFromByteArray(byte @NotNull [] bytes) throws NbtException {
         try {
             byte[] decompressed = Compression.decompress(bytes);
             return NbtInputTape.parse(decompressed).root();
@@ -144,7 +144,7 @@ public class NbtFactory {
      * @param file the NBT file to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromFile(@NotNull File file) throws NbtException {
+    public static @NotNull CompoundTag fromFile(@NotNull File file) throws NbtException {
         try {
             @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
             return fromStream(fileInputStream);
@@ -164,7 +164,7 @@ public class NbtFactory {
      * @param file the JSON file to read from
      * @throws NbtException if any I/O or parse error occurs
      */
-    public @NotNull CompoundTag fromJson(@NotNull File file) throws NbtException {
+    public static @NotNull CompoundTag fromJson(@NotNull File file) throws NbtException {
         try {
             @Cleanup FileReader reader = new FileReader(file, StandardCharsets.UTF_8);
             @Cleanup NbtJsonDeserializer deserializer = new NbtJsonDeserializer(reader);
@@ -185,7 +185,7 @@ public class NbtFactory {
      * @param json the JSON string to read from
      * @throws NbtException if any I/O or parse error occurs
      */
-    public @NotNull CompoundTag fromJson(@NotNull String json) throws NbtException {
+    public static @NotNull CompoundTag fromJson(@NotNull String json) throws NbtException {
         try {
             @Cleanup NbtJsonDeserializer deserializer = new NbtJsonDeserializer(new StringReader(json));
             return deserializer.readCompoundTag(0);
@@ -200,7 +200,7 @@ public class NbtFactory {
      * @param file the SNBT file to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromSnbt(@NotNull File file) throws NbtException {
+    public static @NotNull CompoundTag fromSnbt(@NotNull File file) throws NbtException {
         try {
             String snbt = Files.readString(Paths.get(file.toURI()), StandardCharsets.UTF_8);
             return fromSnbt(snbt);
@@ -215,7 +215,7 @@ public class NbtFactory {
      * @param snbt the SNBT string to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromSnbt(@NotNull String snbt) throws NbtException {
+    public static @NotNull CompoundTag fromSnbt(@NotNull String snbt) throws NbtException {
         try {
             @Cleanup SnbtDeserializer snbtDeserializer = new SnbtDeserializer(snbt);
             return snbtDeserializer.readCompoundTag(0);
@@ -230,7 +230,7 @@ public class NbtFactory {
      * @param path the NBT resource path to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromResource(@NotNull String path) {
+    public static @NotNull CompoundTag fromResource(@NotNull String path) {
         try {
             @Cleanup InputStream inputStream = SystemUtil.getResource(path);
             return fromStream(inputStream);
@@ -250,7 +250,7 @@ public class NbtFactory {
      * @param inputStream the NBT input stream to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromStream(@NotNull InputStream inputStream) throws NbtException {
+    public static @NotNull CompoundTag fromStream(@NotNull InputStream inputStream) throws NbtException {
         // Close-shield the caller's stream so the cascading close() from NbtInputStream ->
         // Compression.wrap() -> ... stops at the boundary instead of closing the caller's
         // InputStream. Preserves the prior contract that callers own the lifetime of their stream.
@@ -279,7 +279,7 @@ public class NbtFactory {
      * @param url the NBT url to read from
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull CompoundTag fromUrl(@NotNull URL url) {
+    public static @NotNull CompoundTag fromUrl(@NotNull URL url) {
         try {
             @Cleanup InputStream inputStream = url.openStream();
             return fromStream(inputStream);
@@ -294,7 +294,7 @@ public class NbtFactory {
      * @param compound the NBT compound to write
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull String toBase64(@NotNull CompoundTag compound) throws NbtException {
+    public static @NotNull String toBase64(@NotNull CompoundTag compound) throws NbtException {
         return toBase64(compound, Compression.GZIP);
     }
 
@@ -305,7 +305,7 @@ public class NbtFactory {
      * @param compression compression to use on the file
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull String toBase64(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
+    public static @NotNull String toBase64(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
         return StringUtil.encodeBase64ToString(toByteArray(compound, compression));
     }
 
@@ -315,7 +315,7 @@ public class NbtFactory {
      * @param compound the NBT compound to write
      * @throws NbtException if any I/O error occurs
      */
-    public byte[] toByteArray(@NotNull CompoundTag compound) throws NbtException {
+    public static byte[] toByteArray(@NotNull CompoundTag compound) throws NbtException {
         return toByteArray(compound, Compression.NONE);
     }
 
@@ -326,7 +326,7 @@ public class NbtFactory {
      * @param compression compression to use on the file
      * @throws NbtException if any I/O error occurs
      */
-    public byte[] toByteArray(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
+    public static byte[] toByteArray(@NotNull CompoundTag compound, @NotNull Compression compression) throws NbtException {
         try {
             // Serialize into the growable buffer, then hand the raw backing array straight to
             // Compression.compress(data, offset, length, compression) - this skips the full-payload
@@ -350,7 +350,7 @@ public class NbtFactory {
      * @param file the file to write to
      * @throws NbtException if any I/O error occurs
      */
-    public void toFile(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
+    public static void toFile(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
         toFile(compound, file, Compression.GZIP);
     }
 
@@ -365,7 +365,7 @@ public class NbtFactory {
      * @param compression compression to use on the file
      * @throws NbtException if any I/O error occurs
      */
-    public void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
+    public static void toFile(@NotNull CompoundTag compound, @NotNull File file, @NotNull Compression compression) throws NbtException {
         try {
             @Cleanup FileOutputStream fileOutputStream = new FileOutputStream(file);
             toStream(compound, fileOutputStream, compression);
@@ -385,7 +385,7 @@ public class NbtFactory {
      * @param compound the NBT compound to write
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull String toJson(@NotNull CompoundTag compound) throws NbtException {
+    public static @NotNull String toJson(@NotNull CompoundTag compound) throws NbtException {
         try {
             StringWriter writer = new StringWriter();
             NbtJsonSerializer nbtJsonSerializer = new NbtJsonSerializer(writer);
@@ -408,7 +408,7 @@ public class NbtFactory {
      * @param file the file to write to
      * @throws NbtException if any I/O error occurs
      */
-    public void toJson(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
+    public static void toJson(@NotNull CompoundTag compound, @NotNull File file) throws NbtException {
         try {
             @Cleanup FileWriter writer = new FileWriter(file);
             NbtJsonSerializer nbtJsonSerializer = new NbtJsonSerializer(writer);
@@ -424,7 +424,7 @@ public class NbtFactory {
      * @param compound the NBT compound to write
      * @throws NbtException if any I/O error occurs
      */
-    public @NotNull String toSnbt(@NotNull CompoundTag compound) {
+    public static @NotNull String toSnbt(@NotNull CompoundTag compound) {
         try {
             StringWriter writer = new StringWriter();
             SnbtSerializer snbtSerializer = new SnbtSerializer(writer);
@@ -442,7 +442,7 @@ public class NbtFactory {
      * @param file the file to write to
      * @throws NbtException if any I/O error occurs
      */
-    public void toSnbt(@NotNull CompoundTag compound, @NotNull File file) {
+    public static void toSnbt(@NotNull CompoundTag compound, @NotNull File file) {
         try {
             @Cleanup FileWriter writer = new FileWriter(file);
             SnbtSerializer snbtSerializer = new SnbtSerializer(writer);
@@ -459,7 +459,7 @@ public class NbtFactory {
      * @param outputStream the stream to write to
      * @throws NbtException if any I/O error occurs
      */
-    public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream) throws NbtException {
+    public static void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream) throws NbtException {
         toStream(compound, outputStream, Compression.GZIP);
     }
 
@@ -484,7 +484,7 @@ public class NbtFactory {
      * @param compression compression to use on the stream
      * @throws NbtException if any I/O error occurs
      */
-    public void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream, @NotNull Compression compression) throws NbtException {
+    public static void toStream(@NotNull CompoundTag compound, @NotNull OutputStream outputStream, @NotNull Compression compression) throws NbtException {
         // Close-shield the caller's stream so the cascading close() from NbtOutputStream stops at
         // the boundary instead of closing the caller's OutputStream. Preserves the prior contract:
         // caller owns the lifetime of their stream. The shield still forwards flush() so the
