@@ -23,22 +23,19 @@ repositories {
 
 dependencies {
     // Simplified Annotations
+    compileOnly(libs.simplified.annotations)
     annotationProcessor(libs.simplified.annotations)
+    testCompileOnly(libs.simplified.annotations)
+    testAnnotationProcessor(libs.simplified.annotations)
 
     // JetBrains Annotations (@NotNull / @Nullable / @PrintFormat)
     api(libs.jetbrains.annotations)
-
-    // Lombok
-    compileOnly(libs.lombok)
-    annotationProcessor(libs.lombok)
-    testCompileOnly(libs.lombok)
-    testAnnotationProcessor(libs.lombok)
 
     // Gson - SNBT/JSON serializers + fixture generator
     api(libs.gson)
 
     // Simplified Libraries - Compression, StringUtil
-    api("com.github.simplified-dev:utils") { version { strictly("7c2feb7") } }
+    api("com.github.simplified-dev:utils") { version { strictly("821499b") } }
 
     // Tests
     testImplementation(libs.hamcrest)

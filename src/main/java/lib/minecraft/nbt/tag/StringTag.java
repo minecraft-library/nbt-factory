@@ -1,8 +1,8 @@
 package lib.minecraft.nbt.tag;
 
+import dev.simplified.annotations.Getter;
 import dev.simplified.util.StringUtil;
 import lib.minecraft.nbt.tag.borrow.BorrowedStringTag;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;

@@ -1,10 +1,10 @@
 package lib.minecraft.nbt.io.util;
 
+import dev.simplified.annotations.UtilityClass;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
 import lib.minecraft.nbt.tag.borrow.MutfStringView;
-import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;

@@ -1,10 +1,10 @@
 package lib.minecraft.nbt.io.util;
 
+import dev.simplified.annotations.UtilityClass;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
-import lombok.experimental.UtilityClass;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
