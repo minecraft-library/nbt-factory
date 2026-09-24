@@ -35,7 +35,7 @@ dependencies {
     api(libs.gson)
 
     // Simplified Libraries - Compression, StringUtil
-    api("com.github.simplified-dev:utils") { version { strictly("d675d06") } }
+    api("com.github.simplified-dev:utils") { version { strictly("92ae878") } }
 
     // Tests
     testImplementation(libs.hamcrest)
