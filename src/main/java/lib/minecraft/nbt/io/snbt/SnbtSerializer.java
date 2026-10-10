@@ -103,13 +103,13 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
     @Override
     public void writeByte(int value) throws IOException {
         this.writer.write(Integer.toString(value));
-        this.writer.write('b');
+        this.writer.write(SUFFIX_BYTE);
     }
 
     @Override
     public void writeShort(int value) throws IOException {
         this.writer.write(Integer.toString(value));
-        this.writer.write('s');
+        this.writer.write(SUFFIX_SHORT);
     }
 
     @Override
@@ -120,19 +120,19 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
     @Override
     public void writeLong(long value) throws IOException {
         this.writer.write(Long.toString(value));
-        this.writer.write('L');
+        this.writer.write(SUFFIX_LONG);
     }
 
     @Override
     public void writeFloat(float value) throws IOException {
         this.writer.write(Float.toString(value));
-        this.writer.write('f');
+        this.writer.write(SUFFIX_FLOAT);
     }
 
     @Override
     public void writeDouble(double value) throws IOException {
         this.writer.write(Double.toString(value));
-        this.writer.write('d');
+        this.writer.write(SUFFIX_DOUBLE);
     }
 
     @Override
@@ -150,7 +150,7 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
 
         for (int i = 0; i < value.length; i++) {
             if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(value[i]).append('B');
+            sb.append(value[i]).append(ARRAY_SUFFIX_BYTE);
         }
 
         this.writer.write(sb.append(ARRAY_END).toString());
@@ -166,7 +166,7 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
 
         for (int i = 0; i < value.length; i++) {
             if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(value[i]);
+            sb.append(value[i]).append(ARRAY_SUFFIX_INT);
         }
 
         this.writer.write(sb.append(ARRAY_END).toString());
@@ -182,7 +182,7 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
 
         for (int i = 0; i < value.length; i++) {
             if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(value[i]).append('L');
+            sb.append(value[i]).append(ARRAY_SUFFIX_LONG);
         }
 
         this.writer.write(sb.append(ARRAY_END).toString());
@@ -213,19 +213,20 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
 
         List<Map.Entry<String, Tag<?>>> entries = new ArrayList<>(tag.entrySet());
         entries.sort(Map.Entry.comparingByKey());
-        this.writer.write('{');
+        this.writer.write(COMPOUND_START);
 
         for (int i = 0; i < entries.size(); i++) {
             Map.Entry<String, Tag<?>> entry = entries.get(i);
             if (i > 0) this.writer.write(ENTRY_SEPARATOR);
             this.newline(depth);
             this.writer.write(key(entry.getKey()));
-            this.writer.write(this.pretty ? ": " : ":");
+            this.writer.write(ENTRY_VALUE_INDICATOR);
+            if (this.pretty) this.writer.write(' ');
             this.writeTag(entry.getValue(), depth);
         }
 
         if (!entries.isEmpty()) this.newline(depth - 1);
-        this.writer.write('}');
+        this.writer.write(COMPOUND_END);
     }
 
     @Override
@@ -277,28 +278,28 @@ public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
 
-            if (c == '\\')
-                builder.append("\\\\");
-            else if (c == '"' || c == '\'') {
+            if (c == STRING_ESCAPE)
+                builder.append(STRING_ESCAPE).append(STRING_ESCAPE);
+            else if (c == STRING_DELIMITER_1 || c == STRING_DELIMITER_2) {
                 if (quote == 0)
-                    quote = c == '"' ? '\'' : '"';
+                    quote = c == STRING_DELIMITER_1 ? STRING_DELIMITER_2 : STRING_DELIMITER_1;
 
                 if (quote == c)
-                    builder.append('\\');
+                    builder.append(STRING_ESCAPE);
 
                 builder.append(c);
             } else {
                 String escape = controlEscape(c);
 
                 if (escape != null)
-                    builder.append('\\').append(escape);
+                    builder.append(STRING_ESCAPE).append(escape);
                 else
                     builder.append(c);
             }
         }
 
         if (quote == 0)
-            quote = '"';
+            quote = STRING_DELIMITER_1;
 
         builder.setCharAt(0, quote);
         return builder.append(quote).toString();
