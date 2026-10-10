@@ -6,6 +6,7 @@ import lib.minecraft.nbt.tag.IntArrayTag;
 import lib.minecraft.nbt.tag.LongArrayTag;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.TagType;
 import lib.minecraft.nbt.tag.ByteTag;
 import lib.minecraft.nbt.tag.DoubleTag;
 import lib.minecraft.nbt.tag.FloatTag;
@@ -222,9 +223,9 @@ class BorrowedNavigatorTest {
     }
 
     @Test
-    @DisplayName("Empty list preserves wire elementId through borrow + materialize")
-    void emptyListPreservesElementId() {
-        // ListTag exposes a constructor that pre-seeds elementId for empty lists.
+    @DisplayName("Empty list reads back as END through borrow, as vanilla types an empty list")
+    void emptyListReadsAsEnd() {
+        // A list's type is read off its elements, so an empty one has none, as vanilla writes it.
         ListTag<ByteTag> emptyByteList = new ListTag<>(0);
         CompoundTag root = new CompoundTag();
         root.put("empty", emptyByteList);
@@ -232,12 +233,9 @@ class BorrowedNavigatorTest {
         BorrowedCompoundTag borrowed = Tape.encode(root).root();
         BorrowedListTag borrowedList = (BorrowedListTag) borrowed.get("empty");
         assertNotNull(borrowedList);
-        assertEquals((byte) 1, borrowedList.getListType());
+        assertEquals(TagType.END.getId(), borrowedList.getListType());
         assertEquals(0, borrowedList.size());
         assertTrue(borrowedList.isEmpty());
-
-        // The borrowed list IS-A ListTag - the wire elementId carries through directly.
-        assertEquals((byte) 1, borrowedList.getListType());
     }
 
     @Test
