@@ -2,6 +2,7 @@ package lib.minecraft.nbt.tag.borrow;
 
 import lib.minecraft.nbt.tag.ListTag;
 import lib.minecraft.nbt.tag.Tag;
+import lib.minecraft.nbt.tag.TagType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +20,10 @@ import java.util.function.Supplier;
  * tape on a per-index basis; the first mutation promotes the view to an {@link ArrayList} and
  * every subsequent operation forwards there.</p>
  *
- * <p>The packed list header carries the wire {@code elementId} (NBT tag id of the list's
- * elements) which is read directly from the header without forcing the supplier, so callers can
- * inspect {@link #getListType()} without paying for view allocation.</p>
+ * <p>The packed list header carries the {@code elementId} (NBT tag id of the list's elements as
+ * the list holds them, or {@link TapeElement#MIXED_LIST_ELEMENT_ID} when they differ) which is read
+ * directly from the header without forcing the supplier, so callers can inspect
+ * {@link #getListType()} and {@link #isMixed()} without paying for view allocation.</p>
  *
  * @see ListTag
  * @see TapeListView
@@ -37,7 +39,15 @@ public final class BorrowedListTag extends ListTag<Tag<?>> {
      * @param tapeIndex tape index of the {@link TapeKind#LIST_HEADER} entry
      */
     public BorrowedListTag(@NotNull Tape tape, int tapeIndex) {
-        super(TapeElement.unpackListElementId(tape.elementAt(tapeIndex)), viewSupplier(tape, tapeIndex));
+        this(TapeElement.unpackListElementId(tape.elementAt(tapeIndex)), tape, tapeIndex);
+    }
+
+    private BorrowedListTag(byte elementId, @NotNull Tape tape, int tapeIndex) {
+        super(
+            elementId == TapeElement.MIXED_LIST_ELEMENT_ID ? TagType.COMPOUND.getId() : elementId,
+            elementId == TapeElement.MIXED_LIST_ELEMENT_ID,
+            viewSupplier(tape, tapeIndex)
+        );
     }
 
     private static @NotNull Supplier<List<Tag<?>>> viewSupplier(@NotNull Tape tape, int tapeIndex) {

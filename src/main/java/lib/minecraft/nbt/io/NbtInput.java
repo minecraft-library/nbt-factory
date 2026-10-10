@@ -106,6 +106,10 @@ public interface NbtInput {
      * Reads an NBT {@code TAG_List} payload: element type byte, big-endian length, then that many
      * elements of the given type.
      *
+     * <p>A list whose elements differ in type is written under {@link TagType#COMPOUND} with each
+     * element wrapped in a compound under the empty key, so every element read is unwrapped through
+     * {@link ListTag#addAndUnwrap(Tag)}, as vanilla's reader unwraps it.</p>
+     *
      * <p>Binary NBT backends ({@code NbtInputBuffer}, {@code NbtInputStream}) share this
      * implementation. SNBT and any other text-based backend overrides with format-specific parsing.</p>
      *
@@ -122,11 +126,11 @@ public interface NbtInput {
 
             byte listType = this.readByte();
             int length = Math.max(0, this.readInt());
-            // Pre-seed elementId so ListTag.add skips the "first element" probe on every entry.
+            // Declaring the wire type keeps it on a list that reads empty.
             ListTag<Tag<?>> listTag = new ListTag<>(listType, length);
 
             for (int i = 0; i < length; i++)
-                listTag.add(this.readTag(listType, depth));
+                listTag.addAndUnwrap(this.readTag(listType, depth));
 
             return listTag;
         } catch (StackOverflowError soe) {

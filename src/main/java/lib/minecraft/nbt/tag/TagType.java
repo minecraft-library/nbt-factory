@@ -1,6 +1,8 @@
 package lib.minecraft.nbt.tag;
 
+import dev.simplified.annotations.EnumLookup;
 import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.KeyField;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -10,6 +12,7 @@ import java.util.Map;
  * Defines the 13 Minecraft NBT tag types.
  */
 @Getter
+@EnumLookup
 public enum TagType {
 
     /**
@@ -91,12 +94,7 @@ public enum TagType {
      */
     LONG_ARRAY(12, long[].class, LongArrayTag.class);
 
-    static final TagType[] VALUES;
-
-    static {
-        VALUES = values();
-    }
-
+    @KeyField
     private final byte id;
     private final @NotNull Class<?> javaClass;
     private final @NotNull Class<? extends Tag<?>> tagClass;

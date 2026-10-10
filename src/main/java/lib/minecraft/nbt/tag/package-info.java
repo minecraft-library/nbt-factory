@@ -16,7 +16,8 @@
  *       arrays. The array kinds expose a {@code forEachXxx} primitive consumer entry point so
  *       borrowed views can read direct from a retained buffer without boxing.</li>
  *   <li><b>Containers.</b> {@link CompoundTag} is an order-preserving map of name to {@link Tag};
- *       {@link ListTag} is a homogeneous list with a wire element id pinned at construction.
+ *       {@link ListTag} is an ordered list whose elements may differ in type, as a vanilla list's
+ *       may, and which reports the element id they share or that they are mixed.
  *       Both are mutable through the standard {@link Map} / {@link List} surfaces.</li>
  * </ul>
  *

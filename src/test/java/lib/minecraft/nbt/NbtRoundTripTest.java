@@ -1,26 +1,26 @@
 package lib.minecraft.nbt;
 
+import dev.simplified.util.compression.Compression;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.io.buffer.NbtInputBuffer;
 import lib.minecraft.nbt.io.buffer.NbtOutputBuffer;
 import lib.minecraft.nbt.io.json.NbtJsonDeserializer;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
-import lib.minecraft.nbt.tag.Tag;
-import lib.minecraft.nbt.tag.TagType;
 import lib.minecraft.nbt.tag.ByteArrayTag;
-import lib.minecraft.nbt.tag.IntArrayTag;
-import lib.minecraft.nbt.tag.LongArrayTag;
-import lib.minecraft.nbt.tag.CompoundTag;
-import lib.minecraft.nbt.tag.ListTag;
 import lib.minecraft.nbt.tag.ByteTag;
+import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.DoubleTag;
 import lib.minecraft.nbt.tag.FloatTag;
+import lib.minecraft.nbt.tag.IntArrayTag;
 import lib.minecraft.nbt.tag.IntTag;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.LongArrayTag;
 import lib.minecraft.nbt.tag.LongTag;
 import lib.minecraft.nbt.tag.ShortTag;
 import lib.minecraft.nbt.tag.StringTag;
-import dev.simplified.util.compression.Compression;
+import lib.minecraft.nbt.tag.Tag;
+import lib.minecraft.nbt.tag.TagType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -598,15 +598,26 @@ public class NbtRoundTripTest {
     }
 
     // ---------------------------------------------------------------------
-    // JSON serialization and deserialization (lossy cascade per the Minecraft Wiki)
+    // JSON serialization and deserialization (lossy, as vanilla converts JSON to NBT)
     // ---------------------------------------------------------------------
 
     /**
-     * Fixture curated so every value survives the wiki's "Conversion from JSON" cascade. Values
-     * are picked outside every narrower numeric range, floats use dyadic rationals that are exact
-     * in both {@code float} and {@code double}, and typed arrays keep their native form because
-     * the read side always promotes homogeneous byte/int/long arrays back to the matching array
-     * tag.
+     * Builds a list holding the given tags, mixed where their types differ.
+     *
+     * @param elements the tags
+     * @return the list
+     */
+    private static ListTag<Tag<?>> listOf(Tag<?>... elements) {
+        ListTag<Tag<?>> list = new ListTag<>();
+        for (Tag<?> element : elements) list.add(element);
+        return list;
+    }
+
+    /**
+     * Fixture curated so every value survives vanilla's JSON-to-NBT conversion. Values are picked
+     * outside every narrower numeric range, floats use dyadic rationals that are exact in both
+     * {@code float} and {@code double}, and every array is a list, because vanilla reads a JSON
+     * array as a list and never as an array tag.
      */
     private static CompoundTag jsonCascadeSafeFixture() {
         CompoundTag compound = new CompoundTag();
@@ -629,7 +640,7 @@ public class NbtRoundTripTest {
 
         // Float: dyadic rationals are exact in both float and double, so the read side keeps them
         // as floats (Float.parseFloat(text) == Double.parseDouble(text)). Whole-number floats are
-        // deliberately avoided because the wiki cascade evaluates them against the integer ranges
+        // deliberately avoided because the conversion evaluates them against the integer ranges
         // first and would narrow them to ByteTag / ShortTag / IntTag.
         compound.put("float_half", new FloatTag(0.5f));
         compound.put("float_neg_quarter", new FloatTag(-0.25f));
@@ -644,10 +655,13 @@ public class NbtRoundTripTest {
         compound.put("str_ascii", new StringTag("hello world"));
         compound.put("str_escapes", new StringTag("has \"quotes\" and \\backslash"));
 
-        // Typed arrays: homogeneous children are always promoted back to the matching array tag.
-        compound.put("byte_arr", new ByteArrayTag((byte) 1, (byte) -1, (byte) 127));
-        compound.put("int_arr", new IntArrayTag(100_000, 200_000, 300_000));
-        compound.put("long_arr", new LongArrayTag(5_000_000_000L, 6_000_000_000L));
+        // Lists of one numeric type: a JSON array reads back as a list, never as an array tag.
+        compound.put("byte_list", listOf(new ByteTag((byte) 1), new ByteTag((byte) -1), new ByteTag((byte) 127)));
+        compound.put("int_list", listOf(new IntTag(100_000), new IntTag(200_000), new IntTag(300_000)));
+        compound.put("long_list", listOf(new LongTag(5_000_000_000L), new LongTag(6_000_000_000L)));
+
+        // A list whose elements differ in type reads back as a mixed list.
+        compound.put("mixed_list", listOf(new ByteTag((byte) 1), new StringTag("a"), new IntTag(100_000)));
 
         // Empty list - becomes an empty ListTag with no fixed element type on read.
         compound.put("empty_list", new ListTag<>());
@@ -778,31 +792,27 @@ public class NbtRoundTripTest {
             assertThat(((StringTag) c.get("v")).getValue(), is("hi"));
         }
 
-        // ---------------- typed arrays and lists ----------------
+        // ---------------- lists ----------------
 
         @Test
-        void homogeneousBytes_asByteArrayTag() throws Exception {
+        void homogeneousBytes_asByteList() throws Exception {
+            // Vanilla's NbtOps builds a list for every JSON array, never a byte/int/long array tag.
             CompoundTag c = NbtFactory.fromJson("{\"v\":[1,2,3]}");
-            assertThat(c.get("v"), instanceOf(ByteArrayTag.class));
-            assertThat(((ByteArrayTag) c.get("v")).getValue(), is(new byte[]{1, 2, 3}));
+            assertThat(c.get("v"), is(listOf(new ByteTag((byte) 1), new ByteTag((byte) 2), new ByteTag((byte) 3))));
         }
 
         @Test
-        void homogeneousInts_asIntArrayTag() throws Exception {
-            // All elements must be outside short range [-32768, 32767] so every one of them
-            // resolves to an IntTag. A small value like 1 would narrow to ByteTag and make the
-            // array heterogeneous.
+        void homogeneousInts_asIntList() throws Exception {
+            // Every element is outside short range [-32768, 32767], so each one resolves to an IntTag.
             CompoundTag c = NbtFactory.fromJson("{\"v\":[40000,50000,60000]}");
-            assertThat(c.get("v"), instanceOf(IntArrayTag.class));
-            assertThat(((IntArrayTag) c.get("v")).getValue(), is(new int[]{40000, 50000, 60000}));
+            assertThat(c.get("v"), is(listOf(new IntTag(40000), new IntTag(50000), new IntTag(60000))));
         }
 
         @Test
-        void homogeneousLongs_asLongArrayTag() throws Exception {
-            // All elements must be outside int range so every one of them resolves to a LongTag.
+        void homogeneousLongs_asLongList() throws Exception {
+            // Every element is outside int range, so each one resolves to a LongTag.
             CompoundTag c = NbtFactory.fromJson("{\"v\":[3000000000,4000000000,5000000000]}");
-            assertThat(c.get("v"), instanceOf(LongArrayTag.class));
-            assertThat(((LongArrayTag) c.get("v")).getValue(), is(new long[]{3_000_000_000L, 4_000_000_000L, 5_000_000_000L}));
+            assertThat(c.get("v"), is(listOf(new LongTag(3_000_000_000L), new LongTag(4_000_000_000L), new LongTag(5_000_000_000L))));
         }
 
         @Test
@@ -822,13 +832,15 @@ public class NbtRoundTripTest {
             assertThat((ListTag<?>) c.get("v"), hasSize(0));
         }
 
-        // ---------------- errors ----------------
-
         @Test
-        void heterogeneousArray_throws() {
-            // 1 would be ByteTag, 40000 would be IntTag - mixed types.
-            assertThrows(NbtException.class, () -> NbtFactory.fromJson("{\"v\":[1,40000]}"));
+        void heterogeneousArray_asMixedList() throws Exception {
+            // 1 resolves to a ByteTag and 40000 to an IntTag, so the list holds mixed types.
+            CompoundTag c = NbtFactory.fromJson("{\"v\":[1,40000]}");
+            assertThat(((ListTag<?>) c.get("v")).isMixed(), is(true));
+            assertThat(c.get("v"), is(listOf(new ByteTag((byte) 1), new IntTag(40000))));
         }
+
+        // ---------------- errors ----------------
 
         @Test
         void jsonNull_throws() {

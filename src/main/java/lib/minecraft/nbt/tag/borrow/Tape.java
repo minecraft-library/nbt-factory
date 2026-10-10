@@ -1,5 +1,7 @@
 package lib.minecraft.nbt.tag.borrow;
 
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtFormatException;
@@ -33,8 +35,15 @@ import java.io.IOException;
  *
  * <p>All container traversal helpers run in {@code O(n)} where {@code n} is the number of tape
  * entries, never the buffer length.</p>
+ *
+ * <p>The constructor is public so the {@link NbtInputTape} builder, in the {@code io.tape} package,
+ * can hand off its accumulated {@code long[]} without a copy. It re-validates none of the tape's
+ * invariants - kind ordering, matched headers, valid offsets - so a caller is responsible for a
+ * well-formed tape, typically by routing through {@link #encode(CompoundTag)} or
+ * {@link NbtInputTape#parse(byte[])}.</p>
  */
 @ApiStatus.Experimental
+@RequiredArgsConstructor
 public final class Tape {
 
     /**
@@ -58,26 +67,6 @@ public final class Tape {
      * reference; {@link #encode(CompoundTag)} retains its own serializer output.
      */
     final byte @NotNull [] buffer;
-
-    /**
-     * Constructs a tape from already-packed elements + the retained buffer.
-     *
-     * <p>Public so that the {@link NbtInputTape} builder (which
-     * lives in the {@code io.tape} package) can hand off its accumulated {@code long[]} without
-     * a copy. The tape's invariants (kind ordering, matched headers, valid offsets) are not
-     * re-validated here - callers are responsible for producing a well-formed tape, typically
-     * by routing through {@link #encode(CompoundTag)} or
-     * {@link NbtInputTape#parse(byte[])}.</p>
-     *
-     * @param elements packed tape entries
-     * @param size number of valid entries in {@code elements}
-     * @param buffer retained byte buffer pointer-kind elements address
-     */
-    public Tape(long @NotNull [] elements, int size, byte @NotNull [] buffer) {
-        this.elements = elements;
-        this.size = size;
-        this.buffer = buffer;
-    }
 
     /**
      * Number of populated tape entries.
@@ -275,9 +264,9 @@ public final class Tape {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static @NotNull ListTag readList(@NotNull MaterializeContext ctx, byte elementId, int approxLen) {
         // ListTag(elementId, capacity) pre-seeds the element-type so an empty list still carries
-        // the wire-derived elementId after materialize - matches NbtInput.readContainerIterative,
-        // which uses the same constructor on the same elementId byte.
-        ListTag list = new ListTag(elementId, approxLen);
+        // the wire-derived elementId after materialize - matches NbtInput.readListTag, which uses
+        // the same constructor on the same elementId byte. A mixed list is typed by its elements.
+        ListTag list = new ListTag(elementId == TapeElement.MIXED_LIST_ELEMENT_ID ? 0 : elementId, approxLen);
 
         while (true) {
             long element = ctx.elements[ctx.tapeIndex];
@@ -288,20 +277,16 @@ public final class Tape {
                 return list;
             }
 
-            list.add(readValue(ctx));
+            list.addAndUnwrap(readValue(ctx));
         }
     }
 
+    @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
     private static final class MaterializeContext {
 
         final long @NotNull [] elements;
         final byte @NotNull [] buffer;
         int tapeIndex;
-
-        MaterializeContext(long @NotNull [] elements, byte @NotNull [] buffer) {
-            this.elements = elements;
-            this.buffer = buffer;
-        }
 
     }
 
@@ -419,6 +404,26 @@ public final class Tape {
             default -> throw new NbtTypeException(
                 "Cannot construct borrowed tag from kind %s at tape index %d", kind, valueIndex);
         };
+    }
+
+    /**
+     * Returns the navigator for one element of a list - the value a wrapper compound wraps when the
+     * element is one, as {@link ListTag#unwrap(Tag)} unwraps it, and the element itself otherwise.
+     *
+     * @param valueIndex tape index of the list element
+     * @return a navigator over the element the list holds
+     */
+    @NotNull Tag<?> listElementAt(int valueIndex) {
+        long element = this.elements[valueIndex];
+
+        if (TapeElement.unpackKind(element) == TapeKind.COMPOUND_HEADER && TapeElement.unpackApproxLen(element) == 1) {
+            int keyOffset = (int) TapeElement.unpackValue(this.elements[valueIndex + 1]);
+
+            if (NbtByteCodec.getUnsignedShort(this.buffer, keyOffset) == 0)
+                return this.tagAt(valueIndex + 2);
+        }
+
+        return this.tagAt(valueIndex);
     }
 
     /**

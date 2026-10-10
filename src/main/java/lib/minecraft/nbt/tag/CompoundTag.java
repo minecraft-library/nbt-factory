@@ -99,7 +99,7 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
     public boolean containsListOf(@NotNull String key, byte of) {
         // Single map lookup folds the prior containsType + getListTag pair into one probe.
         Tag<?> tag = this.getValue().get(key);
-        return tag instanceof ListTag<?> listTag && listTag.getListType() == of;
+        return tag instanceof ListTag<?> listTag && !listTag.isMixed() && listTag.getListType() == of;
     }
 
     public boolean containsType(@NotNull String key, @NotNull TagType tagType) {

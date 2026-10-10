@@ -1,5 +1,7 @@
 package lib.minecraft.nbt.tag.borrow;
 
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.AllArgsConstructor;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.exception.NbtTypeException;
@@ -317,6 +319,7 @@ public final class RawList {
      * sub-spliterators access disjoint byte ranges so parallel reduction is safe without
      * synchronization.</p>
      */
+    @AllArgsConstructor(access = AccessLevel.PACKAGE)
     private static final class LongArraySpliterator implements Spliterator.OfLong {
 
         // NONNULL is intentionally omitted - it has no meaning for primitive long spliterators
@@ -331,12 +334,6 @@ public final class RawList {
         private int position;
 
         private final int end;
-
-        LongArraySpliterator(byte @NotNull [] buffer, int position, int end) {
-            this.buffer = buffer;
-            this.position = position;
-            this.end = end;
-        }
 
         @Override
         public boolean tryAdvance(@NotNull LongConsumer action) {

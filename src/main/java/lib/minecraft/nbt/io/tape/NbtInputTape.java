@@ -81,6 +81,19 @@ public class NbtInputTape implements NbtInput {
 
     private final byte @NotNull [] openFrameListElementId;
 
+    /**
+     * Per compound frame, the type id of its first entry when that entry's key is empty, else
+     * {@code 0} - with an entry count of one, the frame is a wrapper around a value of that type.
+     */
+    private final byte @NotNull [] openFrameWrappedId;
+
+    /**
+     * Per list frame, the type id its compound elements unwrap to so far - {@code 0} before the
+     * first, {@link TapeElement#MIXED_LIST_ELEMENT_ID} once two differ. Only compound elements fold
+     * into it, so it stays {@code 0} for every list but a compound one.
+     */
+    private final byte @NotNull [] openFrameListUnwrappedId;
+
     private int sp;
 
     public NbtInputTape(byte @NotNull [] input) {
@@ -92,6 +105,8 @@ public class NbtInputTape implements NbtInput {
         this.openFrameRemaining = new int[MAX_DEPTH];
         this.openFrameCompoundEntries = new int[MAX_DEPTH];
         this.openFrameListElementId = new byte[MAX_DEPTH];
+        this.openFrameWrappedId = new byte[MAX_DEPTH];
+        this.openFrameListUnwrappedId = new byte[MAX_DEPTH];
         this.sp = -1;
     }
 
@@ -295,7 +310,9 @@ public class NbtInputTape implements NbtInput {
         this.advance(keyLen);
 
         this.appendTape(TapeElement.pack(TapeKind.KEY_PTR, keyOffset));
-        this.openFrameCompoundEntries[this.sp]++;
+
+        if (this.openFrameCompoundEntries[this.sp]++ == 0)
+            this.openFrameWrappedId[this.sp] = keyLen == 0 ? typeId : 0;
 
         this.dispatchValue(typeId);
     }
@@ -393,21 +410,33 @@ public class NbtInputTape implements NbtInput {
         this.openFrameRemaining[newSp] = remaining;
         this.openFrameCompoundEntries[newSp] = 0;
         this.openFrameListElementId[newSp] = elementId;
+        this.openFrameWrappedId[newSp] = 0;
+        this.openFrameListUnwrappedId[newSp] = 0;
     }
 
     private void closeCompoundFrame() {
         int headerIdx = this.openFrameTapeIndex[this.sp];
         int entries = this.openFrameCompoundEntries[this.sp];
+        byte wrappedId = entries == 1 ? this.openFrameWrappedId[this.sp] : 0;
         this.sp--;
 
         int endIdx = this.appendTape(TapeElement.pack(TapeKind.COMPOUND_END, headerIdx));
         this.checkEndOffsetFits(endIdx);
         this.tape[headerIdx] = TapeElement.packCompoundHeader(entries, endIdx);
+
+        // A compound list element is one the borrowed list unwraps when it is a wrapper, so the list
+        // header has to carry the type its elements unwrap to rather than the wire's compound type.
+        if (this.sp >= 0 && this.openFrameRemaining[this.sp] != COMPOUND_FRAME) {
+            byte unwrappedId = wrappedId != 0 ? wrappedId : TagType.COMPOUND.getId();
+            byte current = this.openFrameListUnwrappedId[this.sp];
+            this.openFrameListUnwrappedId[this.sp] = current == 0 || current == unwrappedId ? unwrappedId : TapeElement.MIXED_LIST_ELEMENT_ID;
+        }
     }
 
     private void closeListFrame() {
         int headerIdx = this.openFrameTapeIndex[this.sp];
-        byte elementId = TapeElement.unpackListElementId(this.tape[headerIdx]);
+        byte unwrappedId = this.openFrameListUnwrappedId[this.sp];
+        byte elementId = unwrappedId != 0 ? unwrappedId : TapeElement.unpackListElementId(this.tape[headerIdx]);
         int approxLen = TapeElement.unpackApproxLen(this.tape[headerIdx]);
         this.sp--;
 

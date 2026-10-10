@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.tag.borrow;
 
+import dev.simplified.annotations.EnumLookup;
 import lib.minecraft.nbt.io.tape.NbtInputTape;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 import lib.minecraft.nbt.tag.CompoundTag;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus;
  * ({@link Tape#encode(CompoundTag) Tape.encode}) and the streaming parser ({@link NbtInputTape})
  * produce identical tape shapes for the same input.</p>
  */
+@EnumLookup
 @ApiStatus.Experimental
 public enum TapeKind {
 
@@ -101,9 +103,9 @@ public enum TapeKind {
      *
      * <p>Encoded via {@link TapeElement#packListHeader(byte, int, int)}; unpack via
      * {@link TapeElement#unpackApproxLen(long)} and {@link TapeElement#unpackEndOffset(long)}. The
-     * 8-bit slot above {@code approxLen} carries the wire element-id (see
-     * {@link TapeElement#unpackListElementId(long)}) so empty lists round-trip with the same
-     * elementId as the production parser preserves.</p>
+     * 8-bit slot above {@code approxLen} carries the element-id of the list as it holds its
+     * elements (see {@link TapeElement#unpackListElementId(long)}) so empty lists round-trip with
+     * the same elementId as the production parser preserves.</p>
      */
     LIST_HEADER,
 

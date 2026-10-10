@@ -17,8 +17,21 @@ import java.util.function.Supplier;
 
 /**
  * {@link TagType#LIST} (ID 9) is used for storing an ordered list of {@link Tag Tags}.
+ *
+ * <p>The elements may differ in type, as a vanilla list's may. A list whose elements share one type
+ * reports it through {@link #getListType()}; a mixed list reports {@link TagType#COMPOUND}, the type
+ * the binary form writes it under, each element then travelling wrapped in a compound under the
+ * empty key - see {@link #isWrapper(CompoundTag)}.</p>
+ *
+ * <p>Two lists are equal when they hold equal elements in the same order, whatever type an empty one
+ * was declared with.</p>
  */
 public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, Comparable<ListTag<E>> {
+
+    /**
+     * {@link #elementId} of a list whose elements differ in type - no tag id is negative.
+     */
+    private static final byte MIXED = -1;
 
     private byte elementId;
 
@@ -39,15 +52,14 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     }
 
     /**
-     * Constructs an empty, unnamed list tag pre-sized to {@code initialCapacity} with its element
-     * type fixed to {@code elementId} before the first {@link #add} call.
+     * Constructs an empty, unnamed list tag pre-sized to {@code initialCapacity} and declared with
+     * the element type {@code elementId}.
      *
-     * <p>Used by the NBT deserialization hot path, where the element type is already known from
-     * the list-type byte in the wire format. Pre-seeding lets {@code add} skip the {@code isEmpty}
-     * probe on every subsequent element - one fewer method call per list entry during bulk
-     * deserialization.</p>
+     * <p>Used by the binary read path, where the element type is known from the list-type byte in
+     * the wire format, so an empty list keeps the type it was written with. The first element added
+     * to the empty list sets its type whatever it was declared with.</p>
      *
-     * @param elementId the NBT tag id all future entries must carry
+     * @param elementId the NBT tag id the list is declared with
      * @param initialCapacity initial capacity for the backing list
      */
     public ListTag(byte elementId, int initialCapacity) {
@@ -56,12 +68,13 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     }
 
     /**
-     * Constructs a list tag with a given name and {@code List<>} value.
+     * Constructs a list tag with a given {@code List<>} value, typed by the elements it holds.
      *
      * @param value the tag's {@code List<>} value
      */
     public ListTag(@NotNull List<E> value) {
         super(value);
+        this.retype();
     }
 
     /**
@@ -69,12 +82,77 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      * element type pre-seeded so callers can read {@link #getListType()} before the supplier
      * fires. Used by {@link BorrowedListTag}.
      *
-     * @param elementId the NBT tag id every element of this list must carry
+     * @param elementId the NBT tag id every element of this list carries
      * @param supplier supplier invoked on first {@code getValue()}
      */
     public ListTag(byte elementId, @NotNull Supplier<List<E>> supplier) {
+        this(elementId, false, supplier);
+    }
+
+    /**
+     * Constructs a list tag whose backing list is supplied lazily on first access, with the element
+     * type - or the knowledge that the elements differ in type - pre-seeded so callers can read
+     * {@link #getListType()} and {@link #isMixed()} before the supplier fires.
+     *
+     * @param elementId the NBT tag id every element of this list carries, ignored when {@code mixed}
+     * @param mixed whether the elements differ in type
+     * @param supplier supplier invoked on first {@code getValue()}
+     */
+    protected ListTag(byte elementId, boolean mixed, @NotNull Supplier<List<E>> supplier) {
         super(supplier);
-        this.elementId = elementId;
+        this.elementId = mixed ? MIXED : elementId;
+    }
+
+    /**
+     * Returns whether a compound is the wrapper the binary form writes one element of a mixed list
+     * in - exactly one entry, under the empty key.
+     *
+     * @param compound the compound to test
+     * @return whether the compound wraps one list element
+     */
+    public static boolean isWrapper(@NotNull CompoundTag compound) {
+        return compound.size() == 1 && compound.containsKey("");
+    }
+
+    /**
+     * Returns the element a list holds for one read from the binary form - the tag a wrapper
+     * compound wraps, and any other tag as it is.
+     *
+     * @param element the element as read
+     * @return the element the list holds
+     */
+    public static @NotNull Tag<?> unwrap(@NotNull Tag<?> element) {
+        if (element instanceof CompoundTag compound && compound.size() == 1) {
+            Tag<?> wrapped = compound.get("");
+
+            if (wrapped != null)
+                return wrapped;
+        }
+
+        return element;
+    }
+
+    /**
+     * Returns the tag the binary form writes for one element of a list written under the given type.
+     *
+     * <p>Under {@link TagType#COMPOUND} every element travels as a compound, so any other element is
+     * wrapped under the empty key, and so is a compound that is itself shaped like a wrapper, which
+     * reading would otherwise take for one. Under any other type the element is written as it is.</p>
+     *
+     * @param listType the type the list is written under
+     * @param element the element
+     * @return the tag to write
+     */
+    public static @NotNull Tag<?> wrapIfNeeded(byte listType, @NotNull Tag<?> element) {
+        if (listType != TagType.COMPOUND.getId())
+            return element;
+
+        if (element instanceof CompoundTag compound && !isWrapper(compound))
+            return compound;
+
+        CompoundTag wrapper = new CompoundTag(1);
+        wrapper.put("", element);
+        return wrapper;
     }
 
     @Override
@@ -85,27 +163,20 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     @Override
     @SuppressWarnings("all")
     public final @NotNull ListTag<E> clone() {
-        return new ListTag<>(new ArrayList<>(this.getValue()));
+        ListTag<E> copy = new ListTag<>(new ArrayList<>(this.getValue()));
+        copy.elementId = this.elementId;
+        return copy;
     }
 
     /**
-     * Appends the specified element to the end of the list. Returns true if added successfully.
+     * Appends the specified element to the end of the list.
      *
      * @param element the element to be added
-     * @return true if added successfully
+     * @return true, as the list always takes the element
      */
     @Override
     public boolean add(@NotNull E element) {
-        byte id = element.getId();
-
-        // elementId == 0 (END) is used as the sentinel for "list has no fixed type yet". END is
-        // never a valid list element type, so this is unambiguous. Skipping the isEmpty() probe
-        // eliminates one ArrayList method call per add during bulk deserialization.
-        if (this.elementId == 0)
-            this.elementId = id;
-        else if (id != this.elementId)
-            return false;
-
+        this.admit(element.getId());
         return this.getValue().add(element);
     }
 
@@ -118,14 +189,19 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      */
     @Override
     public void add(int index, E element) {
-        byte id = element.getId();
-
-        if (this.elementId == 0)
-            this.elementId = id;
-        else if (id != this.elementId)
-            return;
-
+        this.admit(element.getId());
         this.getValue().add(index, element);
+    }
+
+    /**
+     * Appends an element read from the binary form, unwrapping the compound a mixed list's element
+     * travels in - see {@link #unwrap(Tag)}.
+     *
+     * @param element the element as read
+     */
+    @SuppressWarnings("unchecked")
+    public void addAndUnwrap(@NotNull Tag<?> element) {
+        this.add((E) unwrap(element));
     }
 
     @Override
@@ -205,12 +281,11 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     @Override
     public boolean equals(Object o) {
         // Loosened to instanceof ListTag so a materialized list and a BorrowedListTag holding the
-        // same elements compare equal across backends. Size + element-id short-circuit beats the
-        // per-element List.equals walk on every mismatched pair.
+        // same elements compare equal across backends. The declared type of an empty list takes no
+        // part, as it takes none in vanilla's equality.
         if (this == o) return true;
         if (!(o instanceof ListTag<?> listTag)) return false;
 
-        if (this.getListType() != listTag.getListType()) return false;
         if (this.size() != listTag.size()) return false;
         return this.getValue().equals(listTag.getValue());
     }
@@ -233,15 +308,17 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     }
 
     /**
-     * Gets the NBT tag id of the list elements.
+     * Gets the NBT tag id of the list elements - the id every element carries, the id an empty list
+     * was declared with ({@link TagType#END} when none), and {@link TagType#COMPOUND} for a mixed
+     * list, the id the binary form writes one under.
      */
     public byte getListType() {
-        return this.elementId;
+        return this.elementId == MIXED ? TagType.COMPOUND.getId() : this.elementId;
     }
 
     @Override
     public int hashCode() {
-        return 31 * this.getValue().hashCode() + this.getListType();
+        return this.getValue().hashCode();
     }
 
     @Override
@@ -266,6 +343,13 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     @Override
     public boolean isEmpty() {
         return this.getValue().isEmpty();
+    }
+
+    /**
+     * Gets whether the elements of this list differ in type.
+     */
+    public boolean isMixed() {
+        return this.elementId == MIXED;
     }
 
     @Override
@@ -307,10 +391,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
     @Override
     public @NotNull E remove(int index) {
         E previous = this.getValue().remove(index);
-
-        if (this.isEmpty())
-            this.elementId = 0;
-
+        this.afterRemoval();
         return previous;
     }
 
@@ -322,12 +403,7 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
      */
     @Override
     public boolean remove(Object obj) {
-        boolean result = this.removeIf(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj));
-
-        if (this.isEmpty())
-            this.elementId = 0;
-
-        return result;
+        return this.removeIf(tag -> Objects.equals((obj instanceof Tag<?>) ? tag : tag.getValue(), obj));
     }
 
     @Override
@@ -339,7 +415,12 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public boolean removeIf(@NotNull Predicate<? super E> filter) {
-        return this.getValue().removeIf(filter);
+        boolean removed = this.getValue().removeIf(filter);
+
+        if (removed)
+            this.afterRemoval();
+
+        return removed;
     }
 
     @Override
@@ -351,7 +432,12 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
 
     @Override
     public E set(int index, @NotNull E element) {
-        return this.getValue().set(index, element);
+        E previous = this.getValue().set(index, element);
+
+        if (element.getId() != this.elementId)
+            this.retype();
+
+        return previous;
     }
 
     /**
@@ -387,6 +473,48 @@ public class ListTag<E extends Tag<?>> extends Tag<List<E>> implements List<E>, 
         StringBuilder builder = new StringBuilder();
         this.appendTo(builder, 0);
         return builder.toString();
+    }
+
+    /**
+     * Records that an element of the given type is about to join the list: the first element of an
+     * empty list sets the list's type, and an element of another type makes the list mixed.
+     *
+     * @param id the tag id of the joining element
+     */
+    private void admit(byte id) {
+        if (id != this.elementId)
+            this.elementId = this.elementId == 0 || this.getValue().isEmpty() ? id : MIXED;
+    }
+
+    /**
+     * Restores the list's type after elements left it - none once it is empty, and recomputed for a
+     * mixed list, which the removal may have left holding one type.
+     */
+    private void afterRemoval() {
+        if (this.isEmpty())
+            this.elementId = 0;
+        else if (this.elementId == MIXED)
+            this.retype();
+    }
+
+    /**
+     * Recomputes the list's type from the elements it holds.
+     */
+    private void retype() {
+        byte id = 0;
+
+        for (E element : this.getValue()) {
+            byte next = element.getId();
+
+            if (id == 0)
+                id = next;
+            else if (next != id) {
+                this.elementId = MIXED;
+                return;
+            }
+        }
+
+        this.elementId = id;
     }
 
     /**

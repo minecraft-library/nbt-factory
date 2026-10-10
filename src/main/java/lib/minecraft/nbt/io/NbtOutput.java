@@ -24,7 +24,9 @@ import java.util.Map;
  *       concrete tag types - no intermediate {@code writeXxxTag} wrapper hop, no
  *       {@code Tag.getValue()} chain through wrapper boxes for the primitive cases.</li>
  *   <li>{@link #writeListTag(ListTag, int)} emits: 1-byte element type, 4-byte big-endian
- *       length, then {@code length} elements back through {@code writeTag}.</li>
+ *       length, then {@code length} elements back through {@code writeTag} - a list whose
+ *       elements differ in type under {@link TagType#COMPOUND}, each element wrapped as
+ *       {@link ListTag#wrapIfNeeded(byte, Tag)} wraps it.</li>
  *   <li>{@link #writeCompoundTag(CompoundTag, int)} emits each entry as
  *       {@code (1-byte type, modified-UTF-8 name, value)} followed by a terminating
  *       {@code TAG_End} (id 0).</li>
@@ -104,6 +106,10 @@ public interface NbtOutput {
      * Writes an NBT {@code TAG_List} payload: element type byte, big-endian length, then each
      * element through {@link #writeTag(Tag, int)}.
      *
+     * <p>The type byte is {@link ListTag#getListType()}, which is {@link TagType#COMPOUND} for a list
+     * whose elements differ in type; under that type each element goes through
+     * {@link ListTag#wrapIfNeeded(byte, Tag)}, as vanilla's writer wraps it.</p>
+     *
      * <p>Binary NBT backends ({@code NbtOutputBuffer}, {@code NbtOutputStream}) share this
      * implementation. SNBT and other text-based backends override with format-specific output.</p>
      */
@@ -111,11 +117,12 @@ public interface NbtOutput {
         if (++depth >= 512)
             throw new NbtMaxDepthException();
 
-        this.writeByte(tag.getListType());
+        byte listType = tag.getListType();
+        this.writeByte(listType);
         this.writeInt(tag.size());
 
         for (Tag<?> element : tag)
-            this.writeTag(element, depth);
+            this.writeTag(ListTag.wrapIfNeeded(listType, element), depth);
     }
 
     default void writeCompoundTag(@NotNull CompoundTag tag) throws IOException {

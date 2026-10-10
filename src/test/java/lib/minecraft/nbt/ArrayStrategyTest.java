@@ -6,11 +6,14 @@ import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -21,11 +24,20 @@ import static org.hamcrest.Matchers.is;
  * byte-identical output. Every payload written with one strategy must read back unchanged through
  * either strategy, and the on-wire bytes must match the existing single-buffer implementation.
  *
- * <p>Phase F of the optimization plan picks the JMH winner as the default; this test ensures the
- * loser stays correct so future callers can opt back in.</p>
+ * <p>One strategy of each pair is the default; this test keeps the other correct so a caller can
+ * opt back in.</p>
  */
 @DisplayName("Stream array read/write strategies - bit-identical contract")
 class ArrayStrategyTest {
+
+    /**
+     * Pairs every write strategy with every read strategy.
+     *
+     * @return each pair, write strategy first
+     */
+    static Stream<Arguments> strategyPairs() {
+        return ArrayWriteStrategy.stream().flatMap(write -> ArrayReadStrategy.stream().map(read -> Arguments.of(write, read)));
+    }
 
     /**
      * Sizes covering the small/medium/large/edge spectrum: empty, single, sub-chunk, on-cap,
@@ -39,19 +51,15 @@ class ArrayStrategyTest {
     // int[] round-trip
     // ---------------------------------------------------------------------
 
-    @ParameterizedTest(name = "intArray write={0}")
-    @EnumSource(ArrayWriteStrategy.class)
+    @ParameterizedTest(name = "intArray write={0} read={1}")
+    @MethodSource("strategyPairs")
     @DisplayName("int[] write strategy produces bytes readable by both read strategies")
-    void intArray_writeStrategy_matchesAllReadStrategies(ArrayWriteStrategy writeStrategy) throws Exception {
+    void intArray_writeStrategy_matchesAllReadStrategies(ArrayWriteStrategy writeStrategy, ArrayReadStrategy readStrategy) throws Exception {
         for (int size : SIZES) {
             int[] expected = buildIntArray(size);
-            byte[] payload = writeIntArray(expected, writeStrategy);
-
-            for (ArrayReadStrategy readStrategy : ArrayReadStrategy.values()) {
-                int[] actual = readIntArray(payload, readStrategy);
-                assertThat("write=" + writeStrategy + " read=" + readStrategy + " size=" + size,
-                    actual, is(equalTo(expected)));
-            }
+            int[] actual = readIntArray(writeIntArray(expected, writeStrategy), readStrategy);
+            assertThat("write=" + writeStrategy + " read=" + readStrategy + " size=" + size,
+                actual, is(equalTo(expected)));
         }
     }
 
@@ -79,19 +87,15 @@ class ArrayStrategyTest {
     // long[] round-trip
     // ---------------------------------------------------------------------
 
-    @ParameterizedTest(name = "longArray write={0}")
-    @EnumSource(ArrayWriteStrategy.class)
+    @ParameterizedTest(name = "longArray write={0} read={1}")
+    @MethodSource("strategyPairs")
     @DisplayName("long[] write strategy produces bytes readable by both read strategies")
-    void longArray_writeStrategy_matchesAllReadStrategies(ArrayWriteStrategy writeStrategy) throws Exception {
+    void longArray_writeStrategy_matchesAllReadStrategies(ArrayWriteStrategy writeStrategy, ArrayReadStrategy readStrategy) throws Exception {
         for (int size : SIZES) {
             long[] expected = buildLongArray(size);
-            byte[] payload = writeLongArray(expected, writeStrategy);
-
-            for (ArrayReadStrategy readStrategy : ArrayReadStrategy.values()) {
-                long[] actual = readLongArray(payload, readStrategy);
-                assertThat("write=" + writeStrategy + " read=" + readStrategy + " size=" + size,
-                    actual, is(equalTo(expected)));
-            }
+            long[] actual = readLongArray(writeLongArray(expected, writeStrategy), readStrategy);
+            assertThat("write=" + writeStrategy + " read=" + readStrategy + " size=" + size,
+                actual, is(equalTo(expected)));
         }
     }
 
@@ -118,10 +122,10 @@ class ArrayStrategyTest {
     // Mixed primitive interleave - guards against scratch-buffer pollution between calls.
     // ---------------------------------------------------------------------
 
-    @ParameterizedTest(name = "mixed write={0}")
-    @EnumSource(ArrayWriteStrategy.class)
+    @ParameterizedTest(name = "mixed write={0} read={1}")
+    @MethodSource("strategyPairs")
     @DisplayName("mixed int/long interleave round-trips byte-for-byte across strategies")
-    void mixedInterleave_roundTrips(ArrayWriteStrategy writeStrategy) throws Exception {
+    void mixedInterleave_roundTrips(ArrayWriteStrategy writeStrategy, ArrayReadStrategy readStrategy) throws Exception {
         int[] ints1 = buildIntArray(17000);
         long[] longs1 = buildLongArray(9000);
         int[] ints2 = buildIntArray(3);
@@ -135,19 +139,15 @@ class ArrayStrategyTest {
             out.writeLongArray(longs2);
         }
 
-        byte[] payload = baos.toByteArray();
-
-        for (ArrayReadStrategy readStrategy : ArrayReadStrategy.values()) {
-            try (NbtInputStream in = new NbtInputStream(new ByteArrayInputStream(payload), readStrategy)) {
-                assertThat("write=" + writeStrategy + " read=" + readStrategy + " ints1",
-                    in.readIntArray(), is(equalTo(ints1)));
-                assertThat("write=" + writeStrategy + " read=" + readStrategy + " longs1",
-                    in.readLongArray(), is(equalTo(longs1)));
-                assertThat("write=" + writeStrategy + " read=" + readStrategy + " ints2",
-                    in.readIntArray(), is(equalTo(ints2)));
-                assertThat("write=" + writeStrategy + " read=" + readStrategy + " longs2",
-                    in.readLongArray(), is(equalTo(longs2)));
-            }
+        try (NbtInputStream in = new NbtInputStream(new ByteArrayInputStream(baos.toByteArray()), readStrategy)) {
+            assertThat("write=" + writeStrategy + " read=" + readStrategy + " ints1",
+                in.readIntArray(), is(equalTo(ints1)));
+            assertThat("write=" + writeStrategy + " read=" + readStrategy + " longs1",
+                in.readLongArray(), is(equalTo(longs1)));
+            assertThat("write=" + writeStrategy + " read=" + readStrategy + " ints2",
+                in.readIntArray(), is(equalTo(ints2)));
+            assertThat("write=" + writeStrategy + " read=" + readStrategy + " longs2",
+                in.readLongArray(), is(equalTo(longs2)));
         }
     }
 

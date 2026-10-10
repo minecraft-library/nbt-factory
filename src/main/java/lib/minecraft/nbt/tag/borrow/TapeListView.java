@@ -13,7 +13,8 @@ import java.util.NoSuchElementException;
 
 /**
  * {@link List} view over a {@link TapeKind#LIST_HEADER}-bracketed tape range that decodes
- * elements lazily on a per-index basis.
+ * elements lazily on a per-index basis, each through {@link Tape#listElementAt(int)} so the element
+ * a mixed list's wrapper compound wraps is the one the view holds.
  *
  * <p>{@link #get(int)} runs an O(i) walk via {@link Tape#nextSibling(int)} - the tape does not
  * store per-element offsets. Sequential traversal via {@link #iterator()} amortizes to O(1) per
@@ -75,7 +76,7 @@ final class TapeListView extends AbstractList<Tag<?>> {
 
         while (idx < this.endIdx) {
             if (cursor == i)
-                return this.tape.tagAt(idx);
+                return this.tape.listElementAt(idx);
 
             idx = this.tape.nextSibling(idx);
             cursor++;
@@ -125,7 +126,7 @@ final class TapeListView extends AbstractList<Tag<?>> {
         int idx = this.tapeIndex + 1;
 
         while (idx < this.endIdx) {
-            list.add(this.tape.tagAt(idx));
+            list.add(this.tape.listElementAt(idx));
             idx = this.tape.nextSibling(idx);
         }
 
@@ -147,7 +148,7 @@ final class TapeListView extends AbstractList<Tag<?>> {
             if (this.cursor >= TapeListView.this.endIdx)
                 throw new NoSuchElementException();
 
-            Tag<?> tag = TapeListView.this.tape.tagAt(this.cursor);
+            Tag<?> tag = TapeListView.this.tape.listElementAt(this.cursor);
             this.cursor = TapeListView.this.tape.nextSibling(this.cursor);
             return tag;
         }
