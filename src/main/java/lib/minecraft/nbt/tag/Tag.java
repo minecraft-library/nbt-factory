@@ -3,9 +3,13 @@ package lib.minecraft.nbt.tag;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.NbtOutput;
+import lib.minecraft.nbt.io.snbt.SnbtSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.util.function.Supplier;
 
 /**
@@ -98,16 +102,22 @@ public abstract class Tag<T> implements Cloneable {
     }
 
     /**
-     * Returns the canonical text form of this tag, the form vanilla renders a tag in: every entry at
-     * every depth, compound keys sorted, each number suffixed with its type and each string quoted,
-     * so equal tags render the same text and the text serves as a key for the value.
+     * Returns the canonical text form of this tag - the compact SNBT {@link SnbtSerializer} writes:
+     * every entry at every depth, compound keys sorted, each number suffixed with its type and each
+     * string quoted, so equal tags render the same text and the text serves as a key for the value.
      *
      * @return the canonical rendering
      */
     public final @NotNull String toCanonicalString() {
-        StringBuilder builder = new StringBuilder();
-        CanonicalTagWriter.write(this, builder);
-        return builder.toString();
+        StringWriter writer = new StringWriter();
+
+        try (SnbtSerializer serializer = new SnbtSerializer(writer)) {
+            serializer.writeTag(this, 0);
+        } catch (IOException exception) {
+            throw new UncheckedIOException(exception);
+        }
+
+        return writer.toString();
     }
 
     @Override

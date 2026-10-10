@@ -82,7 +82,15 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     @Override
     public byte readByte() throws IOException {
-        return Byte.parseByte(this.readNumberAsString());
+        String number = this.readNumberAsString();
+
+        if (number.equalsIgnoreCase("true"))
+            return 1;
+
+        if (number.equalsIgnoreCase("false"))
+            return 0;
+
+        return Byte.parseByte(number);
     }
 
     @Override
@@ -284,7 +292,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         // Check if the string is quoted.
         if (firstChar == STRING_DELIMITER_1 || firstChar == STRING_DELIMITER_2) {
             // Decode escape sequences: a backslash is consumed, and the following char is appended literally.
-            // This correctly unescapes the \" and \\ sequences emitted by SnbtSerializer.escapeString.
+            // This correctly unescapes the \" and \\ sequences emitted by SnbtSerializer.
             while (true) {
                 lastChar = this.read();
 
@@ -383,6 +391,10 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         int n = token.length();
         if (n == 0)
             return TagType.STRING.getId();
+
+        // A bare true or false is a byte, 1b or 0b, as vanilla's parser reads it.
+        if (token.equalsIgnoreCase("true") || token.equalsIgnoreCase("false"))
+            return TagType.BYTE.getId();
 
         char last = token.charAt(n - 1);
         return switch (last) {
