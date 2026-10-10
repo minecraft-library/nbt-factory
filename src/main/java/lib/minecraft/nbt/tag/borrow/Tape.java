@@ -252,21 +252,18 @@ public final class Tape {
                 yield readCompound(ctx);
             }
             case LIST_HEADER -> {
-                byte listElementId = TapeElement.unpackListElementId(element);
                 int approxLen = TapeElement.unpackApproxLen(element);
                 ctx.tapeIndex++;
-                yield readList(ctx, listElementId, approxLen);
+                yield readList(ctx, approxLen);
             }
             default -> throw new NbtFormatException("Unexpected kind in value position: %s", kind);
         };
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static @NotNull ListTag readList(@NotNull MaterializeContext ctx, byte elementId, int approxLen) {
-        // ListTag(elementId, capacity) pre-seeds the element-type so an empty list still carries
-        // the wire-derived elementId after materialize - matches NbtInput.readListTag, which uses
-        // the same constructor on the same elementId byte. A mixed list is typed by its elements.
-        ListTag list = new ListTag(elementId == TapeElement.MIXED_LIST_ELEMENT_ID ? 0 : elementId, approxLen);
+    private static @NotNull ListTag readList(@NotNull MaterializeContext ctx, int approxLen) {
+        // A list is typed by its elements, as NbtInput.readListTag's is.
+        ListTag list = new ListTag(approxLen);
 
         while (true) {
             long element = ctx.elements[ctx.tapeIndex];
@@ -277,7 +274,7 @@ public final class Tape {
                 return list;
             }
 
-            list.addAndUnwrap(readValue(ctx));
+            list.add(ListTag.unwrap(readValue(ctx)));
         }
     }
 

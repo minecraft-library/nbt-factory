@@ -6,10 +6,14 @@ import lib.minecraft.nbt.io.NbtOutput;
 import lib.minecraft.nbt.io.json.NbtJsonSerializer;
 import lib.minecraft.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 
 import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
@@ -49,12 +53,12 @@ import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
  *       braced JSON-like object {@code {key:value,...}}.</li>
  * </ul>
  *
- * <p>Strings are emitted unquoted when their contents match {@code [A-Za-z0-9._+-]+}; otherwise
- * they are double-quoted with {@code "} and {@code \} escaped by a leading backslash, matching
- * what {@link SnbtDeserializer} accepts on read. Booleans are written as {@code 1b} / {@code 0b},
- * the same representation Minecraft itself uses for boolean-valued NBT fields. The output is
- * pretty-printed with a four-space indent (inherited from the parent {@link JsonWriter}
- * configuration) to aid manual inspection.</p>
+ * <p>Strings are always quoted, as vanilla quotes them - with the one of {@code "} and {@code '}
+ * the string does not meet first, so only that quote needs escaping, with the backslash and the
+ * control characters escaped - so a string such as {@code true} never reads back as a byte.
+ * Compound keys are written sorted, so equal compounds write equal text. Booleans are written as
+ * {@code 1b} / {@code 0b}, the same representation Minecraft itself uses for boolean-valued NBT
+ * fields. The output is compact unless constructed pretty, with a four-space indent.</p>
  *
  * @see SnbtDeserializer
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format - "SNBT format"</a>
@@ -70,9 +74,31 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
      */
     private final StringBuilder primitiveBuf = new StringBuilder(24);
 
+    /**
+     * Hex digits of a control character written as a {@code \x} escape.
+     */
+    private static final @NotNull HexFormat HEX = HexFormat.of().withUpperCase();
+
+    /**
+     * Constructs a serializer writing compact SNBT.
+     *
+     * @param writer the destination
+     */
     public SnbtSerializer(@NotNull Writer writer) {
+        this(writer, false);
+    }
+
+    /**
+     * Constructs a serializer writing compact SNBT, or SNBT indented four spaces per level.
+     *
+     * @param writer the destination
+     * @param pretty whether to indent the output
+     */
+    public SnbtSerializer(@NotNull Writer writer, boolean pretty) {
         super(writer);
-        this.setIndent("    ");
+
+        if (pretty)
+            this.setIndent("    ");
     }
 
     @Override
@@ -128,7 +154,7 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeUTF(@NotNull String value) throws IOException {
-        this.jsonValue(escapeString(value));
+        this.jsonValue(quote(value));
     }
 
     @Override
@@ -200,9 +226,11 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
         if (++depth >= 512)
             throw new NbtMaxDepthException();
 
+        List<Map.Entry<String, Tag<?>>> entries = new ArrayList<>(tag.entrySet());
+        entries.sort(Map.Entry.comparingByKey());
         this.beginObject();
 
-        for (Map.Entry<String, Tag<?>> entry : tag) {
+        for (Map.Entry<String, Tag<?>> entry : entries) {
             this.name(entry.getKey());
             this.writeTag(entry.getValue(), depth);
         }
@@ -210,48 +238,62 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
         this.endObject();
     }
 
-    private static String escapeString(@NotNull String value) {
-        // Single-pass scan: find the first character that requires quoting. Mirrors the prior
-        // NON_QUOTE_PATTERN [a-zA-Z_.+\-] check character-by-character via the IS_NON_QUOTE
-        // table, but bails out at the first offender so an unquoted-eligible string never pays
-        // the cost of a full re-walk.
-        int len = value.length();
-        if (len == 0)
-            return "\"\"";
+    /**
+     * Quotes and escapes a string as vanilla does - with the one of {@code "} and {@code '} it does
+     * not meet first, so only that quote needs escaping, and with {@code "} when it holds neither.
+     *
+     * @param value the string
+     * @return the quoted string
+     */
+    private static @NotNull String quote(@NotNull String value) {
+        StringBuilder builder = new StringBuilder(value.length() + 2).append(' ');
+        char quote = 0;
 
-        int firstOffending = -1;
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            if (c >= 128 || !IS_NON_QUOTE[c]) {
-                firstOffending = i;
-                break;
+
+            if (c == '\\')
+                builder.append("\\\\");
+            else if (c == '"' || c == '\'') {
+                if (quote == 0)
+                    quote = c == '"' ? '\'' : '"';
+
+                if (quote == c)
+                    builder.append('\\');
+
+                builder.append(c);
+            } else {
+                String escape = controlEscape(c);
+
+                if (escape != null)
+                    builder.append('\\').append(escape);
+                else
+                    builder.append(c);
             }
         }
 
-        // Fast path: every character was unquoted-eligible, so emit the value verbatim.
-        if (firstOffending == -1)
-            return value;
+        if (quote == 0)
+            quote = '"';
 
-        // Slow path: at least one character requires quoting. Pre-size for {@code "value"} plus
-        // a small allowance for the escape backslashes.
-        StringBuilder sb = new StringBuilder(len + 4);
-        sb.append(STRING_DELIMITER_1);
+        builder.setCharAt(0, quote);
+        return builder.append(quote).toString();
+    }
 
-        // Copy the prefix that was already verified clean - no escape check needed inside it
-        // because IS_NON_QUOTE excludes both STRING_ESCAPE ('\') and STRING_DELIMITER_1 ('"').
-        if (firstOffending > 0)
-            sb.append(value, 0, firstOffending);
-
-        // Walk the remaining tail char-by-char, escaping the two SNBT escapees.
-        for (int i = firstOffending; i < len; i++) {
-            char c = value.charAt(i);
-            if (c == STRING_ESCAPE || c == STRING_DELIMITER_1)
-                sb.append(STRING_ESCAPE);
-            sb.append(c);
-        }
-
-        sb.append(STRING_DELIMITER_1);
-        return sb.toString();
+    /**
+     * Returns the escape a control character is written with, after the backslash.
+     *
+     * @param c the character
+     * @return the escape, or {@code null} for a character written as it is
+     */
+    private static @Nullable String controlEscape(char c) {
+        return switch (c) {
+            case '\b' -> "b";
+            case '\t' -> "t";
+            case '\n' -> "n";
+            case '\f' -> "f";
+            case '\r' -> "r";
+            default -> c < ' ' ? "x" + HEX.toHexDigits((byte) c) : null;
+        };
     }
 
 }

@@ -96,6 +96,14 @@ public class CompoundTag extends Tag<Map<String, Tag<?>>> implements Map<String,
         return this.getValue().containsKey(key);
     }
 
+    /**
+     * Gets whether this compound is the wrapper the binary form writes one element of a mixed list
+     * in - exactly one entry, under the empty key.
+     */
+    public boolean isWrapper() {
+        return this.size() == 1 && this.containsKey("");
+    }
+
     public boolean containsListOf(@NotNull String key, byte of) {
         // Single map lookup folds the prior containsType + getListTag pair into one probe.
         Tag<?> tag = this.getValue().get(key);

@@ -18,12 +18,7 @@ import java.util.function.Supplier;
  * decodes elements lazily from the underlying {@link Tape}. Reads through the standard
  * {@code List} surface ({@link #get(int)}, {@link #size}, {@link #iterator}, ...) consult the
  * tape on a per-index basis; the first mutation promotes the view to an {@link ArrayList} and
- * every subsequent operation forwards there.</p>
- *
- * <p>The packed list header carries the {@code elementId} (NBT tag id of the list's elements as
- * the list holds them, or {@link TapeElement#MIXED_LIST_ELEMENT_ID} when they differ) which is read
- * directly from the header without forcing the supplier, so callers can inspect
- * {@link #getListType()} and {@link #isMixed()} without paying for view allocation.</p>
+ * every subsequent operation forwards there. Its type is read off its elements, as any list's is.</p>
  *
  * @see ListTag
  * @see TapeListView
@@ -32,22 +27,13 @@ import java.util.function.Supplier;
 public final class BorrowedListTag extends ListTag<Tag<?>> {
 
     /**
-     * Constructs a borrowed list rooted at {@code tapeIndex} on {@code tape}. Pre-seeds the
-     * element id from the tape header so {@link #getListType()} works before the supplier fires.
+     * Constructs a borrowed list rooted at {@code tapeIndex} on {@code tape}.
      *
      * @param tape the tape to navigate
      * @param tapeIndex tape index of the {@link TapeKind#LIST_HEADER} entry
      */
     public BorrowedListTag(@NotNull Tape tape, int tapeIndex) {
-        this(TapeElement.unpackListElementId(tape.elementAt(tapeIndex)), tape, tapeIndex);
-    }
-
-    private BorrowedListTag(byte elementId, @NotNull Tape tape, int tapeIndex) {
-        super(
-            elementId == TapeElement.MIXED_LIST_ELEMENT_ID ? TagType.COMPOUND.getId() : elementId,
-            elementId == TapeElement.MIXED_LIST_ELEMENT_ID,
-            viewSupplier(tape, tapeIndex)
-        );
+        super(viewSupplier(tape, tapeIndex));
     }
 
     private static @NotNull Supplier<List<Tag<?>>> viewSupplier(@NotNull Tape tape, int tapeIndex) {

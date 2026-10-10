@@ -225,7 +225,7 @@ class BorrowedNavigatorTest {
     @DisplayName("Empty list preserves wire elementId through borrow + materialize")
     void emptyListPreservesElementId() {
         // ListTag exposes a constructor that pre-seeds elementId for empty lists.
-        ListTag<ByteTag> emptyByteList = new ListTag<>((byte) 1, 0);
+        ListTag<ByteTag> emptyByteList = new ListTag<>(0);
         CompoundTag root = new CompoundTag();
         root.put("empty", emptyByteList);
 
@@ -273,7 +273,7 @@ class BorrowedNavigatorTest {
         root.put("ba", new ByteArrayTag(new byte[]{1}));
         root.put("ia", new IntArrayTag(new int[]{1}));
         root.put("la", new LongArrayTag(new long[]{1L}));
-        root.put("list", new ListTag<>((byte) 3, 0));
+        root.put("list", new ListTag<>(0));
         root.put("compound", new CompoundTag());
 
         BorrowedCompoundTag borrowed = Tape.encode(root).root();

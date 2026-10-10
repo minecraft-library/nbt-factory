@@ -82,7 +82,15 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
 
     @Override
     public byte readByte() throws IOException {
-        return Byte.parseByte(this.readNumberAsString());
+        String number = this.readNumberAsString();
+
+        if (number.equalsIgnoreCase("true"))
+            return 1;
+
+        if (number.equalsIgnoreCase("false"))
+            return 0;
+
+        return Byte.parseByte(number);
     }
 
     @Override
@@ -383,6 +391,10 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         int n = token.length();
         if (n == 0)
             return TagType.STRING.getId();
+
+        // A bare true or false is a byte, 1b or 0b, as vanilla's parser reads it.
+        if (token.equalsIgnoreCase("true") || token.equalsIgnoreCase("false"))
+            return TagType.BYTE.getId();
 
         char last = token.charAt(n - 1);
         return switch (last) {
