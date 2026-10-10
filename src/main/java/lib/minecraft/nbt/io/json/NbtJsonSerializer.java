@@ -25,11 +25,10 @@ import java.util.Map;
  *
  * <p>This representation is convenient for tools that expect ordinary JSON, but it does not
  * preserve NBT tag type information. Round-tripping through {@link NbtJsonDeserializer}
- * reconstructs types using the Minecraft Wiki's "Conversion from JSON" cascade, so a
- * {@code ShortTag(100)} will come back as a {@code ByteTag(100)}, a {@code ListTag<IntTag>} of
- * small values may come back as a {@code ByteArrayTag}, and floats that cannot be stored
- * exactly in {@code float} may come back as a {@code DoubleTag}. Use the binary or SNBT
- * backends when lossless round-trip is required.</p>
+ * reconstructs types as vanilla converts JSON to NBT, so a {@code ShortTag(100)} will come back as
+ * a {@code ByteTag(100)}, a {@code ByteArrayTag} will come back as a {@code ListTag} of bytes, and
+ * floats that cannot be stored exactly in {@code float} may come back as a {@code DoubleTag}. Use
+ * the binary or SNBT backends when lossless round-trip is required.</p>
  *
  * @see NbtJsonDeserializer
  */

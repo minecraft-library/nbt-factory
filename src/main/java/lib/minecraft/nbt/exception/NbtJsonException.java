@@ -5,9 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Thrown when the JSON-NBT deserializer encounters input it cannot map to a tag - a heterogeneous
- * array, an unexpected JSON token, an invalid numeric literal, or a JSON {@code null} in a
- * position that NBT does not permit.
+ * Thrown when the JSON-NBT deserializer encounters input it cannot map to a tag - an unexpected
+ * JSON token, an invalid numeric literal, or a JSON {@code null}, which NBT has no tag for.
  */
 public class NbtJsonException extends NbtException {
 

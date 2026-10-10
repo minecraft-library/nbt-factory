@@ -97,6 +97,19 @@ public abstract class Tag<T> implements Cloneable {
         return this.getValue().hashCode();
     }
 
+    /**
+     * Returns the canonical text form of this tag, the form vanilla renders a tag in: every entry at
+     * every depth, compound keys sorted, each number suffixed with its type and each string quoted,
+     * so equal tags render the same text and the text serves as a key for the value.
+     *
+     * @return the canonical rendering
+     */
+    public final @NotNull String toCanonicalString() {
+        StringBuilder builder = new StringBuilder();
+        CanonicalTagWriter.write(this, builder);
+        return builder.toString();
+    }
+
     @Override
     public abstract @NotNull String toString();
 

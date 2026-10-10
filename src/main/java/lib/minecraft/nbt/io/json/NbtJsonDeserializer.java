@@ -1,5 +1,9 @@
 package lib.minecraft.nbt.io.json;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import lib.minecraft.nbt.exception.NbtJsonException;
@@ -14,13 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 /**
  * NBT JSON deserialization that reads directly from a JSON reader, reconstructing tag type
- * information using the Minecraft Wiki's "Conversion from JSON" algorithm.
+ * information as vanilla converts JSON to NBT.
  *
  * <p>JSON has no native representation of NBT tag types, so types are inferred from each JSON
  * value as follows:</p>
@@ -28,34 +30,89 @@ import java.util.List;
  *   <li><b>JSON string</b> - {@link StringTag}.</li>
  *   <li><b>JSON boolean</b> - {@link ByteTag} with value {@code 1} for {@code true} and
  *       {@code 0} for {@code false}.</li>
- *   <li><b>JSON null</b> - rejected with an {@link IOException}; NBT has no null representation.</li>
+ *   <li><b>JSON null</b> - rejected with an {@link NbtJsonException}; NBT has no null representation.</li>
  *   <li><b>JSON object</b> - {@link CompoundTag}.</li>
- *   <li><b>JSON number</b> - narrowest integer tag whose range contains the value
- *       ({@link ByteTag} - {@link ShortTag} - {@link IntTag} - {@link LongTag}) when the value
- *       is integer-valued, otherwise {@link FloatTag} if the literal is representable exactly
- *       in {@code float}, else {@link DoubleTag}. The check is performed on the numeric value,
- *       not the literal's syntax, so {@code 1.0} and {@code 1.27e2} both resolve as bytes.</li>
- *   <li><b>JSON array</b> - all elements are read first, then the result type is decided from
- *       the shared element type: a homogeneous byte array becomes {@link ByteArrayTag}, a
- *       homogeneous int array becomes {@link IntArrayTag}, a homogeneous long array becomes
- *       {@link LongArrayTag}, and any other homogeneous array becomes a {@link ListTag} of that
- *       element type. An empty array becomes a {@code ListTag} with no fixed element type. A
- *       heterogeneous array is rejected with an {@code IOException}.</li>
+ *   <li><b>JSON number</b> - when the value is whole and fits a {@code long}, the narrowest integer
+ *       tag whose range contains it ({@link ByteTag} - {@link ShortTag} - {@link IntTag} -
+ *       {@link LongTag}); otherwise {@link FloatTag} when the value as a {@code double} is exactly a
+ *       {@code float}, else {@link DoubleTag}. The check is performed on the numeric value, not the
+ *       literal's syntax, so {@code 1.0} and {@code 1.27e2} both resolve as bytes.</li>
+ *   <li><b>JSON array</b> - always a {@link ListTag}, never a typed array, whose elements may differ
+ *       in type. An empty array becomes a {@code ListTag} with no element type.</li>
  * </ul>
  *
- * <p><b>Round-trip caveat.</b> The wiki algorithm is inherently lossy: a JSON round-trip through
+ * <p>{@link #convert(JsonElement)} applies the same rules to an already-parsed JSON tree.</p>
+ *
+ * <p><b>Round-trip caveat.</b> The conversion is inherently lossy: a JSON round-trip through
  * {@link NbtJsonSerializer} and this reader may narrow wide numeric types down to their smallest
- * fitting representation, collapse a {@code ListTag<IntTag>} of small values into a
- * {@link ByteArrayTag}, and widen floats that cannot be stored exactly in {@code float} to a
- * {@link DoubleTag}. Use the binary or SNBT backends when lossless round-trip is required.</p>
+ * fitting representation, turn a {@link ByteArrayTag}, {@link IntArrayTag} or {@link LongArrayTag}
+ * into a {@link ListTag} of numbers, and widen floats that cannot be stored exactly in
+ * {@code float} to a {@link DoubleTag}. Use the binary or SNBT backends when lossless round-trip is
+ * required.</p>
  *
  * @see NbtJsonSerializer
- * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format - "Conversion from JSON"</a>
  */
 public class NbtJsonDeserializer extends JsonReader implements NbtInput {
 
     public NbtJsonDeserializer(@NotNull Reader reader) {
         super(reader);
+    }
+
+    /**
+     * Converts an already-parsed JSON value to NBT by the rules this reader reads JSON text with.
+     *
+     * @param element the JSON value
+     * @return the NBT value
+     * @throws NbtJsonException if the value holds a JSON {@code null} or a number that does not parse
+     * @throws NbtMaxDepthException if the value nests 512 levels deep or deeper
+     */
+    public static @NotNull Tag<?> convert(@NotNull JsonElement element) {
+        return convert(element, 0);
+    }
+
+    private static @NotNull Tag<?> convert(@NotNull JsonElement element, int depth) {
+        if (element.isJsonObject()) {
+            if (++depth >= 512)
+                throw new NbtMaxDepthException();
+
+            JsonObject object = element.getAsJsonObject();
+            CompoundTag compoundTag = new CompoundTag(object.size());
+
+            for (Map.Entry<String, JsonElement> entry : object.entrySet())
+                compoundTag.put(entry.getKey(), convert(entry.getValue(), depth));
+
+            return compoundTag;
+        }
+
+        if (element.isJsonArray()) {
+            if (++depth >= 512)
+                throw new NbtMaxDepthException();
+
+            JsonArray array = element.getAsJsonArray();
+            ListTag<Tag<?>> listTag = new ListTag<>(array.size());
+
+            for (JsonElement child : array)
+                listTag.add(convert(child, depth));
+
+            return listTag;
+        }
+
+        if (element.isJsonNull())
+            throw new NbtJsonException("Cannot convert JSON null to NBT");
+
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+
+        if (primitive.isString())
+            return new StringTag(primitive.getAsString());
+
+        if (primitive.isBoolean())
+            return new ByteTag((byte) (primitive.getAsBoolean() ? 1 : 0));
+
+        try {
+            return inferNumber(primitive.getAsBigDecimal());
+        } catch (NumberFormatException exception) {
+            throw new NbtJsonException(exception, "Invalid JSON number literal: '%s'", primitive.getAsString());
+        }
     }
 
     // ------------------------------------------------------------------
@@ -167,15 +224,17 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
 
     @Override
     public @NotNull ListTag<?> readListTag(int depth) throws IOException {
-        Tag<?> result = this.readArrayOrTypedArray(depth);
+        if (++depth >= 512)
+            throw new NbtMaxDepthException();
 
-        // Typed arrays (byte/int/long) can satisfy the wiki's array rules but are not ListTag
-        // instances. Direct callers of readListTag are asserting the JSON array should map to
-        // a list, so surface the mismatch rather than silently returning the wrong shape.
-        if (!(result instanceof ListTag<?> list))
-            throw new NbtJsonException("Expected a JSON list but parsed a typed array tag (" + result.getClass().getSimpleName() + ").");
+        ListTag<Tag<?>> listTag = new ListTag<>();
+        this.beginArray();
 
-        return list;
+        while (this.hasNext())
+            listTag.add(this.readValue(depth));
+
+        this.endArray();
+        return listTag;
     }
 
     // ------------------------------------------------------------------
@@ -190,71 +249,63 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
             case BOOLEAN -> new ByteTag((byte) (this.nextBoolean() ? 1 : 0));
             case NUMBER -> inferNumber(this.nextString());
             case BEGIN_OBJECT -> this.readCompoundTag(depth);
-            case BEGIN_ARRAY -> this.readArrayOrTypedArray(depth);
-            case NULL -> throw new NbtJsonException("Cannot convert JSON null to NBT.");
-            default -> throw new NbtJsonException("Unexpected JSON token: " + token);
+            case BEGIN_ARRAY -> this.readListTag(depth);
+            case NULL -> throw new NbtJsonException("Cannot convert JSON null to NBT");
+            default -> throw new NbtJsonException("Unexpected JSON token '%s'", token);
         };
     }
 
     /**
-     * Maps a JSON number literal to the narrowest NBT tag per the Minecraft Wiki cascade.
-     *
-     * <p>The comparison runs against the numeric value, not the literal's syntax, so
-     * {@code "1.0"} and {@code "1.27e2"} resolve the same way as {@code "1"} and {@code "127"}.
-     * Non-integer literals fall back to {@link FloatTag} if the exact float parse equals the
-     * exact double parse, otherwise {@link DoubleTag}.</p>
+     * Maps a JSON number literal to the NBT tag vanilla converts its value to.
      *
      * <p>Plain integer literals (no decimal point, no exponent, fitting within {@code long})
-     * take a fast path that bypasses the {@link BigDecimal}/{@link BigInteger} pipeline. The
-     * slow path is reserved for decimal, scientific, or out-of-{@code long}-range literals.</p>
+     * take a fast path that bypasses the {@link BigDecimal} pipeline. The slow path is reserved for
+     * decimal, scientific, or out-of-{@code long}-range literals.</p>
      */
-    private static @NotNull Tag<?> inferNumber(@NotNull String text) throws IOException {
+    private static @NotNull Tag<?> inferNumber(@NotNull String text) {
         // Fast path: plain integer literal (no '.', no 'e'/'E'). Length cap of 20 covers signed
         // Long.MIN_VALUE/MAX_VALUE (-9223372036854775808 .. 9223372036854775807). Any overflow or
         // unexpected formatting falls through to the BigDecimal slow path below.
         if (isPlainIntegerLiteral(text) && text.length() <= 20) {
             try {
-                long l = Long.parseLong(text);
-                if ((byte) l == l) return new ByteTag((byte) l);
-                if ((short) l == l) return new ShortTag((short) l);
-                if ((int) l == l) return new IntTag((int) l);
-                return new LongTag(l);
+                return narrowest(Long.parseLong(text));
             } catch (NumberFormatException ignored) {
                 // Out-of-long-range or unexpected sign placement - fall through to BigDecimal.
             }
         }
 
-        final BigDecimal bd;
+        final BigDecimal value;
         try {
-            bd = new BigDecimal(text);
+            value = new BigDecimal(text);
         } catch (NumberFormatException exception) {
             throw new NbtJsonException(exception, "Invalid JSON number literal: '%s'", text);
         }
 
-        // Integer cascade: byte -> short -> int -> long, on the numeric value.
+        return inferNumber(value);
+    }
+
+    /**
+     * Maps a JSON number to the NBT tag vanilla converts it to: the narrowest of byte, short, int and
+     * long when the value is whole and fits a {@code long}, and otherwise a float when the value as a
+     * {@code double} survives the narrowing to {@code float}, else a double.
+     */
+    private static @NotNull Tag<?> inferNumber(@NotNull BigDecimal value) {
         try {
-            BigInteger bi = bd.toBigIntegerExact();
-
-            // bitLength() < 64 guarantees the value fits in a signed long (accounts for the sign bit).
-            if (bi.bitLength() < 64) {
-                long l = bi.longValueExact();
-                if ((byte) l == l) return new ByteTag((byte) l);
-                if ((short) l == l) return new ShortTag((short) l);
-                if ((int) l == l) return new IntTag((int) l);
-                return new LongTag(l);
-            }
-        } catch (ArithmeticException notAnInteger) {
-            // Value has a non-zero fractional part - fall through to the float/double branch.
+            return narrowest(value.longValueExact());
+        } catch (ArithmeticException fractionalOrTooWide) {
+            double real = value.doubleValue();
+            return (float) real == real ? new FloatTag((float) real) : new DoubleTag(real);
         }
+    }
 
-        // Non-integer or out-of-long-range: prefer float iff it is exactly representable.
-        double d = Double.parseDouble(text);
-        float f = Float.parseFloat(text);
-
-        if (Float.isFinite(f) && (double) f == d)
-            return new FloatTag(f);
-
-        return new DoubleTag(d);
+    /**
+     * Returns the narrowest integer tag whose range holds the value.
+     */
+    private static @NotNull Tag<?> narrowest(long value) {
+        if ((byte) value == value) return new ByteTag((byte) value);
+        if ((short) value == value) return new ShortTag((short) value);
+        if ((int) value == value) return new IntTag((int) value);
+        return new LongTag(value);
     }
 
     /**
@@ -267,97 +318,6 @@ public class NbtJsonDeserializer extends JsonReader implements NbtInput {
             if (c == '.' || c == 'e' || c == 'E') return false;
         }
         return true;
-    }
-
-    /**
-     * Reads a JSON array and resolves it to the typed-array or list tag type the wiki cascade
-     * produces.
-     *
-     * <p>The first element's inferred tag id selects the dispatch path. For the byte/int/long
-     * primitive paths the elements stream directly into a primitive growable buffer
-     * ({@link ByteList}/{@link IntList}/{@link LongList}), eliminating both the boxed
-     * {@code ArrayList<Tag<?>>} buffer and the second narrow-conversion walk. The generic path
-     * (homogeneous non-numeric, e.g. all strings or all compounds) falls back to buffering into
-     * an {@code ArrayList<Tag<?>>} so the homogeneity contract is preserved.</p>
-     */
-    private @NotNull Tag<?> readArrayOrTypedArray(int depth) throws IOException {
-        if (++depth >= 512)
-            throw new NbtMaxDepthException();
-
-        this.beginArray();
-
-        // Empty array has no element type to key off - match the existing ListTag() convention
-        // used by listsFixture().empty_list in the round-trip tests.
-        if (!this.hasNext()) {
-            this.endArray();
-            return new ListTag<>();
-        }
-
-        Tag<?> first = this.readValue(depth);
-        byte commonId = first.getId();
-
-        // Primitive typed-array fast paths: stream directly into the matching primitive buffer.
-        // (byte) / (int) Number.longValue() truncation matches the previous post-buffer cast.
-        if (commonId == TagType.BYTE.getId()) {
-            ByteList out = new ByteList();
-            out.add(((NumericalTag<?>) first).byteValue());
-            while (this.hasNext()) {
-                Tag<?> element = this.readValue(depth);
-                if (element.getId() != commonId)
-                    throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
-                out.add(((NumericalTag<?>) element).byteValue());
-            }
-            this.endArray();
-            return new ByteArrayTag(out.toArray());
-        }
-
-        if (commonId == TagType.INT.getId()) {
-            IntList out = new IntList();
-            out.add(((NumericalTag<?>) first).intValue());
-            while (this.hasNext()) {
-                Tag<?> element = this.readValue(depth);
-                if (element.getId() != commonId)
-                    throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
-                out.add(((NumericalTag<?>) element).intValue());
-            }
-            this.endArray();
-            return new IntArrayTag(out.toArray());
-        }
-
-        if (commonId == TagType.LONG.getId()) {
-            LongList out = new LongList();
-            out.add(((NumericalTag<?>) first).longValue());
-            while (this.hasNext()) {
-                Tag<?> element = this.readValue(depth);
-                if (element.getId() != commonId)
-                    throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
-                out.add(((NumericalTag<?>) element).longValue());
-            }
-            this.endArray();
-            return new LongArrayTag(out.toArray());
-        }
-
-        // Generic path: homogeneous non-numeric (strings, compounds, lists, floats, doubles, shorts).
-        // The heterogeneity check still requires holding every element until endArray, so a buffered
-        // ArrayList remains the cheapest data structure here.
-        List<Tag<?>> buffered = new ArrayList<>();
-        buffered.add(first);
-
-        while (this.hasNext()) {
-            Tag<?> element = this.readValue(depth);
-            if (element.getId() != commonId)
-                throw new NbtJsonException("Heterogeneous JSON arrays cannot be converted to NBT.");
-            buffered.add(element);
-        }
-
-        this.endArray();
-
-        // Pre-seed the ListTag with the common element id so add() skips the isEmpty probe on
-        // every entry (mirrors NbtInput.readListTag's hot path).
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        ListTag<Tag<?>> listTag = new ListTag(commonId, buffered.size());
-        listTag.addAll((List) buffered);
-        return listTag;
     }
 
 }

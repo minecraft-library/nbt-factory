@@ -53,9 +53,9 @@ import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
  *       {@link IntArrayTag} /
  *       {@link LongArrayTag}).</li>
  *   <li><b>{@code [value,value,...]}</b> -
- *       {@link ListTag} whose element type is
- *       decided from the first element and then enforced for the rest via
- *       {@link ListTag#add(Tag)}.</li>
+ *       {@link ListTag} whose elements may differ in type, each read as it is written - a
+ *       compound under the empty key stays a compound, since only the binary form wraps a
+ *       mixed list's elements.</li>
  *   <li><b>{@code {key:value,...}}</b> -
  *       {@link CompoundTag}.</li>
  * </ul>

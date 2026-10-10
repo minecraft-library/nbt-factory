@@ -1,5 +1,6 @@
 package lib.minecraft.nbt;
 
+import com.google.gson.JsonElement;
 import dev.simplified.annotations.Cleanup;
 import dev.simplified.annotations.UtilityClass;
 import dev.simplified.util.StringUtil;
@@ -16,6 +17,8 @@ import lib.minecraft.nbt.io.stream.NbtInputStream;
 import lib.minecraft.nbt.io.stream.NbtOutputStream;
 import lib.minecraft.nbt.io.tape.NbtInputTape;
 import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.Tag;
 import lib.minecraft.nbt.tag.TagType;
 import lib.minecraft.nbt.tag.borrow.BorrowedCompoundTag;
 import lib.minecraft.nbt.tag.borrow.Tape;
@@ -154,8 +157,8 @@ public class NbtFactory {
     }
 
     /**
-     * Deserializes a JSON {@link File} into a {@link CompoundTag} using the Minecraft Wiki's
-     * "Conversion from JSON" algorithm.
+     * Deserializes a JSON {@link File} into a {@link CompoundTag}, converting each value as vanilla
+     * converts JSON to NBT.
      *
      * <p>JSON does not preserve NBT tag type information, so reconstruction applies the rules
      * documented on {@link NbtJsonDeserializer}. This conversion is lossy in the general case -
@@ -175,8 +178,8 @@ public class NbtFactory {
     }
 
     /**
-     * Deserializes a JSON {@link String} into a {@link CompoundTag} using the Minecraft Wiki's
-     * "Conversion from JSON" algorithm.
+     * Deserializes a JSON {@link String} into a {@link CompoundTag}, converting each value as vanilla
+     * converts JSON to NBT.
      *
      * <p>JSON does not preserve NBT tag type information, so reconstruction applies the rules
      * documented on {@link NbtJsonDeserializer}. This conversion is lossy in the general case -
@@ -192,6 +195,22 @@ public class NbtFactory {
         } catch (IOException exception) {
             throw new NbtException(exception);
         }
+    }
+
+    /**
+     * Converts an already-parsed JSON value of any kind into the {@link Tag} vanilla converts it to.
+     *
+     * <p>Applies the rules documented on {@link NbtJsonDeserializer} - an object becomes a
+     * {@link CompoundTag}, an array a {@link ListTag}, a whole number the narrowest integer tag that
+     * holds it - so the result is a compound only where the value is a JSON object.</p>
+     *
+     * @param json the JSON value to convert
+     * @return the NBT value
+     * @throws NbtException if the value holds a JSON {@code null}, a number that does not parse, or
+     *     nests 512 levels deep or deeper
+     */
+    public static @NotNull Tag<?> fromJson(@NotNull JsonElement json) throws NbtException {
+        return NbtJsonDeserializer.convert(json);
     }
 
     /**

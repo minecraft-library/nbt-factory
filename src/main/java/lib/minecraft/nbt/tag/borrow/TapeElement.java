@@ -1,6 +1,8 @@
 package lib.minecraft.nbt.tag.borrow;
 
 import dev.simplified.annotations.UtilityClass;
+import lib.minecraft.nbt.tag.ListTag;
+import lib.minecraft.nbt.tag.Tag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,23 +23,17 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p>For {@code COMPOUND_HEADER} the 56-bit payload splits as
  * {@code [reserved:8][approxLen:24][endTapeOffset:24]}. For {@code LIST_HEADER} the same field
- * layout is reused with the {@code reserved} byte repurposed to hold the wire {@code elementId}
- * (NBT type id of the list's elements) so a round trip preserves the element type even on empty
- * lists. {@code endTapeOffset} fits in 24 bits since the tape is itself bounded by buffer size:
+ * layout is reused with the {@code reserved} byte repurposed to hold the {@code elementId} (NBT type
+ * id of the list's elements as the list holds them) so a round trip preserves the element type even
+ * on empty lists. That is the wire {@code elementId}, except for a compound list whose elements
+ * unwrap - see {@link ListTag#unwrap(Tag)} - which holds the type they unwrap to, or
+ * {@link #MIXED_LIST_ELEMENT_ID} when they differ. {@code endTapeOffset} fits in 24 bits since the
+ * tape is itself bounded by buffer size:
  * 16M entries == ~128 MB of tape, well past anything a real NBT payload reaches.</p>
- *
- * <p>{@code TapeKind.values()} is cached in {@link #BY_ORDINAL} so {@link #unpackKind(long)} does
- * not pay the array-clone tax that {@code TapeKind.values()} performs on every call.</p>
  */
 @ApiStatus.Experimental
 @UtilityClass
 public class TapeElement {
-
-    /**
-     * Cached snapshot of {@link TapeKind#values()} indexed by ordinal. Avoids the per-call array
-     * clone that {@code TapeKind.values()} performs.
-     */
-    static final TapeKind @NotNull [] BY_ORDINAL = TapeKind.values();
 
     /**
      * Maximum value the {@code approxLen} field of a {@code COMPOUND_HEADER} / {@code LIST_HEADER}
@@ -51,6 +47,12 @@ public class TapeElement {
      * far past any realistic NBT payload.
      */
     public static final int MAX_END_OFFSET = 0xFF_FFFF;
+
+    /**
+     * {@code LIST_HEADER} element id of a list whose elements differ in type once unwrapped - no tag
+     * id is {@code 0xFF}.
+     */
+    public static final byte MIXED_LIST_ELEMENT_ID = (byte) 0xFF;
 
     /**
      * Mask covering the low 56 bits of a tape element - the kind-dependent payload region.
@@ -90,16 +92,17 @@ public class TapeElement {
     }
 
     /**
-     * Packs a {@link TapeKind#LIST_HEADER} element with the wire element-id, the approximate
-     * length, and the tape index of the matching {@link TapeKind#LIST_END}.
+     * Packs a {@link TapeKind#LIST_HEADER} element with the element-id, the approximate length, and
+     * the tape index of the matching {@link TapeKind#LIST_END}.
      *
-     * <p>The element id is the NBT tag id all entries of this list carry on the wire (e.g.
-     * {@code 1} for byte lists, {@code 10} for compound lists). Stashing it in the header lets a
-     * round trip preserve the type even on empty lists, where the element type would otherwise
-     * be unrecoverable from the absent children.</p>
+     * <p>The element id is the NBT tag id all entries of this list carry as the list holds them
+     * (e.g. {@code 1} for byte lists, {@code 10} for compound lists), or
+     * {@link #MIXED_LIST_ELEMENT_ID} when they differ. Stashing it in the header lets a round trip
+     * preserve the type even on empty lists, where the element type would otherwise be
+     * unrecoverable from the absent children.</p>
      *
-     * @param elementId the NBT tag id of the list's elements (the byte that immediately follows
-     *     the {@code TAG_List} marker on the wire)
+     * @param elementId the NBT tag id of the list's elements - the byte that immediately follows
+     *     the {@code TAG_List} marker on the wire, or what a compound list's elements unwrap to
      * @param approxLen the approximate element count, saturated at {@link #MAX_APPROX_LEN}
      * @param endTapeOffset the tape index of the matching {@code LIST_END} entry, capped at
      *     {@link #MAX_END_OFFSET}
@@ -129,14 +132,15 @@ public class TapeElement {
     }
 
     /**
-     * Returns the {@link TapeKind} discriminant of a packed element. Reads the top byte and
-     * indexes {@link #BY_ORDINAL} to avoid the {@code TapeKind.values()} clone.
+     * Returns the {@link TapeKind} discriminant of a packed element, the kind whose ordinal its top
+     * byte holds.
      *
      * @param element the packed tape element
      * @return the discriminant kind
+     * @throws java.util.NoSuchElementException if the top byte is the ordinal of no kind
      */
     public static @NotNull TapeKind unpackKind(long element) {
-        return BY_ORDINAL[(int) (element >>> 56)];
+        return TapeKind.findByOrdinal((int) (element >>> 56)).orElseThrow();
     }
 
     /**
@@ -184,12 +188,12 @@ public class TapeElement {
     }
 
     /**
-     * Returns the wire element-id stashed in a {@code LIST_HEADER}'s 8-bit reserved slot.
+     * Returns the element-id stashed in a {@code LIST_HEADER}'s 8-bit reserved slot.
      *
      * @param element the packed list-header element
      * @return the NBT tag id of the list's elements (e.g. {@code 1} for byte lists, {@code 10}
-     *     for compound lists). Returns {@code 0} for compound headers, where the slot is reserved
-     *     and unused.
+     *     for compound lists), or {@link #MIXED_LIST_ELEMENT_ID} when they differ. Returns
+     *     {@code 0} for compound headers, where the slot is reserved and unused.
      */
     public static byte unpackListElementId(long element) {
         return (byte) ((element >>> 48) & 0xFF);

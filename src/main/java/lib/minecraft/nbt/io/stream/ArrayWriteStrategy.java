@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.io.stream;
 
+import dev.simplified.annotations.EnumLookup;
 import lib.minecraft.nbt.io.util.NbtByteCodec;
 
 import java.io.BufferedOutputStream;
@@ -35,6 +36,7 @@ import java.io.OutputStream;
  * @see ArrayReadStrategy
  * @see NbtOutputStream
  */
+@EnumLookup
 public enum ArrayWriteStrategy {
 
     /**

@@ -1,5 +1,6 @@
 package lib.minecraft.nbt.io.buffer;
 
+import dev.simplified.annotations.RequiredArgsConstructor;
 import lib.minecraft.nbt.exception.NbtFormatException;
 import lib.minecraft.nbt.io.NbtInput;
 import lib.minecraft.nbt.io.stream.NbtInputStream;
@@ -48,15 +49,11 @@ import java.io.IOException;
  * @see NbtInputStream
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format</a>
  */
+@RequiredArgsConstructor
 public class NbtInputBuffer implements NbtInput, DataInput {
 
     private final byte[] buffer;
     private int position;
-
-    public NbtInputBuffer(byte[] buffer) {
-        this.buffer = buffer;
-        this.position = 0;
-    }
 
     // ------------------------------------------------------------------
     // DataInput primitives
