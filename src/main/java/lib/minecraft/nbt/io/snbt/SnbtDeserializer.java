@@ -417,8 +417,9 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
     }
 
     /**
-     * Returns whether {@code [start, end)} of {@code s} matches {@code [+-]?[0-9]*\.?[0-9]+}
-     * (the body of the prior {@code FLOAT_PATTERN} / {@code DOUBLE_PATTERN}).
+     * Returns whether {@code [start, end)} of {@code s} matches
+     * {@code [+-]?[0-9]*\.?[0-9]+([eE][+-]?[0-9]+)?} - a decimal mantissa with an optional
+     * exponent, so {@code 3.4028235E38} reads as the number it is.
      */
     private static boolean isDecimalBody(@NotNull String s, int start, int end) {
         int i = start;
@@ -449,13 +450,27 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         int digitsAfterDot = 0;
         while (i < end) {
             char d = s.charAt(i);
-            if (d < '0' || d > '9') return false;
+            if (d < '0' || d > '9') break;
             digitsAfterDot++;
             i++;
         }
 
-        // Pattern requires at least one trailing digit (the regex anchors {@code [0-9]+} at the end).
-        return digitsAfterDot > 0 || (!sawDot && digitsBeforeDot > 0);
+        // The mantissa requires at least one trailing digit.
+        if (digitsAfterDot == 0 && (sawDot || digitsBeforeDot == 0)) return false;
+        if (i == end) return true;
+
+        // An optional exponent: e or E, an optional sign, then at least one digit.
+        if (s.charAt(i) != 'e' && s.charAt(i) != 'E') return false;
+        i++;
+        if (i < end && (s.charAt(i) == '+' || s.charAt(i) == '-')) i++;
+        if (i >= end) return false;
+
+        for (; i < end; i++) {
+            char d = s.charAt(i);
+            if (d < '0' || d > '9') return false;
+        }
+
+        return true;
     }
 
     /**
