@@ -1,6 +1,5 @@
 package lib.minecraft.nbt.io.snbt;
 
-import com.google.gson.stream.JsonWriter;
 import lib.minecraft.nbt.exception.NbtMaxDepthException;
 import lib.minecraft.nbt.io.NbtOutput;
 import lib.minecraft.nbt.io.json.NbtJsonSerializer;
@@ -9,75 +8,72 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static lib.minecraft.nbt.io.snbt.SnbtConstants.*;
 
 /**
- * SNBT (stringified NBT) serialization that writes directly to a JSON writer, emitting the
- * type-preserving text format documented on the
- * <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki NBT format</a> page.
+ * SNBT (stringified NBT) serialization that writes the text form vanilla's own tag rendering
+ * writes, straight to a {@link Writer}.
  *
- * <p>Unlike {@link NbtJsonSerializer} which strips all tag
- * type information, SNBT keeps every tag disambiguated so it round-trips losslessly through
- * {@link SnbtDeserializer}. Type disambiguation rides on suffix letters for numeric literals
- * and on bracket-prefix markers for typed arrays:</p>
+ * <p>Unlike {@link NbtJsonSerializer} which strips all tag type information, SNBT keeps every tag
+ * disambiguated so it round-trips losslessly through {@link SnbtDeserializer}:</p>
  *
  * <ul>
- *   <li><b>{@link ByteTag}</b> -
- *       numeric literal with a {@code b} suffix, e.g. {@code 34b}.</li>
- *   <li><b>{@link ShortTag}</b> -
- *       numeric literal with an {@code s} suffix, e.g. {@code 31415s}.</li>
- *   <li><b>{@link IntTag}</b> -
- *       numeric literal with no suffix, e.g. {@code 31415926}.</li>
- *   <li><b>{@link LongTag}</b> -
- *       numeric literal with an {@code l} suffix, e.g. {@code 31415926l}.</li>
- *   <li><b>{@link FloatTag}</b> -
- *       numeric literal with an {@code f} suffix, e.g. {@code 3.1415926f}.</li>
- *   <li><b>{@link DoubleTag}</b> -
- *       numeric literal with a {@code d} suffix, e.g. {@code 3.1415926d}.</li>
- *   <li><b>{@link ByteArrayTag}</b> -
- *       {@code [B;1b,2b,3b]}.</li>
- *   <li><b>{@link IntArrayTag}</b> -
- *       {@code [I;1,2,3]}.</li>
- *   <li><b>{@link LongArrayTag}</b> -
- *       {@code [L;1l,2l,3l]}.</li>
- *   <li><b>{@link ListTag}</b> -
- *       plain bracketed array {@code [value,value,...]}.</li>
- *   <li><b>{@link CompoundTag}</b> -
- *       braced JSON-like object {@code {key:value,...}}.</li>
+ *   <li><b>Numbers</b> - the value with its type's suffix: {@code 1b}, {@code 1s}, {@code 1},
+ *       {@code 1L}, {@code 1.0f}, {@code 1.0d}.</li>
+ *   <li><b>Strings</b> - always quoted, with the one of {@code "} and {@code '} the string does not
+ *       meet first, so only that quote needs escaping, and with the backslash and the control
+ *       characters escaped - so a string such as {@code true} never reads back as a byte.</li>
+ *   <li><b>Arrays</b> - {@code [B;1B,2B]}, {@code [I;1,2]}, {@code [L;1L,2L]}.</li>
+ *   <li><b>Lists</b> - {@code [a,b]}, each element as the list holds it.</li>
+ *   <li><b>Compounds</b> - {@code {a:1,b:2}}, the keys sorted so equal compounds write equal text,
+ *       each bare where it is a plain identifier other than {@code true} or {@code false} and quoted
+ *       otherwise.</li>
  * </ul>
  *
- * <p>Strings are always quoted, as vanilla quotes them - with the one of {@code "} and {@code '}
- * the string does not meet first, so only that quote needs escaping, with the backslash and the
- * control characters escaped - so a string such as {@code true} never reads back as a byte.
- * Compound keys are written sorted, so equal compounds write equal text. Booleans are written as
- * {@code 1b} / {@code 0b}, the same representation Minecraft itself uses for boolean-valued NBT
- * fields. The output is compact unless constructed pretty, with a four-space indent.</p>
+ * <p>Booleans are written as {@code 1b} / {@code 0b}, the representation Minecraft itself uses for
+ * boolean-valued NBT fields. A control character with no escape of its own is written as
+ * a {@code u00NN} escape rather than vanilla's {@code xNN}, the form {@link SnbtDeserializer} reads. The
+ * output is compact unless constructed pretty, which breaks each entry onto its own line, indented
+ * four spaces per level.</p>
  *
  * @see SnbtDeserializer
  * @see <a href="https://minecraft.wiki/w/NBT_format">Minecraft Wiki - NBT format - "SNBT format"</a>
  */
-public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
+public class SnbtSerializer implements NbtOutput, Closeable, Flushable {
 
     /**
-     * Reusable scratch buffer for primitive numeric writes. Lets {@code writeByte} / {@code
-     * writeShort} / {@code writeLong} / {@code writeFloat} / {@code writeDouble} build their
-     * suffixed text representation without allocating a fresh {@code StringBuilder} per call.
-     * The instance is single-threaded by contract (callers must not share the serializer across
-     * threads, same as {@link JsonWriter}), so reset-and-reuse is safe.
+     * Keys written without quotes.
      */
-    private final StringBuilder primitiveBuf = new StringBuilder(24);
+    private static final @NotNull Pattern BARE_KEY = Pattern.compile("[A-Za-z._]+[A-Za-z0-9._+-]*");
 
     /**
-     * Hex digits of a control character written as a {@code \x} escape.
+     * Hex digits of a control character written as a {@code u00NN} escape.
      */
     private static final @NotNull HexFormat HEX = HexFormat.of().withUpperCase();
+
+    /**
+     * One level of pretty-printed indentation.
+     */
+    private static final @NotNull String INDENT = "    ";
+
+    /**
+     * The destination.
+     */
+    private final @NotNull Writer writer;
+
+    /**
+     * Whether each entry is broken onto its own, indented line.
+     */
+    private final boolean pretty;
 
     /**
      * Constructs a serializer writing compact SNBT.
@@ -95,10 +91,8 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
      * @param pretty whether to indent the output
      */
     public SnbtSerializer(@NotNull Writer writer, boolean pretty) {
-        super(writer);
-
-        if (pretty)
-            this.setIndent("    ");
+        this.writer = writer;
+        this.pretty = pretty;
     }
 
     @Override
@@ -108,53 +102,42 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
     @Override
     public void writeByte(int value) throws IOException {
-        this.jsonValue(this.formatSuffixed(Integer.toString(value), 'b'));
+        this.writer.write(Integer.toString(value));
+        this.writer.write('b');
     }
 
     @Override
     public void writeShort(int value) throws IOException {
-        this.jsonValue(this.formatSuffixed(Integer.toString(value), 's'));
+        this.writer.write(Integer.toString(value));
+        this.writer.write('s');
     }
 
     @Override
     public void writeInt(int value) throws IOException {
-        this.jsonValue(Integer.toString(value));
+        this.writer.write(Integer.toString(value));
     }
 
     @Override
     public void writeLong(long value) throws IOException {
-        this.jsonValue(this.formatSuffixed(Long.toString(value), 'l'));
+        this.writer.write(Long.toString(value));
+        this.writer.write('L');
     }
 
     @Override
     public void writeFloat(float value) throws IOException {
-        this.jsonValue(this.formatSuffixed(Float.toString(value), 'f'));
+        this.writer.write(Float.toString(value));
+        this.writer.write('f');
     }
 
     @Override
     public void writeDouble(double value) throws IOException {
-        this.jsonValue(this.formatSuffixed(Double.toString(value), 'd'));
-    }
-
-    /**
-     * Builds a numeric literal followed by a one-char SNBT type suffix using the reusable
-     * {@link #primitiveBuf}, avoiding the per-call {@code value + "b"} string-concat
-     * allocation that the prior implementation performed.
-     *
-     * @param numeric the already-formatted numeric body (e.g. {@code Integer.toString(value)})
-     * @param suffix the SNBT type suffix character to append
-     * @return the suffixed literal as a freshly-allocated string ready for {@code jsonValue}
-     */
-    private String formatSuffixed(@NotNull String numeric, char suffix) {
-        StringBuilder buf = this.primitiveBuf;
-        buf.setLength(0);
-        buf.append(numeric).append(suffix);
-        return buf.toString();
+        this.writer.write(Double.toString(value));
+        this.writer.write('d');
     }
 
     @Override
     public void writeUTF(@NotNull String value) throws IOException {
-        this.jsonValue(quote(value));
+        this.writer.write(quote(value));
     }
 
     @Override
@@ -167,11 +150,10 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
         for (int i = 0; i < value.length; i++) {
             if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(value[i]).append(ARRAY_SUFFIX_BYTE);
+            sb.append(value[i]).append('B');
         }
 
-        sb.append(ARRAY_END);
-        this.jsonValue(sb.toString());
+        this.writer.write(sb.append(ARRAY_END).toString());
     }
 
     @Override
@@ -184,11 +166,10 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
         for (int i = 0; i < value.length; i++) {
             if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(value[i]).append(ARRAY_SUFFIX_INT);
+            sb.append(value[i]);
         }
 
-        sb.append(ARRAY_END);
-        this.jsonValue(sb.toString());
+        this.writer.write(sb.append(ARRAY_END).toString());
     }
 
     @Override
@@ -201,11 +182,10 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
         for (int i = 0; i < value.length; i++) {
             if (i > 0) sb.append(ENTRY_SEPARATOR);
-            sb.append(value[i]).append(ARRAY_SUFFIX_LONG);
+            sb.append(value[i]).append('L');
         }
 
-        sb.append(ARRAY_END);
-        this.jsonValue(sb.toString());
+        this.writer.write(sb.append(ARRAY_END).toString());
     }
 
     @Override
@@ -213,12 +193,17 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
         if (++depth >= 512)
             throw new NbtMaxDepthException();
 
-        this.beginArray();
+        this.writer.write(ARRAY_START);
+        int index = 0;
 
-        for (Tag<?> value : tag)
+        for (Tag<?> value : tag) {
+            if (index++ > 0) this.writer.write(ENTRY_SEPARATOR);
+            this.newline(depth);
             this.writeTag(value, depth);
+        }
 
-        this.endArray();
+        if (index > 0) this.newline(depth - 1);
+        this.writer.write(ARRAY_END);
     }
 
     @Override
@@ -228,14 +213,54 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
 
         List<Map.Entry<String, Tag<?>>> entries = new ArrayList<>(tag.entrySet());
         entries.sort(Map.Entry.comparingByKey());
-        this.beginObject();
+        this.writer.write('{');
 
-        for (Map.Entry<String, Tag<?>> entry : entries) {
-            this.name(entry.getKey());
+        for (int i = 0; i < entries.size(); i++) {
+            Map.Entry<String, Tag<?>> entry = entries.get(i);
+            if (i > 0) this.writer.write(ENTRY_SEPARATOR);
+            this.newline(depth);
+            this.writer.write(key(entry.getKey()));
+            this.writer.write(this.pretty ? ": " : ":");
             this.writeTag(entry.getValue(), depth);
         }
 
-        this.endObject();
+        if (!entries.isEmpty()) this.newline(depth - 1);
+        this.writer.write('}');
+    }
+
+    @Override
+    public void flush() throws IOException {
+        this.writer.flush();
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.writer.close();
+    }
+
+    /**
+     * Breaks the line and indents it to a nesting level, when pretty-printing.
+     *
+     * @param level the nesting level
+     * @throws IOException if the destination refuses the write
+     */
+    private void newline(int level) throws IOException {
+        if (this.pretty) {
+            this.writer.write('\n');
+            this.writer.write(INDENT.repeat(level));
+        }
+    }
+
+    /**
+     * Returns a compound key as written - bare where it is a plain identifier other than
+     * {@code true} or {@code false}, and quoted otherwise.
+     *
+     * @param key the key
+     * @return the key as written
+     */
+    private static @NotNull String key(@NotNull String key) {
+        boolean bare = !key.equalsIgnoreCase("true") && !key.equalsIgnoreCase("false") && BARE_KEY.matcher(key).matches();
+        return bare ? key : quote(key);
     }
 
     /**
@@ -292,7 +317,7 @@ public class SnbtSerializer extends JsonWriter implements NbtOutput, Closeable {
             case '\n' -> "n";
             case '\f' -> "f";
             case '\r' -> "r";
-            default -> c < ' ' ? "x" + HEX.toHexDigits((byte) c) : null;
+            default -> c < ' ' ? "u00" + HEX.toHexDigits((byte) c) : null;
         };
     }
 

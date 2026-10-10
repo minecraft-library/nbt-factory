@@ -292,7 +292,7 @@ public class SnbtDeserializer extends StringReader implements NbtInput {
         // Check if the string is quoted.
         if (firstChar == STRING_DELIMITER_1 || firstChar == STRING_DELIMITER_2) {
             // Decode escape sequences: a backslash is consumed, and the following char is appended literally.
-            // This correctly unescapes the \" and \\ sequences emitted by SnbtSerializer.escapeString.
+            // This correctly unescapes the \" and \\ sequences emitted by SnbtSerializer.
             while (true) {
                 lastChar = this.read();
 
